@@ -16,39 +16,34 @@ class Reuters_Crawler:
         
     Example:
         RC = Reuters_Crawler()
-        df = RC.parse_to_dataframe()
+        df = RC.parse_to_dataframe(query="Google")
     """
-    def __init__(self, query="google"):
-        self.query = query
-        self.url = "https://www.reuters.com/search/news?blob={}&sortBy=date&dateRange=all".format(query)
+    def __init__(self):
         self.driver_path = r"./chromedriver.exe"
         self.driver = webdriver.Chrome(self.driver_path)
         self.next_button = '//*[@id="content"]/section[2]/div/div[1]/div[4]/div/div[4]/div[1]'
     
-    def parse_to_dataframe(self, parse_time=10):
+    def parse_to_dataframe(self, query):
         """
         Parameters:
-            parse_time: int (seconds)
+            query: str
         """
         # Open driver
+        self.query = query
+        self.url = "https://www.reuters.com/search/news?blob={}&dateRange=all".format(query)
         self.driver.get(self.url)
         time.sleep(2)
         # Scroll down page
-        start_time = time.time()
-        while (int(time.time() - start_time) < parse_time):
-            if self.check_exists_by_xpath(self.next_button): 
-                self.driver.find_element_by_xpath(self.next_button).click()
-                time.sleep(2 + random.random())
-            else: 
-                break
+        self.scroll_to_bottom()
         # Parsing
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
         self.driver.quit()
         news_list = soup.find_all(name="div", attrs={"class": "search-result-content"})
         news_list_generator = self.get_news_list(news_list)
         df = pd.DataFrame(list(news_list_generator), columns=["title", "date", "query", "url"])
+        df = df.drop_duplicates(subset="title")
+        df["date"] = pd.to_datetime(df["date"], utc=True)
         return df
-        
                 
     def check_exists_by_xpath(self, xpath):
         try:
@@ -56,6 +51,31 @@ class Reuters_Crawler:
         except NoSuchElementException:
             return False
         return True
+
+    def scroll_to_bottom(self):
+
+        old_position = 0
+        new_position = None
+
+        while new_position != old_position:
+            # Get old scroll position
+            old_position = self.driver.execute_script(
+                    ("return (window.pageYOffset !== undefined) ?"
+                     " window.pageYOffset : (document.documentElement ||"
+                     " document.body.parentNode || document.body);"))
+            # Sleep and Scroll
+            time.sleep(1)
+            self.driver.execute_script((
+                    "var scrollingElement = (document.scrollingElement ||"
+                    " document.body);scrollingElement.scrollTop ="
+                    " scrollingElement.scrollHeight;"))
+            # Get new position
+            new_position = self.driver.execute_script(
+                    ("return (window.pageYOffset !== undefined) ?"
+                     " window.pageYOffset : (document.documentElement ||"
+                     " document.body.parentNode || document.body);"))
+            self.driver.find_element_by_xpath(self.next_button).click()
+            time.sleep(2 + random.random())
     
     def get_news_list(self, news_list):
         for i in range(len(news_list)):
