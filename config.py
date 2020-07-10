@@ -16,4 +16,4 @@ class Config(object):
         }
     ]
 
-    SCHEDULER_API_ENABLED = False
+    SCHEDULER_API_ENABLED = True

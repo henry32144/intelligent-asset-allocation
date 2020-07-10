@@ -11,8 +11,8 @@ scheduler = APScheduler()
 app.register_blueprint(model_helper)
 
 if __name__ == "__main__":
-    scheduler = APScheduler()
-    scheduler.init_app(app)
-    scheduler.start()
+    #scheduler = APScheduler()
+    #scheduler.init_app(app)
+    #scheduler.start()
 
     app.run(debug=True)

@@ -6,7 +6,7 @@ model_helper = Blueprint('model_helper', __name__)
 def show():
     try:
         print("123")
-        return render_template("test.html")
+        return render_template("index.html")
     except TemplateNotFound:
         abort(404)
 
