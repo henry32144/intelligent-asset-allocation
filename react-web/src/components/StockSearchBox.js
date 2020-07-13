@@ -29,7 +29,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
   
-
 function StockSearchBox(props) {
   const { additionalStyles } = props
   const classes = useStyles();
@@ -42,7 +41,7 @@ function StockSearchBox(props) {
           placeholder="Search Stocks"
           inputProps={{ 'aria-label': 'search stocks' }}
         />
-        <IconButton type="submit" className={classes.iconButton} aria-label="search">
+        <IconButton className={classes.iconButton} aria-label="search" onClick={(e) => {console.log("search on click")}}>
           <SearchIcon />
         </IconButton>
       </Paper>
