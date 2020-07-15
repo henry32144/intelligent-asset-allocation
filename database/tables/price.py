@@ -29,14 +29,6 @@ class StockPrice(db.Model):
         return "Stock Price ('{}', '{}', '{}', '{}')".format(self.date, self.vol, self.adj_close, self.query)
 
 
-# def save_stock_price_to_db(filename):
-# 	df = pd.read_csv(filename)
-# 	_lst = []
-# 	for index, row in df.iterrows():
-# 		_lst.append(StockPrice(row['Date'], row['High'], row['Low'], row['Open'], row['Close'], row['Volume'], row['Adj Close'], row['query']))
-# 	db.session.add_all(_lst)
-#     db.session.commit()
-
 def save_stock_price_to_db(filename):
 	df = pd.read_csv(filename)
 	_lst = []
