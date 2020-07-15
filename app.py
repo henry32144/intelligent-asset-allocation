@@ -16,7 +16,4 @@ if __name__ == "__main__":
     db.app = app
     db.init_app(app)
     db.create_all()
-    # admin = User(username='admin', email='admin@example.com')
-    # db.session.merge(admin)
-    # db.session.commit()
     app.run(debug=True)
