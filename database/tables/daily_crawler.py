@@ -10,7 +10,7 @@ from tqdm.notebook import tqdm
 import pandas as pd
 
 class ArticleGetter:
-    def __init__(self, base_url):
+    def __init__(self, base_url, query=""):
         self.base_url = base_url
         self.search_url = base_url + query + '&sortBy=date&dateRange=all'
     
