@@ -5,7 +5,7 @@ class StockPrice(db.Model):
     __tablename__ = 'price'
 
     id_ = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DataTime)
+    date = db.Column(db.DateTime)
     high = db.Column(db.Float(precision=4))
     low = db.Column(db.Float(precision=4))
     open_ = db.Column(db.Float(precision=4))
@@ -29,7 +29,7 @@ class StockPrice(db.Model):
         return "Stock Price ('{}', '{}', '{}', '{}')".format(self.date, self.vol, self.adj_close, self.query)
 
 
-def save_to_db(filename):
+def save_stock_price_to_db(filename):
 	df = pd.read_csv(filename)
 	_lst = []
 	for index, row in df.iterrows():

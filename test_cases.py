@@ -4,7 +4,7 @@ Write test functions in this file
 from flask import Blueprint, abort, request, render_template
 from database.tables.user import User
 from database.database import db
-from database.tables.crawling_data import CrawlingData, read_csv
+from database.tables.crawling_data import CrawlingData, read_csv, daily_update
 from database.tables.price import StockPrice, save_stock_price_to_db
 
 test_cases = Blueprint('test_cases', __name__)
@@ -41,6 +41,11 @@ def crawling_test():
 @test_cases.route('/create_crawling_test')
 def create_crawling_test():
     read_csv('./database/tables/test.csv')
+    return ''
+
+@test_cases.route('/daily_update')
+def update():
+    daily_update()
     return ''
 
 
