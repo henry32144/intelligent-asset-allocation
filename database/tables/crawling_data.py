@@ -30,3 +30,4 @@ def read_csv(filename):
 	for index, row in df.iterrows():
 		_lst.append(CrawlingData(row['title'], row['time'], row['query'], row['url']))
 	db.session.add_all(_lst)
+	db.session.commit()
