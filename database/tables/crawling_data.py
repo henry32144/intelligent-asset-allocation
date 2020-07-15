@@ -15,7 +15,7 @@ class CrawlingData(db.Model):
 	def __init__(self, news_title, date, company, url):
 		self.news_title = news_title
 		self.date = date
-		self.comapny = company
+		self.company = company
 		self.url = url
 
 	def get_one_data(self, index):
@@ -30,14 +30,16 @@ def read_csv(filename):
 	for index, row in df.iterrows():
 		_lst.append(CrawlingData(row['title'], row['time'], row['query'], row['url']))
 	db.session.add_all(_lst)
+	db.session.commit()
 
 def daily_update():
 	base_url = 'https://www.reuters.com/search/news?blob='
-	querys = ['Google', 'Amazon']
+	querys = ['Google']
 	article_getter = ArticleGetter(base_url)
 	for q in querys:
-		article_getter.get_daily_news(q)
+		df = article_getter.get_daily_news(q)
 		_lst = []
 		for index, row in df.iterrows():
-			_lst.append(CrawlingData(row['title'], row['time'], row['query'], row['url']))
+			_lst.append(CrawlingData(news_title=row['title'], date=row['time'], company=q, url=row['url']))
 		db.session.add_all(_lst)
+		db.session.commit()
