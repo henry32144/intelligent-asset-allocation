@@ -31,6 +31,7 @@ class StockPrice(db.Model):
 
 def save_stock_price_to_db(filename):
 	df = pd.read_csv(filename)
+    df['Date'] = df.Date.apply(lambda x: x.to_pydatetime())
 	_lst = []
 	for index, row in df.iterrows():
 		_lst.append(StockPrice(row['Date'], row['High'], row['Low'], row['Open'], row['Close'], row['Volume'], row['Adj Close'], row['query']))
