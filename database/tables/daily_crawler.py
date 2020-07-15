@@ -6,7 +6,7 @@ import re
 import time
 from dateutil import parser
 from datetime import datetime, timedelta
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import pandas as pd
 
 class ArticleGetter:
@@ -17,7 +17,9 @@ class ArticleGetter:
     def get_daily_news(self, query):
         # get our search webpage
         search_url = self.base_url + query + '&sortBy=date&dateRange=all'
-        driver = webdriver.Chrome('/Users/samhsia/Python_Study_Group/chromedriver')
+        # script = 'which Chrome'
+        # a = os.system(script)
+        driver = webdriver.Chrome('C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe')
         reuters_url = 'https://www.reuters.com'
         driver.get(search_url)
         
