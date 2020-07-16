@@ -6,6 +6,7 @@ from database.tables.user import User
 from database.database import db
 from database.tables.crawling_data import CrawlingData, read_csv, daily_update
 from database.tables.price import StockPrice, save_stock_price_to_db, update_daily_stock_price
+from database.tables.company import Company, crawl_sp500_info, save_company
 
 test_cases = Blueprint('test_cases', __name__)
 
@@ -57,4 +58,9 @@ def create_pricetable_test():
 @test_cases.route('/daily_update_stockprice')
 def daily_update_stockprice():
     update_daily_stock_price('./database/tables/sp500tickers.pkl')
+    return ''
+
+@test_cases.route('/save_company')
+def save_company_to_db():
+    save_company()
     return ''
