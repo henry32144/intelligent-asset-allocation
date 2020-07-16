@@ -5,7 +5,7 @@ from flask import Blueprint, abort, request, render_template
 from database.tables.user import User
 from database.database import db
 from database.tables.crawling_data import CrawlingData, read_csv, daily_update
-from database.tables.price import StockPrice, save_stock_price_to_db
+from database.tables.price import StockPrice, save_stock_price_to_db, update_daily_stock_price
 
 test_cases = Blueprint('test_cases', __name__)
 
@@ -52,4 +52,9 @@ def update():
 @test_cases.route('/create_pricetable_test')
 def create_pricetable_test():
     save_stock_price_to_db('./database/tables/test_stock_price.csv')
+    return ''
+
+@test_cases.route('/daily_update_stockprice')
+def create_pricetable_test():
+    update_daily_stock_price('./database/tables/sp500tickers.pkl')
     return ''
