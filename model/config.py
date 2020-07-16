@@ -8,6 +8,10 @@ torch.manual_seed(RANDOM_SEED)
 
 # Data configuration
 TOP_K = 5
+TRAIN_START_DATE = "2012-01-01"
+TRAIN_END_DATE = "2016-12-31"
+VALID_START_DATE = "2017-01-01"
+VALID_END_DATE = "2020-07-01"
 
 # Model configuration
 BATCH_SIZE = 8

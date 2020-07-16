@@ -221,9 +221,11 @@ def main():
     df = load_data(
         fx_filename="./data/EURUSD1440.csv",
         news_filename="./data/reuters_news_google_v1.joblib",
+        labels=["forex", "finance"],
+        sort_by="forex",
         top_k=config.TOP_K)
-    train = df.loc[:pd.to_datetime("2017-01-01").date()]
-    valid = df.loc[pd.to_datetime("2017-01-01").date():]
+    train = df.loc[pd.to_datetime(config.TRAIN_START_DATE).date():pd.to_datetime(config.TRAIN_END_DATE).date()]
+    valid = df.loc[pd.to_datetime(config.VALID_START_DATE).date():pd.to_datetime(config.VALID_END_DATE).date()]
     # joblib.dump(train, "train.bin", compress=3)
     # joblib.dump(valid, "valid.bin", compress=3)
 
