@@ -1,20 +1,21 @@
 from database.database import db
 import datetime
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Date
 import pandas as pd
 from database.tables.daily_crawler import ArticleGetter
+
 
 class CrawlingData(db.Model):
 	__tablename__ = "crawling_data"
 	id = db.Column(Integer, primary_key=True)
 	news_title = db.Column(db.String)
-	date = db.Column(db.DateTime)
+	date = db.Column(db.Date)
 	company = db.Column(db.String)
 	url = db.Column(db.String)
-	
+
 	def __init__(self, news_title, date, company, url):
 		self.news_title = news_title
-		self.date = date
+		self.date = date.date()
 		self.company = company
 		self.url = url
 
