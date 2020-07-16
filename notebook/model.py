@@ -15,28 +15,31 @@ warnings.filterwarnings("ignore")
 
 class ReutersClassifier(nn.Module):
 
-    def __init__(self, n_classes, p=0.25):
+    def __init__(self, n_classes, top_k, p=0.25):
         super(ReutersClassifier, self).__init__()
         self.PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
         self.distilbert_layer = AutoModel.from_pretrained(self.PRE_TRAINED_MODEL_NAME)
         self.dropout = nn.Dropout(p=p)
-        self.classifier = nn.Linear(self.distilbert_layer.config.dim*3, n_classes)
+        self.classifier = nn.Linear(self.distilbert_layer.config.dim*top_k, n_classes)
 
-    def forward(self, input_ids_1, attention_mask_1, input_ids_2, attention_mask_2, input_ids_3, attention_mask_3):
-        pooled_output_1 = self.distilbert_layer(
-            input_ids=input_ids_1,
-            attention_mask=attention_mask_1)
-        pooled_output_2 = self.distilbert_layer(
-            input_ids=input_ids_2,
-            attention_mask=attention_mask_2)
-        pooled_output_3 = self.distilbert_layer(
-            input_ids=input_ids_3,
-            attention_mask=attention_mask_3)
-        branch_1 = self.dropout(pooled_output_1[0][:, 0, :])
-        branch_2 = self.dropout(pooled_output_2[0][:, 0, :])
-        branch_3 = self.dropout(pooled_output_3[0][:, 0, :])
-        main = torch.cat([branch_1, branch_2, branch_3], 1)
+    def forward(self, ids_and_mask):
+        pool_list = []
+        for enc in ids_and_mask:
+            pooled_output = self.distilbert_layer(
+                input_ids=enc["input_ids"],
+                attention_mask=enc["attention_mask"])
+            branch = self.dropout(pooled_output[0][:, 0, :])
+            pool_list.append(branch)
+        main = torch.cat([br for br in pool_list], 1)
         return F.softmax(self.classifier(main))
+
+    def freeze_bert_encoder(self):
+        for param in self.distilbert_layer.parameters():
+            param.requires_grad = False
+
+    def unfreeze_bert_encoder(self):
+        for param in self.distilbert_layer.parameters():
+            param.requires_grad = True
 
 def main():
     PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'

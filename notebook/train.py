@@ -198,7 +198,7 @@ def plot_history(history):
     plt.plot([int(x + 1) for x in range(config.EPOCHS)], history["train_acc"], label="train acc")
     plt.plot([int(x + 1) for x in range(config.EPOCHS)], history["val_acc"], label="validation acc")
     plt.title("Training Accuracy History")
-    plt.ylabel("F1")
+    plt.ylabel("Accuracy")
     plt.xlabel("Epoch")
     plt.ylim([0, 1])
     plt.legend()
@@ -224,14 +224,14 @@ def main():
         top_k=config.TOP_K)
     train = df.loc[:pd.to_datetime("2017-01-01").date()]
     valid = df.loc[pd.to_datetime("2017-01-01").date():]
-    joblib.dump(train, "train.bin", compress=3)
-    joblib.dump(valid, "valid.bin", compress=3)
+    # joblib.dump(train, "train.bin", compress=3)
+    # joblib.dump(valid, "valid.bin", compress=3)
 
     train_dataloader = create_dataloader(train, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
     val_dataloader = create_dataloader(valid, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
 
     torch.cuda.empty_cache()
-    model = ReutersClassifier(n_classes=2, top_k=3)
+    model = ReutersClassifier(n_classes=2, top_k=config.TOP_K)
     model.to(config.device)
 
     optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.417, correct_bias=False)
