@@ -1,6 +1,8 @@
 __pycache__
 __pycache__/*
 **/__pycache__
+
 **/.DS_Store
 **/database.db
 **/chromedriver.exe
+
