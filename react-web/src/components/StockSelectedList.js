@@ -9,10 +9,10 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { FixedSizeList } from 'react-window';
 
 const useStyles = makeStyles((theme) => ({
-  root:{},
+  root: {},
   stockComponent: {},
   listSubHeader: {
-      textAlign: 'initial'
+    textAlign: 'initial'
   }
 }));
 
@@ -32,20 +32,16 @@ function renderRow(props) {
 
 
 function StockSelectedList(props) {
-  const { additionalStyles } = props
+  const { selectedStocks, additionalStyles } = props
   const classes = useStyles();
-  const [selectedData, setSelectedData] = React.useState([{companyName:"Alphabet Inc.", companyCode:"NASDAQ：GOOG"},
-    {companyName:"Apple Inc.", companyCode:"NASDAQ: AAPL"},
-    {companyName:"Amazon.com, Inc.", companyCode:"NASDAQ: AMZN"}
-  ]);
 
   return (
     <Box className={additionalStyles.stockComponent}>
-      <FixedSizeList 
+      <FixedSizeList
         height={350}
-        itemSize={60} 
-        itemCount={selectedData.length}
-        itemData={selectedData}
+        itemSize={60}
+        itemCount={selectedStocks.length}
+        itemData={selectedStocks}
       >
         {renderRow}
       </FixedSizeList >

@@ -7,6 +7,7 @@ import Grid from '@material-ui/core/Grid';
 import InvestmentStrategyRadios from './components/InvestmentStrategyRadios'
 import Typography from '@material-ui/core/Typography';
 import StockSelectSection from './views/StockSelectSection'
+import PortfolioPage from './pages/PortfolioPage'
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -17,33 +18,17 @@ const useStyles = makeStyles((theme) => ({
 
 function App() {
   const classes = useStyles();
+  const [userData, setSelectedData] = React.useState({
+    userName: "Hello",
+    userEmail: "test@gmail.com",
+    userPassword: "123"
+  });
 
-  
   return (
     <div className="App">
       <div className={classes.root}>
-        <TopNavBar></TopNavBar>
-        <Grid container direction="column" justify="center" alignItems="center">
-          <Grid className={classes.title} item xs={12}>
-            <Typography variant="h6">
-              Choose your strategy
-            </Typography>
-          </Grid>
-          <Grid className={classes.gridItem} item xs={12}>
-            <InvestmentStrategyRadios/>
-          </Grid>
-          <Grid className={classes.title} item xs={12}>
-            <Typography variant="h6">
-              Select Stocks
-            </Typography>
-          </Grid>
-          <Grid className={classes.gridItem} item xs={12} >
-            <StockSelectSection></StockSelectSection>
-          </Grid>
-          <Grid className={classes.gridItem} item xs={12} >
-            <SubmitSelectionButton/>
-          </Grid>
-        </Grid>
+        <TopNavBar userData={userData}></TopNavBar>
+        <PortfolioPage></PortfolioPage>
       </div>
     </div>
   );
