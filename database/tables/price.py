@@ -3,6 +3,7 @@ import pandas as pd
 import pandas_datareader.data as web
 import datetime as dt
 import pickle
+from tqdm import tqdm
 
 class StockPrice(db.Model):
     __tablename__ = 'price'
@@ -32,7 +33,7 @@ class StockPrice(db.Model):
         return "Stock Price ('{}', '{}', '{}', '{}')".format(self.date, self.vol, self.adj_close, self.query)
 
 def update_daily_stock_price(sp500_file):
-    with open(sp500_file) as f:
+    with open(sp500_file, 'rb') as f:
         tickers = pickle.load(f)
     
     date = str(dt.datetime.now().date()).split('-')
@@ -41,14 +42,18 @@ def update_daily_stock_price(sp500_file):
     end = dt.datetime(int(date[0]), int(date[1]), int(date[2]))
 
     stock_list = []
-    for ticker in tickers:
-        df = web.DataReader(ticker, 'yahoo', start, end)
-        df.reset_index(inplace=True)
-        stock_data = df.values[-1]
+    for ticker in tqdm(tickers):
+        try:
+            df = web.DataReader(ticker, 'yahoo', start, end)
+            df.reset_index(inplace=True)
+            stock_data = df.values[-1]
 
-        date = stock_data[0].to_pydatetime()
-        stock_list.append(StockPrice(date, stock_data[1], stock_data[2], stock_data[3], stock_data[4], stock_data[5], stock_data[6], ticker))
-
+            date = stock_data[0].to_pydatetime()
+            stock_list.append(StockPrice(date, stock_data[1], stock_data[2], stock_data[3], stock_data[4], stock_data[5], stock_data[6], ticker))
+        
+        except:
+            print('Get Nothing.')
+            
     db.session.add_all(stock_list)
     db.session.commit()
 

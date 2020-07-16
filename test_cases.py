@@ -55,6 +55,6 @@ def create_pricetable_test():
     return ''
 
 @test_cases.route('/daily_update_stockprice')
-def create_pricetable_test():
+def daily_update_stockprice():
     update_daily_stock_price('./database/tables/sp500tickers.pkl')
     return ''
