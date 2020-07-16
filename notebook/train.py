@@ -1,4 +1,6 @@
 import warnings
+import logging
+import joblib
 import config
 import torch
 import pandas as pd
@@ -18,68 +20,50 @@ from torch import nn
 from torch.nn import functional as F
 from preprocessor import load_data
 warnings.filterwarnings("ignore")
+logging.basicConfig(level=logging.ERROR)
 
 
 class ReutersDataset(Dataset):
-    def __init__(self, df, tokenizer, max_len):
+    def __init__(self, df, tokenizer, max_len, top_k):
         self.df = df
         self.targets = df.label.values
         self.tokenizer = tokenizer
         self.max_len = max_len
+        self.top_k = top_k
         self.len = len(self.df)
 
     def __len__(self):
         return self.len
 
     def __getitem__(self, item):
-        top_1, top_2, top_3 = self.df.iloc[item, 1:4].values
+        total_top = self.df.iloc[item, 0:self.top_k].values
         target = self.targets[item]
 
-        encoding_1 = self.tokenizer.encode_plus(
-            str(top_1),
-            max_length=self.max_len,
-            add_special_tokens=True,
-            return_token_type_ids=False,
-            pad_to_max_length=True,
-            return_attention_mask=True,
-            return_tensors="pt")
-
-        encoding_2 = self.tokenizer.encode_plus(
-            str(top_2),
-            max_length=self.max_len,
-            add_special_tokens=True,
-            return_token_type_ids=False,
-            pad_to_max_length=True,
-            return_attention_mask=True,
-            return_tensors="pt")
-
-        encoding_3 = self.tokenizer.encode_plus(
-            str(top_3),
-            max_length=self.max_len,
-            add_special_tokens=True,
-            return_token_type_ids=False,
-            pad_to_max_length=True,
-            return_attention_mask=True,
-            return_tensors="pt")
+        enc_list = []
+        for k in total_top:
+            enc = self.tokenizer.encode_plus(
+                str(k),
+                max_length=self.max_len,
+                add_special_tokens=True,
+                return_token_type_ids=False,
+                pad_to_max_length=True,
+                return_attention_mask=True,
+                return_tensors="pt")
+            enc["input_ids"] = enc["input_ids"].flatten()
+            enc["attention_mask"] = enc["attention_mask"].flatten()
+            enc_list.append(enc)
 
         return {
-            "tweet_text_1": str(top_1),
-            "tweet_text_2": str(top_2),
-            "tweet_text_3": str(top_3),
-            "input_ids_1": encoding_1["input_ids"].flatten(),
-            "input_ids_2": encoding_2["input_ids"].flatten(),
-            "input_ids_3": encoding_3["input_ids"].flatten(),
-            "attention_mask_1": encoding_1["attention_mask"].flatten(),
-            "attention_mask_2": encoding_2["attention_mask"].flatten(),
-            "attention_mask_3": encoding_3["attention_mask"].flatten(),
-            "target": torch.tensor(target, dtype=torch.long)
+            "ids_and_mask": enc_list,
+            "target": torch.tensor(target)
         }
 
-def create_dataloader(df, tokenizer, max_len, batch_size):
+def create_dataloader(df, tokenizer, max_len, top_k, batch_size):
     dataset = ReutersDataset(
         df=df,
         tokenizer=tokenizer,
-        max_len=max_len)
+        max_len=max_len,
+        top_k=top_k)
 
     return DataLoader(
         dataset,
@@ -92,6 +76,7 @@ def matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg):
     denominator = np.sqrt((true_pos+false_pos)*(true_pos+false_neg)*(true_neg+false_pos)*(true_neg+false_neg)) + 1e-7
     return (nominator / denominator)
 
+
 def train_distilbert(model, data_loader, loss_function, optimizer, device, scheduler, n_examples):
     model = model.train()
 
@@ -100,16 +85,12 @@ def train_distilbert(model, data_loader, loss_function, optimizer, device, sched
     true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
 
     for data in data_loader:
-        input_ids_1 = data["input_ids_1"].to(device)
-        input_ids_2 = data["input_ids_2"].to(device)
-        input_ids_3 = data["input_ids_3"].to(device)
-        attention_mask_1 = data["attention_mask_1"].to(device)
-        attention_mask_2 = data["attention_mask_2"].to(device)
-        attention_mask_3 = data["attention_mask_3"].to(device)
+        for d in data["ids_and_mask"]:
+            d["input_ids"] = d["input_ids"].to(device)
+            d["attention_mask"] = d["attention_mask"].to(device)
         targets = data["target"].to(device)
 
-        outputs = model(input_ids_1, input_ids_2, input_ids_3,
-                        attention_mask_1, attention_mask_2, attention_mask_3)
+        outputs = model(data["ids_and_mask"])
         _, preds = torch.max(outputs, dim=1)
         loss = loss_function(outputs, targets)
 
@@ -132,6 +113,11 @@ def train_distilbert(model, data_loader, loss_function, optimizer, device, sched
         scheduler.step()
         optimizer.zero_grad()
 
+        for d in data["ids_and_mask"]:
+            d["input_ids"] = d["input_ids"].to("cpu")
+            d["attention_mask"] = d["attention_mask"].to("cpu")
+        targets = data["target"].to("cpu")
+
     recall = float(true_pos) / float(true_pos + false_neg + 1e-7)
     precision = float(true_pos) / float(true_pos + false_pos + 1e-7)
     f1 = 2 * precision * recall / (precision + recall + 1e-7)
@@ -150,16 +136,12 @@ def eval_distilbert(model, data_loader, loss_function, device, n_examples):
 
     with torch.no_grad():
         for data in data_loader:
-            input_ids_1 = data["input_ids_1"].to(device)
-            input_ids_2 = data["input_ids_2"].to(device)
-            input_ids_3 = data["input_ids_3"].to(device)
-            attention_mask_1 = data["attention_mask_1"].to(device)
-            attention_mask_2 = data["attention_mask_2"].to(device)
-            attention_mask_3 = data["attention_mask_3"].to(device)
+            for d in data["ids_and_mask"]:
+                d["input_ids"] = d["input_ids"].to(device)
+                d["attention_mask"] = d["attention_mask"].to(device)
             targets = data["target"].to(device)
 
-            outputs = model(input_ids_1, input_ids_2, input_ids_3,
-                            attention_mask_1, attention_mask_2, attention_mask_3)
+            outputs = model(data["ids_and_mask"])
             _, preds = torch.max(outputs, dim=1)
             loss = loss_function(outputs, targets)
 
@@ -175,6 +157,11 @@ def eval_distilbert(model, data_loader, loss_function, device, n_examples):
                     false_pos += 1
                 if p == 0 and t == 1:
                     false_neg += 1
+
+            for d in data["ids_and_mask"]:
+                d["input_ids"] = d["input_ids"].to("cpu")
+                d["attention_mask"] = d["attention_mask"].to("cpu")
+            targets = data["target"].to("cpu")
 
     recall = float(true_pos) / float(true_pos + false_neg + 1e-7)
     precision = float(true_pos) / float(true_pos + false_pos + 1e-7)
@@ -231,15 +218,20 @@ def plot_history(history):
     plt.show()
 
 def main():
-    df = load_data()
+    df = load_data(
+        fx_filename="./data/EURUSD1440.csv",
+        news_filename="./data/reuters_news_google_v1.joblib",
+        top_k=config.TOP_K)
     train = df.loc[:pd.to_datetime("2017-01-01").date()]
     valid = df.loc[pd.to_datetime("2017-01-01").date():]
+    joblib.dump(train, "train.bin", compress=3)
+    joblib.dump(valid, "valid.bin", compress=3)
 
-    train_dataloader = create_dataloader(train, config.tokenizer, config.MAX_LEN, config.BATCH_SIZE)
-    val_dataloader = create_dataloader(valid, config.tokenizer, config.MAX_LEN, config.BATCH_SIZE)
+    train_dataloader = create_dataloader(train, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
+    val_dataloader = create_dataloader(valid, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
 
     torch.cuda.empty_cache()
-    model = ReutersClassifier(2)
+    model = ReutersClassifier(n_classes=2, top_k=3)
     model.to(config.device)
 
     optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.417, correct_bias=False)
