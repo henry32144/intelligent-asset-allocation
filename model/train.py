@@ -221,8 +221,8 @@ def main():
     df = load_data(
         ticker_name="GOOG",
         news_filename="./data/reuters_news_google_v1.joblib",
-        labels=["forex", "finance"],
-        sort_by="forex",
+        labels=["forex", "stock"],
+        sort_by="stock",
         top_k=config.TOP_K)
     train = df.loc[pd.to_datetime(config.TRAIN_START_DATE).date():pd.to_datetime(config.TRAIN_END_DATE).date()]
     valid = df.loc[pd.to_datetime(config.VALID_START_DATE).date():pd.to_datetime(config.VALID_END_DATE).date()]
@@ -236,10 +236,10 @@ def main():
     model = ReutersClassifier(n_classes=2, top_k=config.TOP_K)
     model.to(config.device)
 
-    optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.417, correct_bias=False)
+    optim = AdamW(model.parameters(), lr=2e-5, weight_decay=0.417, correct_bias=False)
     total_steps = len(train_dataloader) * config.EPOCHS
     scheduler = get_linear_schedule_with_warmup(
-        optimizer,
+        optim,
         num_warmup_steps=0,
         num_training_steps=total_steps)
     loss_function = nn.CrossEntropyLoss().to(config.device)
@@ -252,7 +252,7 @@ def main():
         print("Epoch {}/{}".format(epoch + 1, config.EPOCHS))
 
         train_acc, train_f1, train_mcc, train_loss = train_distilbert(
-            model, train_dataloader, loss_function, optimizer, config.device, scheduler, len(train))
+            model, train_dataloader, loss_function, optim, config.device, scheduler, len(train))
 
         print("Train | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
             train_loss, train_acc, train_f1, train_mcc))
