@@ -219,7 +219,7 @@ def plot_history(history):
 
 def main():
     df = load_data(
-        fx_filename="./data/EURUSD1440.csv",
+        ticker_name="GOOG",
         news_filename="./data/reuters_news_google_v1.joblib",
         labels=["forex", "finance"],
         sort_by="forex",

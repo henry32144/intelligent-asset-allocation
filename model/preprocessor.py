@@ -1,9 +1,11 @@
 import re
 import sys
+import config
 import warnings
 import joblib
 import pandas as pd
 import numpy as np
+import yfinance as yf
 from tqdm import tqdm
 from nltk.corpus import stopwords
 from contractions import contractions_dict
@@ -116,6 +118,20 @@ def load_fx(file_name="./data/EURUSD1440.csv"):
     fx["label"] = fx["label"].map(lambda x: 1 if float(x) >= 0 else 0)
     return fx
 
+def load_stock(ticker_name, start_date=config.TRAIN_START_DATE):
+    ticker = yf.Ticker(ticker_name)
+    hist = ticker.history(period="max", start=start_date)
+    hist.index = hist.index.set_names(['date'])
+    hist = hist.reset_index(drop=False, inplace=False)
+    hist["date"] = pd.to_datetime(hist["date"], utc=True)
+    hist['date'] = hist['date'].apply(lambda x: x.date())
+    hist.sort_values(by='date', inplace=True)
+    hist.reset_index(drop=True, inplace=True)
+    hist["label"] = hist["Close"].diff(periods=1)
+    hist.dropna(inplace=True)
+    hist["label"] = hist["label"].map(lambda x: 1 if float(x) >= 0 else 0)
+    return hist
+
 def load_news(file_name, labels, sort_by, k):
     """
     :param file_name: str
@@ -133,10 +149,10 @@ def load_news(file_name, labels, sort_by, k):
     df.reset_index(drop=True, inplace=True)
     return df
 
-def load_data(fx_filename, news_filename, labels, sort_by, top_k):
-    fx = load_fx(fx_filename)
+def load_data(ticker_name, news_filename, labels, sort_by, top_k):
+    stock = load_stock(ticker_name)
     news = load_news(news_filename, labels=labels, sort_by=sort_by, k=top_k)
-    news_and_fx = pd.merge(news, fx, on=["date"])
+    news_and_fx = pd.merge(news, stock, on=["date"])
     news_and_fx.set_index('date', inplace=True)
     return news_and_fx
 
