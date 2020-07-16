@@ -16,9 +16,10 @@ class NewsPreprocessor:
     """
     Data preprocessing class.
     """
-    def __init__(self, contractions_dict, lower=True):
+    def __init__(self, contractions_dict, lower=True, rm_stopwords=False):
         self.contractions_dict = contractions_dict
         self.lower = lower
+        self.rm_stopwords = rm_stopwords
 
     def remove_unicode(self, text):
         """ Removes unicode strings like "\u002c" and "x96" """
@@ -49,9 +50,10 @@ class NewsPreprocessor:
     def ultimate_clean(self, text):
         if self.lower:
             text = text.lower()
+        if self.rm_stopwords:
+            text = self.remove_stopwords(text)
         text = self.remove_unicode(text)
         text = self.expand_contractions(text, self.contractions_dict)
-        text = self.remove_stopwords(text)
         text = self.remove_digits(text)
         return text
 
@@ -113,9 +115,9 @@ def load_news(file_name="./data/reuters_news_amazon_v1.joblib", labels=["finance
     df.reset_index(drop=True, inplace=True)
     return df
 
-def load_data(fx_filename, news_filename, **kwargs):
+def load_data(fx_filename, news_filename, top_k):
     fx = load_fx(fx_filename)
-    news = load_news(news_filename)
+    news = load_news(news_filename, k=top_k)
     news_and_fx = pd.merge(news, fx, on=["date"])
     news_and_fx.set_index('date', inplace=True)
     return news_and_fx
