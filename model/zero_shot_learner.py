@@ -56,7 +56,7 @@ def extend_df_with_cos_sim(df, col, labels, sort_by):
     :return: df: pandas dataframe
     """
     SB = SentenceBert()
-    for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+    for index, row in df.iterrows():
         sim_dict = SB.get_similarity(row[col], labels)
         for i in range(len(labels)):
             df.loc[index, labels[i]] = sim_dict[labels[i]]

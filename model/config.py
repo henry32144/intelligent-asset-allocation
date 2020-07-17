@@ -7,16 +7,18 @@ torch.manual_seed(RANDOM_SEED)
 
 
 # Data configuration
-TOP_K = 5
+TOP_K = 3
 TRAIN_START_DATE = "2012-01-01"
-TRAIN_END_DATE = "2016-12-31"
-VALID_START_DATE = "2017-01-01"
-VALID_END_DATE = "2020-07-01"
+TRAIN_END_DATE = "2015-12-31"
+VALID_START_DATE = "2016-01-01"
+VALID_END_DATE = "2016-12-31"
+TEST_START_DATE = "2017-01-01"
+TEST_END_DATE = "2020-07-01"
 
 # Model configuration
-BATCH_SIZE = 8
+BATCH_SIZE = 16
 MAX_LEN = 16
-EPOCHS = 5
+EPOCHS = 2
 PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
 tokenizer = AutoTokenizer.from_pretrained(PRE_TRAINED_MODEL_NAME)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

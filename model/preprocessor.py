@@ -91,7 +91,7 @@ def transform_df(df, sort_by, k=10):
     df_temp = df_temp.assign(**dict.fromkeys(new_cols, np.NaN))
 
     # Update every columns
-    for index, row in tqdm(df_temp.iterrows(), total=df_temp.shape[0]):
+    for index, row in df_temp.iterrows():
         try:
             i = 1
             for news in row["agg_news"]:

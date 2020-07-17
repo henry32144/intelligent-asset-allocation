@@ -1,24 +1,18 @@
 import warnings
 import logging
-import joblib
 import config
 import torch
 import pandas as pd
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
 from collections import defaultdict
 from model import ReutersClassifier
-from transformers import AutoTokenizer
-from transformers import AutoModel
-from torch import optim
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from transformers import AdamW
 from transformers import get_linear_schedule_with_warmup
 from torch import nn
-from torch.nn import functional as F
 from preprocessor import load_data
+from visualise import plot_history
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.ERROR)
 
@@ -84,7 +78,7 @@ def train_distilbert(model, data_loader, loss_function, optimizer, device, sched
     correct_predictions = 0
     true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
 
-    for data in data_loader:
+    for i, data in enumerate(data_loader):
         for d in data["ids_and_mask"]:
             d["input_ids"] = d["input_ids"].to(device)
             d["attention_mask"] = d["attention_mask"].to(device)
@@ -171,51 +165,40 @@ def eval_distilbert(model, data_loader, loss_function, device, n_examples):
 
     return accuracy, f1, mcc, np.mean(losses)
 
-def plot_history(history):
-    plt.figure(figsize=(15, 6))
+def test_distilbert(model, data_loader, device):
+    model = model.eval()
+    true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
+    with torch.no_grad():
+        for data in data_loader:
+            for d in data["ids_and_mask"]:
+                d["input_ids"] = d["input_ids"].to(device)
+                d["attention_mask"] = d["attention_mask"].to(device)
+            targets = data["target"].to(device)
 
-    plt.subplot(2, 2, 1)
-    plt.plot([int(x + 1) for x in range(config.EPOCHS)], history["train_mcc"], label="train mcc")
-    plt.plot([int(x + 1) for x in range(config.EPOCHS)], history["val_mcc"], label="validation mcc")
-    plt.title("Training MCC History")
-    plt.ylabel("MCC")
-    plt.xlabel("Epoch")
-    plt.ylim([-1, 1])
-    plt.legend()
-    plt.grid()
+            outputs = model(data["ids_and_mask"])
+            _, preds = torch.max(outputs, dim=1)
 
-    plt.subplot(2, 2, 2)
-    plt.plot([int(x + 1) for x in range(config.EPOCHS)], history["train_f1"], label="train f1")
-    plt.plot([int(x + 1) for x in range(config.EPOCHS)], history["val_f1"], label="validation f1")
-    plt.title("Training F1 History")
-    plt.ylabel("F1")
-    plt.xlabel("Epoch")
-    plt.ylim([0, 1])
-    plt.legend()
-    plt.grid()
+            for p, t in zip(preds, targets):
+                if p == 1 and t == 1:
+                    true_pos += 1
+                if p == 0 and t == 0:
+                    true_neg += 1
+                if p == 1 and t == 0:
+                    false_pos += 1
+                if p == 0 and t == 1:
+                    false_neg += 1
 
-    plt.subplot(2, 2, 3)
-    plt.plot([int(x + 1) for x in range(config.EPOCHS)], history["train_acc"], label="train acc")
-    plt.plot([int(x + 1) for x in range(config.EPOCHS)], history["val_acc"], label="validation acc")
-    plt.title("Training Accuracy History")
-    plt.ylabel("Accuracy")
-    plt.xlabel("Epoch")
-    plt.ylim([0, 1])
-    plt.legend()
-    plt.grid()
+            for d in data["ids_and_mask"]:
+                d["input_ids"] = d["input_ids"].to("cpu")
+                d["attention_mask"] = d["attention_mask"].to("cpu")
+            targets = data["target"].to("cpu")
 
-    plt.subplot(2, 2, 4)
-    plt.plot([int(x + 1) for x in range(config.EPOCHS)], history["train_loss"], label="train loss")
-    plt.plot([int(x + 1) for x in range(config.EPOCHS)], history["val_loss"], label="validation loss")
-    plt.title("Training Loss History")
-    plt.ylabel("Loss")
-    plt.xlabel("Epoch")
-    plt.ylim([0, 1])
-    plt.legend()
-    plt.grid()
-
-    plt.tight_layout()
-    plt.show()
+    recall = float(true_pos) / float(true_pos + false_neg + 1e-7)
+    precision = float(true_pos) / float(true_pos + false_pos + 1e-7)
+    f1 = 2 * precision * recall / (precision + recall + 1e-7)
+    accuracy = (true_pos + true_neg) / (true_pos + true_neg + false_pos + false_neg)
+    mcc = matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg)
+    print("F1: {:.4f}\nACC: {:.4f}\nMCC: {:.4f}".format(f1, accuracy, mcc))
 
 def main():
     df = load_data(
@@ -226,11 +209,13 @@ def main():
         top_k=config.TOP_K)
     train = df.loc[pd.to_datetime(config.TRAIN_START_DATE).date():pd.to_datetime(config.TRAIN_END_DATE).date()]
     valid = df.loc[pd.to_datetime(config.VALID_START_DATE).date():pd.to_datetime(config.VALID_END_DATE).date()]
+    test = df.loc[pd.to_datetime(config.TEST_START_DATE).date():pd.to_datetime(config.TEST_END_DATE).date()]
     # joblib.dump(train, "train.bin", compress=3)
     # joblib.dump(valid, "valid.bin", compress=3)
 
     train_dataloader = create_dataloader(train, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
     val_dataloader = create_dataloader(valid, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
+    test_dataloader = create_dataloader(test, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
 
     torch.cuda.empty_cache()
     model = ReutersClassifier(n_classes=2, top_k=config.TOP_K)
@@ -276,6 +261,7 @@ def main():
             torch.save(model.state_dict(), config.MODEL_PATH)
             best_f1 = val_f1
 
+    test_distilbert(model, test_dataloader, config.device)
     plot_history(history)
 
 if __name__ == "__main__":
