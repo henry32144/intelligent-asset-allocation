@@ -221,7 +221,7 @@ def main():
     model = ReutersClassifier(n_classes=2, top_k=config.TOP_K)
     model.to(config.device)
 
-    optim = AdamW(model.parameters(), lr=2e-5, weight_decay=0.417, correct_bias=False)
+    optim = AdamW(model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY, correct_bias=False)
     total_steps = len(train_dataloader) * config.EPOCHS
     scheduler = get_linear_schedule_with_warmup(
         optim,
@@ -230,7 +230,7 @@ def main():
     loss_function = nn.CrossEntropyLoss().to(config.device)
 
     history = defaultdict(list)
-    best_f1 = 0
+    best_loss = np.inf
 
     for epoch in range(config.EPOCHS):
         print("=" * 20)
@@ -257,9 +257,9 @@ def main():
         history["val_acc"].append(val_acc)
         history["val_loss"].append(val_loss)
 
-        if val_f1 > best_f1:
+        if val_loss < best_loss:
             torch.save(model.state_dict(), config.MODEL_PATH)
-            best_f1 = val_f1
+            best_loss = val_loss
 
     test_distilbert(model, test_dataloader, config.device)
     plot_history(history)

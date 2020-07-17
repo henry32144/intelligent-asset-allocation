@@ -3,7 +3,8 @@ import joblib
 import torch
 from tqdm import tqdm
 from collections import defaultdict
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer
+from transformers import AutoModel
 from torch.nn import functional as F
 warnings.filterwarnings("ignore")
 
@@ -56,12 +57,14 @@ def extend_df_with_cos_sim(df, col, labels, sort_by):
     :return: df: pandas dataframe
     """
     SB = SentenceBert()
+    print("Start zero-shot learner...")
     for index, row in df.iterrows():
         sim_dict = SB.get_similarity(row[col], labels)
         for i in range(len(labels)):
             df.loc[index, labels[i]] = sim_dict[labels[i]]
     df = df.sort_values(by=sort_by, axis=0, ascending=False)
     df = df.reset_index(drop=True)
+    print("Done!")
     return df
 
 def main():

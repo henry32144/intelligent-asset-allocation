@@ -91,6 +91,7 @@ def transform_df(df, sort_by, k=10):
     df_temp = df_temp.assign(**dict.fromkeys(new_cols, np.NaN))
 
     # Update every columns
+    print("Start transforming dataframe...")
     for index, row in df_temp.iterrows():
         try:
             i = 1
@@ -103,6 +104,7 @@ def transform_df(df, sort_by, k=10):
         except:
             pass
     df = df_temp.drop("agg_news", axis=1)
+    print("Done!")
 
     return df
 
