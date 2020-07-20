@@ -22,7 +22,6 @@ const useStyles = makeStyles((theme) => ({
 export default function TopNavBar(props) {
   //This component is the navigation bar on the top of the page
   const classes = useStyles();
-  const [isLogin, setSelectedData] = React.useState(props.userData == undefined ? true : false);
   const [isLoginDialogOpen, setLoginDialogOpen] = React.useState(false);
 
   const handleLoginDialogOpen = () => {
@@ -36,20 +35,20 @@ export default function TopNavBar(props) {
   return (
     <div className={classes.root}>
       <AppBar position="static">
-        <LoginDialog isOpen={isLoginDialogOpen} handleClose={handleLoginDialogClose}></LoginDialog>
+        <LoginDialog isOpen={isLoginDialogOpen} handleClose={handleLoginDialogClose} setUserData={props.setUserData}></LoginDialog>
         <Toolbar>
           <Button className={classes.brandButton} color="inherit" size="large">
             AI Asset
           </Button>
           <section className={classes.rightButtons}>
             {
-              true 
+              props.userData.userEmail == undefined
               ? 
                 <Button color="inherit" onClick={(e) => {handleLoginDialogOpen()}}>
                   Login
                 </Button>
               : 
-                <NavBarAccountButton />
+                <NavBarAccountButton setUserData={props.setUserData}></NavBarAccountButton>
             }
           </section>
         </Toolbar>

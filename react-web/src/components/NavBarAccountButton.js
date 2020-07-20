@@ -8,6 +8,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import { makeStyles } from '@material-ui/core/styles';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
+import Cookies from 'universal-cookie';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -19,7 +20,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-export default function NavBarAccountButton() {
+export default function NavBarAccountButton(props) {
   const classes = useStyles();
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
@@ -32,8 +33,21 @@ export default function NavBarAccountButton() {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
       return;
     }
-
     setOpen(false);
+  };
+
+  const logoutButtonOnClick = (e) => {
+    props.setUserData({
+      userName: null,
+      userEmail: null,
+    });
+
+    // Remove user data from cookies
+    const cookies = new Cookies();
+    cookies.remove('userName');
+    cookies.remove('userEmail');
+
+    handleClose(e)
   };
 
   function handleListKeyDown(event) {
@@ -76,7 +90,7 @@ export default function NavBarAccountButton() {
                 <ClickAwayListener onClickAway={handleClose}>
                   <MenuList autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
                     <MenuItem onClick={handleClose}>Profile</MenuItem>
-                    <MenuItem onClick={handleClose}>Logout</MenuItem>
+                    <MenuItem onClick={logoutButtonOnClick}>Logout</MenuItem>
                   </MenuList>
                 </ClickAwayListener>
               </Paper>

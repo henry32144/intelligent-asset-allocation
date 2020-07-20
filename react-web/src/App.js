@@ -8,6 +8,9 @@ import InvestmentStrategyRadios from './components/InvestmentStrategyRadios'
 import Typography from '@material-ui/core/Typography';
 import StockSelectSection from './views/StockSelectSection'
 import PortfolioPage from './pages/PortfolioPage'
+import Cookies from 'universal-cookie';
+
+
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -18,16 +21,18 @@ const useStyles = makeStyles((theme) => ({
 
 function App() {
   const classes = useStyles();
-  const [userData, setSelectedData] = React.useState({
-    userName: "Hello",
-    userEmail: "test@gmail.com",
-    userPassword: "123"
+  // Try to get user data from cookies
+  const cookies = new Cookies();
+  const [userData, setUserData] = React.useState({
+    userName: cookies.get('userName'),
+    userEmail: cookies.get('userEmail'),
   });
+
 
   return (
     <div className="App">
       <div className={classes.root}>
-        <TopNavBar userData={userData}></TopNavBar>
+        <TopNavBar userData={userData} setUserData={setUserData}></TopNavBar>
         <PortfolioPage></PortfolioPage>
       </div>
     </div>
