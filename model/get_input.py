@@ -1,6 +1,13 @@
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, '..')
+
+
 from database.tables.crawling_data import CrawlingData
 from database.tables.price import StockPrice
 from datetime import datetime
+
+
 
 
 def get_bert_input():
@@ -18,3 +25,4 @@ def get_price():
 		return None
 	else:
 		return data
+
