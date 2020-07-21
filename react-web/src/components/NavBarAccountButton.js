@@ -24,6 +24,7 @@ export default function NavBarAccountButton(props) {
   const classes = useStyles();
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
+  const cookies = new Cookies();
 
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
@@ -78,7 +79,12 @@ export default function NavBarAccountButton(props) {
           className={classes.accountButton}
           onClick={handleToggle}
         >
-          Account
+          {
+            cookies.get('userName') == undefined ? 
+              "Account"
+            : 
+            cookies.get('userName')
+          }
         </Button>
         <Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
           {({ TransitionProps, placement }) => (
