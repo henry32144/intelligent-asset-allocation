@@ -14,13 +14,14 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
   
-export default function StockSelectSection() {
+export default function StockSelectSection(props) {
   const classes = useStyles();
-
+  const { selectedStocks } = props
+  
   return (
     <Box className={classes.root} boxShadow={0}>
       <StockSearchBox additionalStyles={classes} />
-      <StockSelectedList additionalStyles={classes} />
+      <StockSelectedList additionalStyles={classes} selectedStocks={selectedStocks}/>
     </Box>
   );
 }
