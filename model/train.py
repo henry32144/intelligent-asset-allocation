@@ -2,6 +2,7 @@ import warnings
 import logging
 import config
 import torch
+import joblib
 import pandas as pd
 import numpy as np
 from collections import defaultdict
@@ -201,17 +202,23 @@ def test_distilbert(model, data_loader, device):
     print("F1: {:.4f}\nACC: {:.4f}\nMCC: {:.4f}".format(f1, accuracy, mcc))
 
 def main():
-    df = load_data(
-        ticker_name="GOOG",
-        news_filename="./data/reuters_news_google_v1.joblib",
-        labels=["forex", "stock"],
-        sort_by="stock",
-        top_k=config.TOP_K)
-    train = df.loc[pd.to_datetime(config.TRAIN_START_DATE).date():pd.to_datetime(config.TRAIN_END_DATE).date()]
-    valid = df.loc[pd.to_datetime(config.VALID_START_DATE).date():pd.to_datetime(config.VALID_END_DATE).date()]
-    test = df.loc[pd.to_datetime(config.TEST_START_DATE).date():pd.to_datetime(config.TEST_END_DATE).date()]
+    # df = load_data(
+    #     ticker_name="GOOG",
+    #     news_filename="./data/reuters_news_google_v1.joblib",
+    #     labels=["forex", "stock"],
+    #     sort_by="stock",
+    #     top_k=config.TOP_K)
+    # train = df.loc[pd.to_datetime(config.TRAIN_START_DATE).date():pd.to_datetime(config.TRAIN_END_DATE).date()]
+    # valid = df.loc[pd.to_datetime(config.VALID_START_DATE).date():pd.to_datetime(config.VALID_END_DATE).date()]
+    # test = df.loc[pd.to_datetime(config.TEST_START_DATE).date():pd.to_datetime(config.TEST_END_DATE).date()]
     # joblib.dump(train, "train.bin", compress=3)
     # joblib.dump(valid, "valid.bin", compress=3)
+
+    print("Loading data...")
+    train = joblib.load("./data/train.bin")
+    valid = joblib.load("./data/valid.bin")
+    test = joblib.load("./data/test.bin")
+    print("Load data successfully!")
 
     train_dataloader = create_dataloader(train, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
     val_dataloader = create_dataloader(valid, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
