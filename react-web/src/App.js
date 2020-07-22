@@ -7,8 +7,17 @@ import Grid from '@material-ui/core/Grid';
 import InvestmentStrategyRadios from './components/InvestmentStrategyRadios'
 import Typography from '@material-ui/core/Typography';
 import StockSelectSection from './views/StockSelectSection'
+import PortfolioPage from './pages/PortfolioPage'
+import Cookies from 'universal-cookie';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Fade from '@material-ui/core/Fade';
+
+import Box from '@material-ui/core/Box';
 
 const useStyles = makeStyles((theme) => ({
+  root: {
+    height: '100%',
+  },
   title: {
     textAlign: 'initial',
     margin: theme.spacing(4, 0, 2),
@@ -17,33 +26,18 @@ const useStyles = makeStyles((theme) => ({
 
 function App() {
   const classes = useStyles();
+  // Try to get user data from cookies
+  const cookies = new Cookies();
+  const [userData, setUserData] = React.useState({
+    userName: cookies.get('userName'),
+    userEmail: cookies.get('userEmail'),
+  });
 
-  
   return (
     <div className="App">
       <div className={classes.root}>
-        <TopNavBar></TopNavBar>
-        <Grid container direction="column" justify="center" alignItems="center">
-          <Grid className={classes.title} item xs={12}>
-            <Typography variant="h6">
-              Choose your strategy
-            </Typography>
-          </Grid>
-          <Grid className={classes.gridItem} item xs={12}>
-            <InvestmentStrategyRadios/>
-          </Grid>
-          <Grid className={classes.title} item xs={12}>
-            <Typography variant="h6">
-              Select Stocks
-            </Typography>
-          </Grid>
-          <Grid className={classes.gridItem} item xs={12} >
-            <StockSelectSection></StockSelectSection>
-          </Grid>
-          <Grid className={classes.gridItem} item xs={12} >
-            <SubmitSelectionButton/>
-          </Grid>
-        </Grid>
+        <TopNavBar userData={userData} setUserData={setUserData}></TopNavBar>
+        <PortfolioPage></PortfolioPage>
       </div>
     </div>
   );
