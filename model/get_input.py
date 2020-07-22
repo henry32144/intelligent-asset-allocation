@@ -18,6 +18,8 @@ def get_bert_input():
 	else:
 		return data
 
+
+
 def get_price():
 	price = StockPrice.query.filter_by( date = datetime.now().date() )
 	if(data == None):
