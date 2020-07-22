@@ -20,7 +20,7 @@ const useStyles = makeStyles((theme) => ({
     marginRight: 'auto',
   },
   dialogInputBox: {
-      margin: theme.spacing(0, 0, 2),
+    margin: theme.spacing(0, 0, 2),
   },
   dialogActions: {
     display: "flex",
@@ -39,7 +39,7 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "-24px"
   },
 }));
-  
+
 export default function LoginDialog(props) {
 
   const classes = useStyles();
@@ -56,9 +56,9 @@ export default function LoginDialog(props) {
   const emailInput = React.useRef();
   const passwordInput = React.useRef();
 
-  
+
   const checkEmailInputEmpty = () => {
-    if(emailInput.current.value.length < 1) {
+    if (emailInput.current.value.length < 1) {
       console.log("Email is empty")
       setEmailError(true);
       setEmailErrorMsg("Email cannot be empty");
@@ -69,7 +69,7 @@ export default function LoginDialog(props) {
   }
 
   const checkPasswordInputEmpty = () => {
-    if(passwordInput.current.value.length < 1) {
+    if (passwordInput.current.value.length < 1) {
       console.log("Password is empty")
       setPasswordError(true);
       setPasswordErrorMsg("Password cannot be empty");
@@ -89,12 +89,12 @@ export default function LoginDialog(props) {
     checkPasswordInputEmpty();
   };
 
-  const openSignupDialog = async　(e) => {
+  const openSignupDialog = async (e) => {
     props.openSignup();
     props.handleClose();
   }
 
-  const loginButtonOnClick = async　(e) => {
+  const loginButtonOnClick = async (e) => {
     // If no error in both textfield
     checkEmailInputEmpty();
     checkPasswordInputEmpty();
@@ -105,8 +105,8 @@ export default function LoginDialog(props) {
       const request = {
         method: 'POST',
         headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           'userEmail': emailInput.current.value,
@@ -116,7 +116,7 @@ export default function LoginDialog(props) {
 
       try {
         setLoading(true);
-        const response = await fetch( BASEURL + "/user/login", request)
+        const response = await fetch(BASEURL + "/user/login", request)
         if (response.ok) {
           const jsonData = await response.json();
           if (jsonData.isSuccess) {
@@ -135,13 +135,13 @@ export default function LoginDialog(props) {
             cookies.set('userEmail', userEmail, { path: '/' });
             props.handleClose();
           } else {
-              setErrorMsg(jsonData.errorMsg);
+            setErrorMsg(jsonData.errorMsg);
           }
         }
       }
       catch (err) {
         alert('fetch failed', err);
-      } 
+      }
       finally {
         setLoading(false);
       }
@@ -155,7 +155,7 @@ export default function LoginDialog(props) {
           in={loading}
           unmountOnExit
         >
-          <CircularProgress className={classes.circleProgress}/>
+          <CircularProgress className={classes.circleProgress} />
         </Fade>
         <DialogTitle id="form-dialog-title">Login</DialogTitle>
         <DialogContent>

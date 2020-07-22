@@ -9,10 +9,7 @@ import Typography from '@material-ui/core/Typography';
 import StockSelectSection from './views/StockSelectSection'
 import PortfolioPage from './pages/PortfolioPage'
 import Cookies from 'universal-cookie';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Fade from '@material-ui/core/Fade';
 
-import Box from '@material-ui/core/Box';
 
 const useStyles = makeStyles((theme) => ({
   root: {

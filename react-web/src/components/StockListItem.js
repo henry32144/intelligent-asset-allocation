@@ -12,15 +12,20 @@ export default function StockListItem(props) {
   /* 
     props data structure-
       companyName(string): the name of the company, Ex: Apple Inc.
-      companyCode(string): the code of the company in the market, Ex: NASDAQ: AAPL
+      companySymbol(string): the symbol of the company in the market, Ex: NASDAQ: AAPL
   */
   const classes = useStyles();
+
+  const deleteButtonOnClick = () => {
+    props.removeSelectedStock(props.companyId);
+  };
+
 
   return (
     <div className={classes.root}>
       <ListItem alignItems="flex-start">
-        <ListItemText primary={props.companyName} secondary={props.companyCode} />
-        <IconButton edge="end" aria-label="delete">
+        <ListItemText primary={props.companyName} secondary={props.companySymbol} />
+        <IconButton edge="end" aria-label="delete" onClick={deleteButtonOnClick}>
           <DeleteIcon />
         </IconButton>
       </ListItem>

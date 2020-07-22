@@ -57,7 +57,7 @@ export default function SignupDialog(props) {
       setNameError(false);
       setNameErrorMsg("");
     }
-  }
+  };
 
   const checkEmailInputEmpty = () => {
     if (emailInput.current.value.length < 1) {
@@ -68,7 +68,7 @@ export default function SignupDialog(props) {
       setEmailError(false);
       setEmailErrorMsg("");
     }
-  }
+  };
 
   const checkPasswordInputEmpty = () => {
     if (passwordInput.current.value.length < 1) {
@@ -79,7 +79,7 @@ export default function SignupDialog(props) {
       setPasswordError(false);
       setPasswordErrorMsg("");
     }
-  }
+  };
 
   // Do validate here when the focus of input field is out
   // Check whether the input is empty
@@ -97,9 +97,9 @@ export default function SignupDialog(props) {
 
   const signUpSucceed = () => {
     props.setDialogMessage("Sign up success!");
-    props.openMessageDialog()
+    props.openMessageDialog();
     props.handleClose();
-  }
+  };
 
   const signUpButtonOnClick = async (e) => {
     checkNameInputEmpty();
