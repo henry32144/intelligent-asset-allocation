@@ -7,6 +7,9 @@ from database.database import db
 from database.tables.crawling_data import CrawlingData, read_csv, daily_update
 from database.tables.price import StockPrice, save_history_stock_price_to_db, update_daily_stock_price
 from database.tables.company import Company, crawl_sp500_info, save_company
+from database.tables.output_news import OutputNews, to_json
+from model.get_news_keysent import KeysentGetter, test_url
+
 
 test_cases = Blueprint('test_cases', __name__)
 
@@ -63,4 +66,15 @@ def daily_update_stockprice():
 @test_cases.route('/save_company')
 def save_company_to_db():
     save_company()
+    return ''
+
+@test_cases.route('/get_news')
+def get_news():
+    # _ = test_url()
+    getter = KeysentGetter()
+    print("create getter")
+    getter.url2news()
+    print("url 2 news")
+    getter.to_db()
+    print("to db")
     return ''

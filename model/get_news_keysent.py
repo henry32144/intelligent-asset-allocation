@@ -8,9 +8,7 @@ from bs4 import BeautifulSoup
 from database.database import db
 import pandas as pd
 from absl import logging
-
 import tensorflow as tf
-
 import tensorflow_hub as hub
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,69 +17,139 @@ import pandas as pd
 import re
 import seaborn as sns
 import spacy
-# module_url = "https://tfhub.dev/google/universal-sentence-encoder/4" 
-# model = hub.load(module_url)
-# print ("module %s loaded" % module_url)
-
+import pysentiment as ps
+from tqdm import tqdm
+from database.tables.crawling_data import CrawlingData
+from database.tables.output_news import OutputNews
+import json
+from pprint import pprint
+from sqlalchemy import Column, Integer, String, DateTime, Date
+from datetime import datetime,timedelta
 class KeysentGetter():
-	def __init__():
-		self.title = []
-		self.doc = []
-		self.keysent_idx = []
-		self.url = []
+	def __init__(self):
+		self.title = [] #all the titles
+		self.doc = [] # all the documents wrt the title
+		self.keysent_idx = [] # all the keysents
+		self.url = [] #all url
+		self.important_title = []
+		self.polarity = []
+		self.important_news = []
+		self.title_polarity = []
+		self.q_data = self._get_all_url()
+		self.companys = []
 
 	def _get_all_url(self):
-		
+		result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
+		self.q_data = result
+		for r in result:
+			self.url.append(r.url)
+			self.companys.append(r.company)
+		print(result)
+		return result
 
-	def url2news(url):
-	    resp = requests.get(url)
-	    soup = BeautifulSoup(resp.text, 'html.parser')
-	    paragraph = soup.find_all('p')
-	    paragraph = [p.text for p in paragraph]
-	    print(paragraph)
-	    title = soup.find('title')
-	    print(title.text)
+	def url2news(self):
+		company_idx = 0
+		for url in tqdm(self.url, total = len(self.url)):
+		    resp = requests.get(url)
+		    soup = BeautifulSoup(resp.text, 'html.parser')
+		    paragraph = soup.find_all('p')
+		    paragraph = [p.text for p in paragraph]
+		    while(paragraph[0][-8:] == "min read"):
+		    	del paragraph[0]
+
+		    title = soup.find('title').text
+		    title = title.lstrip()
+		    if (len(self.title) != 0):
+		    	if( self.get_jaccard_sim(title, self.title[-1]) >0.8 ):
+		    		del self.companys[company_idx]
+		    		continue
+		    company_idx+=1
+		    self.title.append(title)
+		    hiv4 = ps.hiv4.HIV4()
+		    self.doc.append(paragraph)
+		    self.title_polarity.append( hiv4.get_score(hiv4.tokenize(title))['Polarity']  )
+		    po = []
+		    for p in paragraph[-1]:
+		    	tokens = hiv4.tokenize(p)
+		    	s = hiv4.get_score(tokens)
+		    	po.append(s['Polarity'])
+		    self.polarity.append(po)
+
+	def plot_hist(self):
+	 	plt.hist(self.polarity)
+	 	plt.show()
+
+	def get_jaccard_sim(self, str1, str2): 
+	    a = set(str1.split()) 
+	    b = set(str2.split())
+	    c = a.intersection(b)
+	    return float(len(c)) / (len(a) + len(b) - len(c))
+				
+	def get_news(self):
+		result = []
+		_dict = {
+		"title": 0,
+		"pargraph":0,
+		"keysent":0
+		}
+		for i, po in tqdm(enumerate(self.polarity), total = len(self.polarity)):
+			if (self.title_polarity[i] >= 0.85 or self.title_polarity[i] <= -0.85):
+				key_idx = []
+				for j, p in enumerate(po):
+					if (p >= 0.85):
+						key_idx.append(j)
+					elif (p <= -0.85):
+						key_idx.append(-1*j)
+				if(len(key_idx) != 0):
+					self.important_news.append(self.doc[i])
+					self.keysent_idx.append(abs(key_idx))
+					self.important_title.append(self.title[i])
+				# temp = _dict
+				# temp['title'] = self.title[i]
+				# temp['paragraph'] = self.doc[i]
+				# temp['keysent'] = key_idx
+				# result.append(temp)
+
+		# for i0, n in enumerate(self.important_news):
+		# 	for k in self.keysent_idx[i0][1:]:
+		# 		self.important_news[i0][k+1] = "**" + self.important_news[i0][k+1] + "**"
+		# 	if(self.keysent_idx[i0][0] > 0):
+		# 		print("------------NEWS : Positive------------")
+		# 	else:
+		# 		print("------------NEWS : Negative------------")
+		# 	print("======  :  "+self.important_title[i0] + "  : ======")
+		# 	pprint(self.important_news[i0])
+		# 	l+=1
+
+	def to_db(self):
+		_lst = []
+
+		for i, t in enumerate(self.important_title):
+			s = ""
+			for p in self.important_news[i]:
+				s = s+p+'%%'
+			s = s[:-2]
+			p = s
+			s = ""
+			for k in self.keysent_idx[i]:
+				s = s+str(k)+"%%"
+			s = s[:-2]
+			_lst.append(  OutputNews( t, date = datetime.now().date() - timedelta(days=1), company = self.companys[i], paragraph = p, keysent = s  )   )
+		db.session.add_all(_lst)
+		db.session.commit()
 
 
-
-
-def embed(input):
-  return model(input)
-
-
-def url2news(url):
-    resp = requests.get(url)
-    soup = BeautifulSoup(resp.text, 'html.parser')
-    paragraph = soup.find_all('p')
-    paragraph = [p.text for p in paragraph]
-    print(paragraph)
-    title = soup.find('title')
-    print(title.text)
-
-def plot_similarity(labels, features, rotation):
-  corr = np.inner(features, features)
-  sns.set(font_scale=1.2)
-  g = sns.heatmap(
-      corr,
-      xticklabels=labels,
-      yticklabels=labels,
-      vmin=0,
-      vmax=1,
-      cmap="YlOrRd")
-  g.set_xticklabels(labels, rotation=rotation)
-  g.set_title("Semantic Textual Similarity")
-
-def run_and_plot(messages_):
-  message_embeddings_ = embed(messages_)
-  plot_similarity(messages_, message_embeddings_, 90)
-
-
-def clean_text():
-
-
-
-url = 'https://www.reuters.com/article/us-google-security/google-meet-to-roll-out-new-security-features-for-video-meetings-idUSKCN24M21M'
-
-url2news(url)
+def test_url():
+	result = CrawlingData.query.filter_by(date=(datetime.now().date() - timedelta(days=1)))
+	return result
+# 		self.q_data = result
+# 		for r in result:
+# 			self.url.append(r.url)
+# 			self.companys.append(r.company)
+# 		return result
+# get = KeysentGetter()
+# get.url2news()
+# print(len(get.title))
+# get.get_news()
 
 
