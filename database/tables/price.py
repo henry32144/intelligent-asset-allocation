@@ -1,9 +1,13 @@
 from database.database import db
+
+import pickle
+import requests
+from bs4 import BeautifulSoup
+import datetime as dt
+from tqdm import tqdm
 import pandas as pd
 import pandas_datareader.data as web
-import datetime as dt
-import pickle
-from tqdm import tqdm
+
 
 class StockPrice(db.Model):
     __tablename__ = 'price'
@@ -32,6 +36,38 @@ class StockPrice(db.Model):
     def __repr__(self):
         return "Stock Price ('{}', '{}', '{}', '{}')".format(self.date, self.vol, self.adj_close, self.query)
 
+def save_history_stock_price_to_db(sp500_file):
+    """
+        The goal of the function is read the list of S&P500 from wiki (a pickle file).
+        Then, get the history stock price through Yahoo Finance API.
+        The function just need to execute one time at first.
+    """
+
+    with open(sp500_file, 'rb') as f:
+        tickers = pickle.load(f)
+
+    # get the history stock price
+    start = dt.datetime(2012, 1, 1)
+    end = dt.datetime(2020, 7, 1)
+
+    for ticker in tqdm(tickers):
+        stock_list = []
+        try:
+            df = web.DataReader(ticker, 'yahoo', start, end)
+            df.reset_index(inplace=True)
+
+            for index, row in df.iterrows():
+                date = row['Date'].to_pydatetime().date()
+                stock_list.append(StockPrice(date, row['High'], row['Low'], row['Open'], \
+                                                row['Close'], row['Volume'], row['Adj Close'], ticker))
+            
+        except:
+            print('Get Nothing.')
+
+        db.session.add_all(stock_list)
+        db.session.commit()
+
+
 def update_daily_stock_price(sp500_file):
     with open(sp500_file, 'rb') as f:
         tickers = pickle.load(f)
@@ -55,16 +91,4 @@ def update_daily_stock_price(sp500_file):
             print('Get Nothing.')
             
     db.session.add_all(stock_list)
-    db.session.commit()
-
-
-
-def save_stock_price_to_db(filename):
-    df = pd.read_csv(filename)
-    # date = dt.datetime.strptime(row['date'], '%Y-%m-%d')
-    df['Date'] = df.Date.apply(lambda x: dt.datetime.strptime(x, "%Y-%m-%d"))
-    _lst = []
-    for index, row in df.iterrows():
-        _lst.append(StockPrice(row['Date'], row['High'], row['Low'], row['Open'], row['Close'], row['Volume'], row['Adj Close'], row['query']))
-    db.session.add_all(_lst)
     db.session.commit()

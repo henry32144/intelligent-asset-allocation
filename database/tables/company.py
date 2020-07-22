@@ -56,8 +56,3 @@ def save_company():
 
     db.session.add_all(stock_list)
     db.session.commit()
-
-    # db.session.add_all(symbols)
-    # db.session.add_all(company_names)
-    # db.session.add_all(industries)
-    # db.session.commit()
