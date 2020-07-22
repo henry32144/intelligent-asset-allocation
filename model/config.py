@@ -17,8 +17,8 @@ TEST_END_DATE = "2020-07-01"
 
 # Model configuration
 BATCH_SIZE = 16
-MAX_LEN = 16
-EPOCHS = 10
+MAX_LEN = 32
+EPOCHS = 100
 PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
 tokenizer = AutoTokenizer.from_pretrained(PRE_TRAINED_MODEL_NAME)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
