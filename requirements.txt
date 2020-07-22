@@ -1,0 +1,11 @@
+gunicorn
+gevent
+Flask-APScheduler
+Flask-SQLAlchemy
+bs4
+Flask
+numpy
+pandas
+pandas-datareader
+selenium
+tqdm
