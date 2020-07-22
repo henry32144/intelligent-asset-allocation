@@ -1,3 +1,5 @@
 .ipynb_checkpoints
 .idea
 .pyc
+.iml
+.xml
