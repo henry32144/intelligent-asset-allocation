@@ -20,10 +20,10 @@ class StockPrice(db.Model):
     close = db.Column(db.Float(precision=4))
     vol = db.Column(db.Integer)
     adj_close = db.Column(db.Float(precision=4))
-    query = db.Column(db.String(20))
+    comp = db.Column(db.String(20))
 
 
-    def __init__(self, date, high, low, open_, close, vol, adj_close, query):
+    def __init__(self, date, high, low, open_, close, vol, adj_close, comp):
         self.date = date
         self.high = high
         self.low = low
@@ -31,10 +31,15 @@ class StockPrice(db.Model):
         self.close = close
         self.vol = vol
         self.adj_close = adj_close
-        self.query = query
+        self.comp = comp
 
     def __repr__(self):
-        return "Stock Price ('{}', '{}', '{}', '{}')".format(self.date, self.vol, self.adj_close, self.query)
+        return "Stock Price ('{}', '{}', '{}', '{}')".format(self.date, self.vol, self.close, self.comp)
+
+    @classmethod
+    def find_all_by_query(cls, comp):
+        return cls.query.filter_by(comp=comp).all()
+
 
 def save_history_stock_price_to_db(sp500_file):
     """

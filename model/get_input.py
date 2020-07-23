@@ -1,4 +1,5 @@
 import sys
+
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '..')
 
@@ -21,7 +22,7 @@ def get_bert_input():
 
 
 def get_price():
-	price = StockPrice.query.filter_by( date = datetime.now().date() )
+	price = StockPrice.query.filter_by( date = datetime.now().date())
 	if(data == None):
 		print("no new stock price data updated")
 		return None
