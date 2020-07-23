@@ -78,11 +78,9 @@ def matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg):
     denominator = np.sqrt((true_pos+false_pos)*(true_pos+false_neg)*(true_neg+false_pos)*(true_neg+false_neg)) + 1e-7
     return (nominator / denominator)
 
-def add_metrics_to_log(log, metrics, y_true, y_pred, prefix=''):
-    for metric in metrics:
-        q = metric(y_true, y_pred)
-        log[prefix + metric.__name__] = q
-    return log
+def add_metrics_to_log(log, metrics, results, prefix=''):
+    for metric, result in metrics, results:
+        log[prefix + metric] = str(result)
 
 def log_to_message(log, precision=4):
     fmt = "{0}: {1:." + str(precision) + "f}"
@@ -90,11 +88,10 @@ def log_to_message(log, precision=4):
 
 class ProgressBar(object):
     """Cheers @ajratner"""
-
     def __init__(self, n, length=40):
         # Protect against division by zero
-        self.n      = max(1, n)
-        self.nf     = float(n)
+        self.n = max(1, n)
+        self.nf = float(n)
         self.length = length
 
         # Precalculate the i values that should trigger a write operation
@@ -120,7 +117,26 @@ class ProgressBar(object):
 def train_baseline(
         train_data, valid_data, model, optim_name, lr_scheduler_type, verbose=1, momentum=0.0,
         weight_decay=5e-4, lr_decay=1.0, hyper_lr=1e-8, step_size=30, t_0=10, t_mult=2):
+    """
+    Reference from https://github.com/awslabs/adatune/blob/master/bin/baselines.py
+    Args:
+        train_data: pandas dataframe
+        valid_data: pandas dataframe
+        model: pytorch class
+        optim_name: str ('sgd', 'adam', 'adamw)
+        lr_scheduler_type: str ('hd', 'ed', 'cyclic', 'staircase')
+        verbose: bool (0, 1)
+        momentum: float
+        weight_decay: float
+        lr_decay: float
+        hyper_lr: float
+        step_size: int
+        t_0: int
+        t_mult: int
 
+    Returns:
+        history plot
+    """
     train_dataloader = create_dataloader(train_data, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
     val_dataloader = create_dataloader(valid_data, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
 
@@ -141,8 +157,7 @@ def train_baseline(
                 model.parameters(), lr=config.LEARNING_RATE, momentum=momentum,
                 weight_decay=weight_decay, hypergrad_lr=hyper_lr)
         else:
-            optimizer = AdamW(
-                model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY, correct_bias=False)
+            print("Only can choose either adam or sgd so far...")
     else:
         if optim_name == 'adam':
             optimizer = optim.Adam(
@@ -227,6 +242,7 @@ def train_baseline(
         val_acc, val_f1, val_mcc, val_loss = eval_distilbert(
             model, val_dataloader, loss_function, config.device, len(valid_data))
         log['val_loss'] = val_loss
+        add_metrics_to_log(log=log, metrics=["acc", "f1"], results=[val_acc, val_f1], prefix="val_")
         # print("Valid | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
         #     val_loss, val_acc, val_f1, val_mcc))
 
@@ -250,7 +266,7 @@ def train_baseline(
         cur_lr = 0.0
         for param_group in optimizer.param_groups:
             cur_lr = param_group['lr']
-        print('learning_rate after epoch :{} is : {:.6f}'.format(epoch+1, cur_lr))
+        print('Learning rate after epoch {} is: {:.6f}'.format(epoch+1, cur_lr))
 
     plot_history(history)
 
