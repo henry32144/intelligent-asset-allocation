@@ -9,7 +9,6 @@ import pandas as pd
 import numpy as np
 import torch.optim as optim
 from collections import OrderedDict
-from functools import partial
 from functools import reduce
 from collections import defaultdict
 from model import ReutersClassifier
@@ -60,6 +59,7 @@ class ReutersDataset(Dataset):
             "target": torch.tensor(target)
         }
 
+
 def create_dataloader(df, tokenizer, max_len, top_k, batch_size):
     dataset = ReutersDataset(
         df=df,
@@ -73,18 +73,37 @@ def create_dataloader(df, tokenizer, max_len, top_k, batch_size):
         shuffle=True,
         num_workers=0)
 
+
 def matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg):
     nominator = (true_pos*true_neg-false_pos*false_neg)
     denominator = np.sqrt((true_pos+false_pos)*(true_pos+false_neg)*(true_neg+false_pos)*(true_neg+false_neg)) + 1e-7
     return (nominator / denominator)
 
+
 def add_metrics_to_log(log, metrics, results, prefix=''):
     for metric, result in metrics, results:
         log[prefix + metric] = str(result)
 
+
 def log_to_message(log, precision=4):
     fmt = "{0}: {1:." + str(precision) + "f}"
     return "    ".join(fmt.format(k, v) for k, v in log.items())
+
+
+def progressbar(iter, prefix="", size=60, file=sys.stdout):
+    # Reference from https://stackoverflow.com/questions/3160699/python-progress-bar
+    count = len(iter)
+    def show(t):
+        x = int(size*t/count)
+        file.write("%s[%s%s] %i/%i\r" % (prefix, "#"*x, "."*(size-x), int(100*t/count), 100))
+        file.flush()
+    show(0)
+    for i, item in enumerate(iter):
+        yield item
+        show(i+1)
+    file.write("\n")
+    file.flush()
+
 
 class ProgressBar(object):
     """Cheers @ajratner"""
@@ -94,7 +113,7 @@ class ProgressBar(object):
         self.nf = float(n)
         self.length = length
 
-        # Precalculate the i values that should trigger a write operation
+        # Pre-calculate the i values that should trigger a write operation
         self.ticks = set([round(i/100.0 * n) for i in range(101)])
         self.ticks.add(n-1)
         self.bar(0)
@@ -113,6 +132,7 @@ class ProgressBar(object):
         self.bar(self.n-1)
         sys.stdout.write("{0}\n\n".format(message))
         sys.stdout.flush()
+
 
 def train_baseline(
         train_data, valid_data, model, optim_name, lr_scheduler_type, verbose=1, momentum=0.0,
@@ -191,7 +211,7 @@ def train_baseline(
         correct_predictions = 0
         true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
 
-        for i, data in enumerate(train_dataloader):
+        for i, data in enumerate(progressbar(train_dataloader)):
             for d in data["ids_and_mask"]:
                 d["input_ids"] = d["input_ids"].to(config.device)
                 d["attention_mask"] = d["attention_mask"].to(config.device)
@@ -236,15 +256,15 @@ def train_baseline(
         train_accuracy = (true_pos + true_neg) / float(true_pos + true_neg + false_pos + false_neg)
         train_mcc = matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg)
 
-        # print("Train | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
-        #     np.mean(losses), train_accuracy, train_f1, train_mcc))
+        print("Train | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
+            np.mean(losses), train_accuracy, train_f1, train_mcc))
 
         val_acc, val_f1, val_mcc, val_loss = eval_distilbert(
             model, val_dataloader, loss_function, config.device, len(valid_data))
         log['val_loss'] = val_loss
-        add_metrics_to_log(log=log, metrics=["acc", "f1"], results=[val_acc, val_f1], prefix="val_")
-        # print("Valid | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
-        #     val_loss, val_acc, val_f1, val_mcc))
+
+        print("Valid | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
+            val_loss, val_acc, val_f1, val_mcc))
 
         history["train_f1"].append(train_f1)
         history["train_mcc"].append(train_mcc)
@@ -269,6 +289,7 @@ def train_baseline(
         print('Learning rate after epoch {} is: {:.6f}'.format(epoch+1, cur_lr))
 
     plot_history(history)
+
 
 def train_distilbert(model, data_loader, loss_function, optimizer, device, scheduler, n_examples):
     model = model.train()
@@ -319,6 +340,7 @@ def train_distilbert(model, data_loader, loss_function, optimizer, device, sched
 
     return accuracy, f1, mcc, np.mean(losses)
 
+
 def eval_distilbert(model, data_loader, loss_function, device, n_examples):
     model = model.eval()
 
@@ -363,6 +385,7 @@ def eval_distilbert(model, data_loader, loss_function, device, n_examples):
 
     return accuracy, f1, mcc, np.mean(losses)
 
+
 def test_distilbert(model, data_loader, device):
     model = model.eval()
     true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
@@ -397,6 +420,7 @@ def test_distilbert(model, data_loader, device):
     accuracy = (true_pos + true_neg) / (true_pos + true_neg + false_pos + false_neg)
     mcc = matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg)
     print("F1: {:.4f}\nACC: {:.4f}\nMCC: {:.4f}".format(f1, accuracy, mcc))
+
 
 class AdamHD(Optimizer):
 
@@ -464,6 +488,7 @@ class AdamHD(Optimizer):
                 p.data.addcdiv_(-step_size, exp_avg, denom)
 
         return loss
+
 
 class SGDHD(Optimizer):
 
@@ -555,6 +580,7 @@ class SGDHD(Optimizer):
 
         return loss
 
+
 def main():
     # df = load_data(
     #     ticker_name="GOOG",
@@ -625,6 +651,7 @@ def main():
     test_distilbert(model, test_dataloader, config.device)
     plot_history(history)
 
+
 def main2():
     print("Loading data...")
     train_data = joblib.load("./data/train.bin")
@@ -635,7 +662,8 @@ def main2():
     model.to(config.device)
     print("Load model successfully!")
 
-    train_baseline(train_data, valid_data, model, optim_name="adam", lr_scheduler_type="cyclic")
+    train_baseline(train_data, valid_data, model, optim_name="adam", lr_scheduler_type="hd", verbose=0)
+
 
 if __name__ == "__main__":
     main2()
