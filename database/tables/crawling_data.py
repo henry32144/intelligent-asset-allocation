@@ -34,6 +34,7 @@ def read_csv(filename):
 	db.session.commit()
 
 def daily_update():
+# 	company_name_terms = ['Inc.', 'corporation','Corporation', 'company','Company','']
 	base_url = 'https://www.reuters.com/search/news?blob='
 	querys = ['Google']
 	article_getter = ArticleGetter(base_url)

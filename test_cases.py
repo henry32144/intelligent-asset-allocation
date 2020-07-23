@@ -12,7 +12,7 @@ from database.tables.crawling_data import CrawlingData, read_csv, daily_update
 from database.tables.price import StockPrice, save_history_stock_price_to_db, update_daily_stock_price
 from database.tables.company import Company, crawl_sp500_info, save_company
 
-from database.tables.output_news import OutputNews, to_json
+from database.tables.output_news import OutputNews, news_to_json
 from model.get_news_keysent import KeysentGetter, test_url
 
 
@@ -79,10 +79,11 @@ def save_company_to_db():
 
 @test_cases.route('/outputnews')
 def json_test():
-    _ = to_json('Apple')
+    _ = news_to_json('Apple')
     print("to json")
     print(_)
     return ''
+
 @test_cases.route('/get_news')
 def get_news():
     # _ = test_url()
@@ -93,6 +94,9 @@ def get_news():
     getter.get_news()
     getter.to_db()
     print("to db")
+
+
+
 
 @test_cases.route('/get_stock_price')
 def get_predicted_Q():

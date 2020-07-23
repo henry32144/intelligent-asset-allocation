@@ -37,7 +37,7 @@ class KeysentGetter():
 		self.title_polarity = []
 		self.companys = []
 		self.q_data = self._get_all_url()
-		
+
 
 	def _get_all_url(self):
 		result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))

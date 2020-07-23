@@ -23,5 +23,5 @@ if __name__ == "__main__":
     db.app = app
     db.init_app(app)
     db.create_all()
-    initialize()
+    #initialize()
     app.run(debug=True)

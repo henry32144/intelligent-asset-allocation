@@ -19,7 +19,7 @@ class OutputNews(db.Model):
 		self.paragraph = paragraph
 		self.keysent = keysent
 
-def to_json(company):
+def news_to_json(company):
 	result = []
 	_dict = {
 	"title": 0,
