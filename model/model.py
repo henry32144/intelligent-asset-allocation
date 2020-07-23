@@ -15,7 +15,7 @@ warnings.filterwarnings("ignore")
 
 class ReutersClassifier(nn.Module):
 
-    def __init__(self, n_classes, top_k, p=0.2):
+    def __init__(self, n_classes, top_k, p=0.5):
         super(ReutersClassifier, self).__init__()
         self.PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
         self.distilbert_layer = AutoModel.from_pretrained(self.PRE_TRAINED_MODEL_NAME)
