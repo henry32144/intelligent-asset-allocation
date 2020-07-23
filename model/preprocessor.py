@@ -129,6 +129,7 @@ def load_stock(ticker_name, start_date=config.TRAIN_START_DATE):
     hist['date'] = hist['date'].apply(lambda x: x.date())
     hist.sort_values(by='date', inplace=True)
     hist.reset_index(drop=True, inplace=True)
+    hist["ticker"] = ticker_name
     hist["label"] = hist["Close"].diff(periods=1)
     hist.dropna(inplace=True)
     hist["label"] = hist["label"].map(lambda x: 1 if float(x) >= 0 else 0)
