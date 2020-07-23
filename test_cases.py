@@ -68,6 +68,13 @@ def save_company_to_db():
     save_company()
     return ''
 
+
+@test_cases.route('/outputnews')
+def json_test():
+    _ = to_json('Apple')
+    print("to json")
+    print(_)
+    return ''
 @test_cases.route('/get_news')
 def get_news():
     # _ = test_url()
@@ -75,6 +82,7 @@ def get_news():
     print("create getter")
     getter.url2news()
     print("url 2 news")
+    getter.get_news()
     getter.to_db()
     print("to db")
     return ''

@@ -35,8 +35,9 @@ class KeysentGetter():
 		self.polarity = []
 		self.important_news = []
 		self.title_polarity = []
-		self.q_data = self._get_all_url()
 		self.companys = []
+		self.q_data = self._get_all_url()
+		
 
 	def _get_all_url(self):
 		result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
@@ -49,32 +50,37 @@ class KeysentGetter():
 
 	def url2news(self):
 		company_idx = 0
-		for url in tqdm(self.url, total = len(self.url)):
+		for url in tqdm(self.url[:10]):
 		    resp = requests.get(url)
 		    soup = BeautifulSoup(resp.text, 'html.parser')
 		    paragraph = soup.find_all('p')
 		    paragraph = [p.text for p in paragraph]
-		    while(paragraph[0][-8:] == "min read"):
-		    	del paragraph[0]
+		    # while(paragraph[0][-8:] == "min read"):
+		    # 	del paragraph[0]
 
 		    title = soup.find('title').text
 		    title = title.lstrip()
 		    if (len(self.title) != 0):
 		    	if( self.get_jaccard_sim(title, self.title[-1]) >0.8 ):
-		    		del self.companys[company_idx]
+		    		del self.companys[company_idx+1]
 		    		continue
+		    # print(self.title)
 		    company_idx+=1
 		    self.title.append(title)
 		    hiv4 = ps.hiv4.HIV4()
 		    self.doc.append(paragraph)
 		    self.title_polarity.append( hiv4.get_score(hiv4.tokenize(title))['Polarity']  )
+		    
 		    po = []
-		    for p in paragraph[-1]:
+		    for p in paragraph[:-1]:
 		    	tokens = hiv4.tokenize(p)
 		    	s = hiv4.get_score(tokens)
+		    	# print(tokens)
 		    	po.append(s['Polarity'])
+		    	# print(s)
 		    self.polarity.append(po)
-
+		# print(self.doc[0])
+		# print(self.title_polarity)
 	def plot_hist(self):
 	 	plt.hist(self.polarity)
 	 	plt.show()
@@ -102,8 +108,10 @@ class KeysentGetter():
 						key_idx.append(-1*j)
 				if(len(key_idx) != 0):
 					self.important_news.append(self.doc[i])
-					self.keysent_idx.append(abs(key_idx))
+					self.keysent_idx.append(key_idx)
 					self.important_title.append(self.title[i])
+		print(len(self.doc))
+		print(len(self.important_news))
 				# temp = _dict
 				# temp['title'] = self.title[i]
 				# temp['paragraph'] = self.doc[i]
@@ -123,7 +131,8 @@ class KeysentGetter():
 
 	def to_db(self):
 		_lst = []
-
+		# print(self.important_title)
+		# print(len(self.important_title))
 		for i, t in enumerate(self.important_title):
 			s = ""
 			for p in self.important_news[i]:
@@ -134,7 +143,9 @@ class KeysentGetter():
 			for k in self.keysent_idx[i]:
 				s = s+str(k)+"%%"
 			s = s[:-2]
+
 			_lst.append(  OutputNews( t, date = datetime.now().date() - timedelta(days=1), company = self.companys[i], paragraph = p, keysent = s  )   )
+		# print(_lst[3].news_title)
 		db.session.add_all(_lst)
 		db.session.commit()
 
