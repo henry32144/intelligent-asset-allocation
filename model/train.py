@@ -2,18 +2,24 @@ import sys
 import warnings
 import logging
 import config
+import math
 import torch
 import joblib
 import pandas as pd
 import numpy as np
+import torch.optim as optim
+from collections import OrderedDict
+from functools import partial
+from functools import reduce
 from collections import defaultdict
 from model import ReutersClassifier
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from torch import nn
+from torch.optim.optimizer import Optimizer
+from torch.optim.optimizer import required
 from transformers import AdamW
 from transformers import get_linear_schedule_with_warmup
-from torch import nn
-from preprocessor import load_data
 from visualise import plot_history
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.ERROR)
@@ -72,6 +78,16 @@ def matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg):
     denominator = np.sqrt((true_pos+false_pos)*(true_pos+false_neg)*(true_neg+false_pos)*(true_neg+false_neg)) + 1e-7
     return (nominator / denominator)
 
+def add_metrics_to_log(log, metrics, y_true, y_pred, prefix=''):
+    for metric in metrics:
+        q = metric(y_true, y_pred)
+        log[prefix + metric.__name__] = q
+    return log
+
+def log_to_message(log, precision=4):
+    fmt = "{0}: {1:." + str(precision) + "f}"
+    return "    ".join(fmt.format(k, v) for k, v in log.items())
+
 class ProgressBar(object):
     """Cheers @ajratner"""
 
@@ -80,6 +96,7 @@ class ProgressBar(object):
         self.n      = max(1, n)
         self.nf     = float(n)
         self.length = length
+
         # Precalculate the i values that should trigger a write operation
         self.ticks = set([round(i/100.0 * n) for i in range(101)])
         self.ticks.add(n-1)
@@ -99,6 +116,143 @@ class ProgressBar(object):
         self.bar(self.n-1)
         sys.stdout.write("{0}\n\n".format(message))
         sys.stdout.flush()
+
+def train_baseline(
+        train_data, valid_data, model, optim_name, lr_scheduler_type, verbose=1, momentum=0.0,
+        weight_decay=5e-4, lr_decay=1.0, hyper_lr=1e-8, step_size=30, t_0=10, t_mult=2):
+
+    train_dataloader = create_dataloader(train_data, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
+    val_dataloader = create_dataloader(valid_data, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
+
+    model.to(config.device)
+    cur_lr = config.LEARNING_RATE
+    scheduler = None
+    loss_function = nn.CrossEntropyLoss().to(config.device)
+    history = defaultdict(list)
+    best_loss = np.inf
+
+    if lr_scheduler_type == 'hd':
+        if optim_name == 'adam':
+            optimizer = AdamHD(
+                model.parameters(), lr=config.LEARNING_RATE, weight_decay=weight_decay,
+                eps=1e-4, hypergrad_lr=hyper_lr)
+        elif optim_name == 'sgd':
+            optimizer = SGDHD(
+                model.parameters(), lr=config.LEARNING_RATE, momentum=momentum,
+                weight_decay=weight_decay, hypergrad_lr=hyper_lr)
+        else:
+            optimizer = AdamW(
+                model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY, correct_bias=False)
+    else:
+        if optim_name == 'adam':
+            optimizer = optim.Adam(
+                model.parameters(), lr=config.LEARNING_RATE, weight_decay=weight_decay, eps=1e-4)
+        elif optim_name == 'sgd':
+            optimizer = optim.SGD(
+                model.parameters(), lr=config.LEARNING_RATE, momentum=momentum, weight_decay=weight_decay)
+        else:
+            optimizer = AdamW(
+                model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY, correct_bias=False)
+
+        if lr_scheduler_type == 'ed':
+            scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=lr_decay)
+        elif lr_scheduler_type == 'staircase':
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=lr_decay)
+        elif lr_scheduler_type == 'cyclic':
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+                optimizer, T_0=t_0, T_mult=t_mult, eta_min=config.LEARNING_RATE * 1e-4)
+
+    logs = []
+    for epoch in range(config.EPOCHS):
+        model = model.train()
+        print("\n")
+        print("Epoch {}/{}".format(epoch + 1, config.EPOCHS))
+
+        if verbose:
+            pb = ProgressBar(len(train_data))
+        log = OrderedDict()
+
+        losses = []
+        correct_predictions = 0
+        true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
+
+        for i, data in enumerate(train_dataloader):
+            for d in data["ids_and_mask"]:
+                d["input_ids"] = d["input_ids"].to(config.device)
+                d["attention_mask"] = d["attention_mask"].to(config.device)
+            targets = data["target"].to(config.device)
+
+            outputs = model(data["ids_and_mask"])
+            _, preds = torch.max(outputs, dim=1)
+            loss = loss_function(outputs, targets)
+
+            for p, t in zip(preds, targets):
+                if p == 1 and t == 1:
+                    true_pos += 1
+                if p == 0 and t == 0:
+                    true_neg += 1
+                if p == 1 and t == 0:
+                    false_pos += 1
+                if p == 0 and t == 1:
+                    false_neg += 1
+
+            correct_predictions += torch.sum(preds == targets)
+            losses.append(loss.item())
+
+            loss.backward()
+            nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
+            optimizer.zero_grad()
+            if scheduler and lr_scheduler_type == 'cyclic':
+                scheduler.step(epoch + (i / len(train_data)))
+
+            for d in data["ids_and_mask"]:
+                d["input_ids"] = d["input_ids"].to("cpu")
+                d["attention_mask"] = d["attention_mask"].to("cpu")
+            targets = data["target"].to("cpu")
+
+            log['loss'] = np.mean(losses)
+            if verbose:
+                pb.bar(i, log_to_message(log))
+
+        train_recall = float(true_pos) / float(true_pos + false_neg + 1e-7)
+        train_precision = float(true_pos) / float(true_pos + false_pos + 1e-7)
+        train_f1 = 2 * train_precision * train_recall / (train_precision + train_recall + 1e-7)
+        train_accuracy = (true_pos + true_neg) / float(true_pos + true_neg + false_pos + false_neg)
+        train_mcc = matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg)
+
+        # print("Train | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
+        #     np.mean(losses), train_accuracy, train_f1, train_mcc))
+
+        val_acc, val_f1, val_mcc, val_loss = eval_distilbert(
+            model, val_dataloader, loss_function, config.device, len(valid_data))
+        log['val_loss'] = val_loss
+        # print("Valid | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
+        #     val_loss, val_acc, val_f1, val_mcc))
+
+        history["train_f1"].append(train_f1)
+        history["train_mcc"].append(train_mcc)
+        history["train_acc"].append(train_accuracy)
+        history["train_loss"].append(np.mean(losses))
+        history["val_f1"].append(val_f1)
+        history["val_mcc"].append(val_mcc)
+        history["val_acc"].append(val_acc)
+        history["val_loss"].append(val_loss)
+
+        if val_loss < best_loss:
+            torch.save(model.state_dict(), config.MODEL_PATH)
+            best_loss = val_loss
+
+        logs.append(log)
+        if verbose:
+            pb.close(log_to_message(log))
+
+        cur_lr = 0.0
+        for param_group in optimizer.param_groups:
+            cur_lr = param_group['lr']
+        print('learning_rate after epoch :{} is : {:.6f}'.format(epoch+1, cur_lr))
+
+    plot_history(history)
 
 def train_distilbert(model, data_loader, loss_function, optimizer, device, scheduler, n_examples):
     model = model.train()
@@ -148,7 +302,6 @@ def train_distilbert(model, data_loader, loss_function, optimizer, device, sched
     mcc = matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg)
 
     return accuracy, f1, mcc, np.mean(losses)
-
 
 def eval_distilbert(model, data_loader, loss_function, device, n_examples):
     model = model.eval()
@@ -229,6 +382,163 @@ def test_distilbert(model, data_loader, device):
     mcc = matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg)
     print("F1: {:.4f}\nACC: {:.4f}\nMCC: {:.4f}".format(f1, accuracy, mcc))
 
+class AdamHD(Optimizer):
+
+    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
+                 weight_decay=0.0, hypergrad_lr=1e-8):
+        defaults = dict(lr=lr, betas=betas, eps=eps,
+                        weight_decay=weight_decay, hypergrad_lr=hypergrad_lr)
+        super(AdamHD, self).__init__(params, defaults)
+
+    def step(self, closure=None):
+        """Performs a single optimization step.
+        Arguments:
+            closure (callable, optional): A closure that reevaluates the model
+                and returns the loss.
+        """
+        loss = None
+        if closure is not None:
+            loss = closure()
+
+        for group in self.param_groups:
+            for p in group['params']:
+                if p.grad is None:
+                    continue
+                grad = p.grad.data
+                if grad.is_sparse:
+                    raise RuntimeError('Adam does not support sparse gradients, please consider SparseAdam instead')
+
+                state = self.state[p]
+
+                # State initialization
+                if len(state) == 0:
+                    state['step'] = 0
+                    # Exponential moving average of gradient values
+                    state['exp_avg'] = torch.zeros_like(p.data)
+                    # Exponential moving average of squared gradient values
+                    state['exp_avg_sq'] = torch.zeros_like(p.data)
+
+                exp_avg, exp_avg_sq = state['exp_avg'], state['exp_avg_sq']
+                beta1, beta2 = group['betas']
+
+                state['step'] += 1
+
+                if group['weight_decay'] != 0:
+                    grad = grad.add(group['weight_decay'], p.data)
+
+                if state['step'] > 1:
+                    prev_bias_correction1 = 1 - beta1 ** (state['step'] - 1)
+                    prev_bias_correction2 = 1 - beta2 ** (state['step'] - 1)
+                    # Hypergradient for Adam:
+                    h = torch.dot(grad.view(-1),
+                                  torch.div(exp_avg, exp_avg_sq.sqrt().add_(group['eps'])).view(-1)) * math.sqrt(
+                        prev_bias_correction2) / prev_bias_correction1
+                    # Hypergradient descent of the learning rate:
+                    group['lr'] += group['hypergrad_lr'] * h
+
+                # Decay the first and second moment running average coefficient
+                exp_avg.mul_(beta1).add_(1 - beta1, grad)
+                exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
+                denom = exp_avg_sq.sqrt().add_(group['eps'])
+
+                bias_correction1 = 1 - beta1 ** state['step']
+                bias_correction2 = 1 - beta2 ** state['step']
+                step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
+
+                p.data.addcdiv_(-step_size, exp_avg, denom)
+
+        return loss
+
+class SGDHD(Optimizer):
+
+    def __init__(self, params, lr=required, momentum=0.0, dampening=0,
+                 weight_decay=0.0, nesterov=False, hypergrad_lr=1e-6):
+        defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
+                        weight_decay=weight_decay, nesterov=nesterov, hypergrad_lr=hypergrad_lr)
+        if nesterov and (momentum <= 0 or dampening != 0):
+            raise ValueError("Nesterov momentum requires a momentum and zero dampening")
+        super(SGDHD, self).__init__(params, defaults)
+
+        if len(self.param_groups) != 1:
+            raise ValueError("SGDHD doesn't support per-parameter options (parameter groups)")
+
+        self._params = self.param_groups[0]['params']
+        self._params_numel = reduce(lambda total, p: total + p.numel(), self._params, 0)
+
+    def _gather_flat_grad_with_weight_decay(self, weight_decay=0):
+        views = []
+        for p in self._params:
+            if p.grad is None:
+                view = torch.zeros_like(p.data)
+            elif p.grad.data.is_sparse:
+                view = p.grad.data.to_dense().view(-1)
+            else:
+                view = p.grad.data.view(-1)
+            if weight_decay != 0:
+                view.add_(weight_decay, p.data.view(-1))
+            views.append(view)
+        return torch.cat(views, 0)
+
+    def _add_grad(self, step_size, update):
+        offset = 0
+        for p in self._params:
+            numel = p.numel()
+            # view as to avoid deprecated pointwise semantics
+            p.data.add_(step_size, update[offset:offset + numel].view_as(p.data))
+            offset += numel
+        assert offset == self._params_numel
+
+    def step(self, closure=None):
+        """Performs a single optimization step.
+        Arguments:
+            closure (callable, optional): A closure that reevaluates the model
+                and returns the loss.
+        """
+        assert len(self.param_groups) == 1
+
+        loss = None
+        if closure is not None:
+            loss = closure()
+
+        group = self.param_groups[0]
+        weight_decay = group['weight_decay']
+        momentum = group['momentum']
+        dampening = group['dampening']
+        nesterov = group['nesterov']
+
+        grad = self._gather_flat_grad_with_weight_decay(weight_decay)
+
+        # NOTE: SGDHD has only global state, but we register it as state for
+        # the first param, because this helps with casting in load_state_dict
+        state = self.state[self._params[0]]
+        # State initialization
+        if len(state) == 0:
+            state['grad_prev'] = torch.zeros_like(grad)
+
+        grad_prev = state['grad_prev']
+        # Hypergradient for SGD
+        h = torch.dot(grad, grad_prev)
+        # Hypergradient descent of the learning rate:
+        group['lr'] += group['hypergrad_lr'] * h
+
+        if momentum != 0:
+            if 'momentum_buffer' not in state:
+                buf = state['momentum_buffer'] = torch.zeros_like(grad)
+                buf.mul_(momentum).add_(grad)
+            else:
+                buf = state['momentum_buffer']
+                buf.mul_(momentum).add_(1 - dampening, grad)
+            if nesterov:
+                grad.add_(momentum, buf)
+            else:
+                grad = buf
+
+        state['grad_prev'] = grad
+
+        self._add_grad(-group['lr'], grad)
+
+        return loss
+
 def main():
     # df = load_data(
     #     ticker_name="GOOG",
@@ -299,5 +609,17 @@ def main():
     test_distilbert(model, test_dataloader, config.device)
     plot_history(history)
 
+def main2():
+    print("Loading data...")
+    train_data = joblib.load("./data/train.bin")
+    valid_data = joblib.load("./data/valid.bin")
+    print("Load data successfully!")
+
+    model = ReutersClassifier(n_classes=2, top_k=config.TOP_K)
+    model.to(config.device)
+    print("Load model successfully!")
+
+    train_baseline(train_data, valid_data, model, optim_name="adam", lr_scheduler_type="cyclic")
+
 if __name__ == "__main__":
-    main()
+    main2()
