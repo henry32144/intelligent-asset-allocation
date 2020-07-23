@@ -5,13 +5,22 @@ import os
 import pickle
 from tqdm import tqdm
 from collections import defaultdict
+import matplotlib.pyplot as plt
+import matplotlib
 from flask import Blueprint, abort, request, render_template
 from database.tables.user import User
 from database.database import db
 from database.tables.crawling_data import CrawlingData, read_csv, daily_update
 from database.tables.price import StockPrice, save_history_stock_price_to_db, update_daily_stock_price
 from database.tables.company import Company, crawl_sp500_info, save_company
+
+from database.tables.output_news import OutputNews, news_to_json
+from model.get_news_keysent import KeysentGetter, test_url
+
+
 from model.predict_Q import predict_Q
+from model.markowitz import Markowitz
+
 
 test_cases = Blueprint('test_cases', __name__)
 
@@ -70,6 +79,28 @@ def save_company_to_db():
     save_company()
     return ''
 
+
+@test_cases.route('/outputnews')
+def json_test():
+    _ = news_to_json('Apple')
+    print("to json")
+    print(_)
+    return ''
+
+@test_cases.route('/get_news')
+def get_news():
+    # _ = test_url()
+    getter = KeysentGetter()
+    print("create getter")
+    getter.url2news()
+    print("url 2 news")
+    getter.get_news()
+    getter.to_db()
+    print("to db")
+
+
+
+
 @test_cases.route('/get_stock_price')
 def get_predicted_Q():
     with open('./model/sp500tickers.pkl', 'rb') as f:
@@ -88,5 +119,23 @@ def get_predicted_Q():
 
     with open('real_price_dict', 'wb') as f:
         pickle.dump(real_price_dict, f)
+
+    return ''
+
+@test_cases.route('/test')
+def test():
+    selected_tickers = ['MMM', 'CLX', 'MS']
+    marko = Markowitz(selected_tickers)
+    all_weights = marko.get_all_weights()
+    all_values, all_return = marko.get_backtest_result()
+
+    print('all_weights:', all_weights)
+    print('all_values:', all_values)
+    print('all_return:', all_return)
+
+    matplotlib.use('agg')
+    plt.plot(all_values, label='Mean-Var Portfolio')
+    plt.show()
+    # plt.savefig('markowitz.png')
 
     return ''
