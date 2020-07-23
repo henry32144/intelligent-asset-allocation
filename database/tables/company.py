@@ -20,6 +20,14 @@ class Company(db.Model):
     def __repr__(self):
         return "Get Company: {}!".format(self.symbol)
 
+    def to_json(self):
+        return {
+                'id_': self.id_,
+                'symbol': self.symbol,
+                'company_name': self.company_name,
+                'industry': self.industry,
+                }
+
 
 def crawl_sp500_info():
     sp500_wiki_url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'

@@ -56,21 +56,21 @@ export default function TopNavBar(props) {
   return (
     <div className={classes.root}>
       <AppBar position="static">
-        <LoginDialog 
-          isOpen={isLoginDialogOpen} 
-          handleClose={handleLoginDialogClose} 
+        <LoginDialog
+          isOpen={isLoginDialogOpen}
+          handleClose={handleLoginDialogClose}
           setUserData={props.setUserData}
           openSignup={handleSignupDialogOpen}>
         </LoginDialog>
-        <SignupDialog 
-          isOpen={isSignupDialogOpen} 
+        <SignupDialog
+          isOpen={isSignupDialogOpen}
           handleClose={handleSignupDialogClose}
           setDialogMessage={setDialogMessage}
           openMessageDialog={handleMessageDialogOpen}
         >
         </SignupDialog>
-        <MessageDialog 
-          isOpen={isMessageDialogOpen} 
+        <MessageDialog
+          isOpen={isMessageDialogOpen}
           handleClose={handleMessageDialogClose}
           message={dialogMessage}
         >
@@ -82,11 +82,11 @@ export default function TopNavBar(props) {
           <section className={classes.rightButtons}>
             {
               props.userData.userEmail == undefined
-              ? 
-                <Button color="inherit" onClick={(e) => {handleLoginDialogOpen()}}>
+                ?
+                <Button color="inherit" onClick={(e) => { handleLoginDialogOpen() }}>
                   Login
                 </Button>
-              : 
+                :
                 <NavBarAccountButton setUserData={props.setUserData}></NavBarAccountButton>
             }
           </section>

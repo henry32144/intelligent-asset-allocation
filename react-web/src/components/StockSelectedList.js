@@ -17,23 +17,50 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-function renderRow(props) {
-  const { data, index, style } = props;
-  const rowItem = data[index];
-  return (
-    <div style={style}>
-      {
-        <StockListItem companyName={rowItem.companyName} companyCode={rowItem.companyCode}>
-        </StockListItem>
-      }
-    </div>
-  );
-}
+// function renderRow(props) {
+//   const { data, index, style } = props;
+//   const rowItem = data[index];
+//   return (
+//     <div style={style}>
+//       {
+//         <StockListItem companyName={rowItem.companyName} companySymbol={rowItem.companySymbol}>
+//         </StockListItem>
+//       }
+//     </div>
+//   );
+// }
 
 
 function StockSelectedList(props) {
   const { selectedStocks, additionalStyles } = props
   const classes = useStyles();
+
+  const removeSelectedStock = (id) => {
+    var selectedStocks = Array.from(props.selectedStocks);
+    var index = selectedStocks.findIndex(x => x.companyId === id);
+    if (index !== -1) {
+      selectedStocks.splice(index, 1);
+      props.setSelectedStocks(selectedStocks);
+    }
+  };
+
+  const renderRow = (props) => {
+    const { data, index, style } = props;
+    const rowItem = data[index];
+    return (
+      <div style={style}>
+        {
+          <StockListItem
+            companyName={rowItem.companyName}
+            companySymbol={rowItem.companySymbol}
+            companyId={rowItem.companyId}
+            removeSelectedStock={removeSelectedStock}
+          >
+          </StockListItem>
+        }
+      </div>
+    );
+  };
 
   return (
     <Box className={additionalStyles.stockComponent}>

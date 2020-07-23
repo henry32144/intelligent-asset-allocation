@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, abort, request, render_template, send_from_directory
 from database.tables.user import User
+from database.tables.company import Company
 from database.database import db
 
 
@@ -9,14 +10,6 @@ front_end = Blueprint('front_end', __name__)
 def manifest():
     return send_from_directory('./static', 'manifest.json')
 
-@front_end.route("/post-test", methods=['POST'])
-def post_test():
-    json_data = request.get_json()
-    test_res = {
-        'data': json_data.get("selectedStocks", [])
-    }
-    return jsonify(test_res)
-
 @front_end.route("/user/login", methods=['POST'])
 def user_login():
     json_data = request.get_json()
@@ -24,7 +17,7 @@ def user_login():
     # Response template
     response = {
         'isSuccess': False,
-        'errorMsg': "Login fail"
+        'errorMsg': "Email or Password is incorrect"
     }
     if result is not None:
         # Not empty, check password
@@ -48,12 +41,33 @@ def user_signup():
     if result is None:
         response['isSuccess'] = True
         new_user = User(
-            user_name='Steve',
+            user_name=json_data.get("userName"),
             user_email=json_data.get("userEmail"),
             user_password=json_data.get("userPassword")
         )
         db.session.add(new_user)
         db.session.commit()
     else:
-        response['errorMsg'] = "User is already exist"
+        response['errorMsg'] = "User already exists"
+    return jsonify(response)
+
+
+@front_end.route("/company", methods=['GET'])
+def get_all_company():
+    json_data = request.get_json()
+    result = Company.query.all()
+    # Response template
+    response = {
+        'data': [],
+        'isSuccess': False,
+        'errorMsg': ""
+    }
+    if len(result) > 0:
+        for r in result:
+            response['data'].append(r.to_json())
+        
+        response['isSuccess'] = True
+    else:
+        response['errorMsg'] = "Get company failed"
+    
     return jsonify(response)

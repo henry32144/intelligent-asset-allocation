@@ -1,0 +1,13 @@
+gunicorn
+gevent
+tensorflow-gpu
+Flask-APScheduler
+Flask-SQLAlchemy
+bs4
+Flask
+numpy
+pandas
+pandas-datareader
+selenium
+tqdm
+sklearn
