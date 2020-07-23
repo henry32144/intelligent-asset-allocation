@@ -7,6 +7,7 @@ import torch
 import joblib
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import torch.optim as optim
 from collections import OrderedDict
 from functools import reduce
@@ -17,6 +18,7 @@ from torch.utils.data import DataLoader
 from torch import nn
 from torch.optim.optimizer import Optimizer
 from torch.optim.optimizer import required
+from torch.autograd import Variable
 from transformers import AdamW
 from transformers import get_linear_schedule_with_warmup
 from visualise import plot_history
@@ -95,7 +97,8 @@ def progressbar(iter, prefix="", size=60, file=sys.stdout):
     count = len(iter)
     def show(t):
         x = int(size*t/count)
-        file.write("%s[%s%s] %i/%i\r" % (prefix, "#"*x, "."*(size-x), int(100*t/count), 100))
+        # file.write("%s[%s%s] %i/%i\r" % (prefix, "#"*x, "."*(size-x), int(100*t/count), 100))
+        file.write("{}[{}{}] {}%\r".format(prefix, "#"*x, "."*(size-x), int(100*t/count)))
         file.flush()
     show(0)
     for i, item in enumerate(iter):
@@ -144,7 +147,7 @@ def train_baseline(
         valid_data: pandas dataframe
         model: pytorch class
         optim_name: str ('sgd', 'adam', 'adamw)
-        lr_scheduler_type: str ('hd', 'ed', 'cyclic', 'staircase')
+        lr_scheduler_type: str ('hd', 'ed', 'cyclic', 'staircase', 'one_cycle)
         verbose: bool (0, 1)
         momentum: float
         weight_decay: float
@@ -167,6 +170,7 @@ def train_baseline(
     history = defaultdict(list)
     best_loss = np.inf
 
+    # Hypergradient Descent: https://arxiv.org/pdf/1703.04782.pdf
     if lr_scheduler_type == 'hd':
         if optim_name == 'adam':
             optimizer = AdamHD(
@@ -189,18 +193,25 @@ def train_baseline(
             optimizer = AdamW(
                 model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY, correct_bias=False)
 
+        # Exponential Decay
         if lr_scheduler_type == 'ed':
             scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=lr_decay)
+        # Staircase Decay
         elif lr_scheduler_type == 'staircase':
             scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=lr_decay)
+        # Cosine Annealing with Restarts
         elif lr_scheduler_type == 'cyclic':
             scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
                 optimizer, T_0=t_0, T_mult=t_mult, eta_min=config.LEARNING_RATE * 1e-4)
+        # One Cycle Policy Learning Rate Scheduler
+        elif lr_scheduler_type == 'one_cycle':
+            total_steps = len(train_dataloader) * config.EPOCHS
+            scheduler = OneCycleLR(optimizer, num_steps=total_steps, lr_range=(1e-8, 1e-3))
 
     logs = []
+    print("\nTrain on {} samples, validate on {} samples".format(train_data.shape[0], valid_data.shape[0]))
     for epoch in range(config.EPOCHS):
         model = model.train()
-        print("\n")
         print("Epoch {}/{}".format(epoch + 1, config.EPOCHS))
 
         if verbose:
@@ -286,7 +297,7 @@ def train_baseline(
         cur_lr = 0.0
         for param_group in optimizer.param_groups:
             cur_lr = param_group['lr']
-        print('Learning rate after epoch {} is: {:.6f}'.format(epoch+1, cur_lr))
+        print('Learning rate after epoch {} is: {:.6f}\n'.format(epoch+1, cur_lr))
 
     plot_history(history)
 
@@ -490,6 +501,116 @@ class AdamHD(Optimizer):
         return loss
 
 
+class OneCycleLR:
+    """ Sets the learing rate of each parameter group by the one cycle learning rate policy
+    proposed in https://arxiv.org/pdf/1708.07120.pdf.
+    It is recommended that you set the max_lr to be the learning rate that achieves
+    the lowest loss in the learning rate range test, and set min_lr to be 1/10 th of max_lr.
+    So, the learning rate changes like min_lr -> max_lr -> min_lr -> final_lr,
+    where final_lr = min_lr * reduce_factor.
+    Note: Currently only supports one parameter group.
+    Args:
+        optimizer:             (Optimizer) against which we apply this scheduler
+        num_steps:             (int) of total number of steps/iterations
+        lr_range:              (tuple) of min and max values of learning rate
+        momentum_range:        (tuple) of min and max values of momentum
+        annihilation_frac:     (float), fracion of steps to annihilate the learning rate
+        reduce_factor:         (float), denotes the factor by which we annihilate the learning rate at the end
+        last_step:             (int), denotes the last step. Set to -1 to start training from the beginning
+    Example:
+        >>> optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+        >>> scheduler = OneCycleLR(optimizer, num_steps=num_steps, lr_range=(0.1, 1.))
+        >>> for epoch in range(epochs):
+        >>>     for step in train_dataloader:
+        >>>         train(...)
+        >>>         scheduler.step()
+    Useful resources:
+        https://towardsdatascience.com/finding-good-learning-rate-and-the-one-cycle-policy-7159fe1db5d6
+        https://medium.com/vitalify-asia/whats-up-with-deep-learning-optimizers-since-adam-5c1d862b9db0
+    """
+
+    def __init__(self,
+                 optimizer: Optimizer,
+                 num_steps: int,
+                 lr_range: tuple = (0.1, 1.),
+                 momentum_range: tuple = (0.85, 0.95),
+                 annihilation_frac: float = 0.1,
+                 reduce_factor: float = 0.01,
+                 last_step: int = -1):
+        # Sanity check
+        if not isinstance(optimizer, Optimizer):
+            raise TypeError('{} is not an Optimizer'.format(type(optimizer).__name__))
+        self.optimizer = optimizer
+
+        self.num_steps = num_steps
+
+        self.min_lr, self.max_lr = lr_range[0], lr_range[1]
+        assert self.min_lr < self.max_lr, \
+            "Argument lr_range must be (min_lr, max_lr), where min_lr < max_lr"
+
+        self.min_momentum, self.max_momentum = momentum_range[0], momentum_range[1]
+        assert self.min_momentum < self.max_momentum, \
+            "Argument momentum_range must be (min_momentum, max_momentum), where min_momentum < max_momentum"
+
+        self.num_cycle_steps = int(num_steps * (1. - annihilation_frac))  # Total number of steps in the cycle
+        self.final_lr = self.min_lr * reduce_factor
+
+        self.last_step = last_step
+
+        if self.last_step == -1:
+            self.step()
+
+    def state_dict(self):
+        """Returns the state of the scheduler as a :class:`dict`.
+        It contains an entry for every variable in self.__dict__ which
+        is not the optimizer. (Borrowed from _LRScheduler class in torch.optim.lr_scheduler.py)
+        """
+        return {key: value for key, value in self.__dict__.items() if key != 'optimizer'}
+
+    def load_state_dict(self, state_dict):
+        """Loads the schedulers state. (Borrowed from _LRScheduler class in torch.optim.lr_scheduler.py)
+        Arguments:
+            state_dict (dict): scheduler state. Should be an object returned
+                from a call to :meth:`state_dict`.
+        """
+        self.__dict__.update(state_dict)
+
+    def get_lr(self):
+        return self.optimizer.param_groups[0]['lr']
+
+    def get_momentum(self):
+        return self.optimizer.param_groups[0]['momentum']
+
+    def step(self):
+        """Conducts one step of learning rate and momentum update
+        """
+        current_step = self.last_step + 1
+        self.last_step = current_step
+
+        if current_step <= self.num_cycle_steps // 2:
+            # Scale up phase
+            scale = current_step / (self.num_cycle_steps // 2)
+            lr = self.min_lr + (self.max_lr - self.min_lr) * scale
+            momentum = self.max_momentum - (self.max_momentum - self.min_momentum) * scale
+        elif current_step <= self.num_cycle_steps:
+            # Scale down phase
+            scale = (current_step - self.num_cycle_steps // 2) / (self.num_cycle_steps - self.num_cycle_steps // 2)
+            lr = self.max_lr - (self.max_lr - self.min_lr) * scale
+            momentum = self.min_momentum + (self.max_momentum - self.min_momentum) * scale
+        elif current_step <= self.num_steps:
+            # Annihilation phase: only change lr
+            scale = (current_step - self.num_cycle_steps) / (self.num_steps - self.num_cycle_steps)
+            lr = self.min_lr - (self.min_lr - self.final_lr) * scale
+            momentum = None
+        else:
+            # Exceeded given num_steps: do nothing
+            return
+
+        self.optimizer.param_groups[0]['lr'] = lr
+        if momentum:
+            self.optimizer.param_groups[0]['momentum'] = momentum
+
+
 class SGDHD(Optimizer):
 
     def __init__(self, params, lr=required, momentum=0.0, dampening=0,
@@ -581,6 +702,59 @@ class SGDHD(Optimizer):
         return loss
 
 
+def plt_find_lr(train_data, net, optimizer, criterion, init_value=1e-8, final_value=10., beta=0.98):
+    # Reference from https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html?utm_source=hacpai.com
+    train_dataloader = create_dataloader(train_data, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
+    num = len(train_dataloader)-1
+    mult = (final_value / init_value) ** (1/num)
+    lr = init_value
+    optimizer.param_groups[0]['lr'] = lr
+    avg_loss = 0.
+    best_loss = 0.
+    batch_num = 0
+    losses = []
+    log_lrs = []
+
+    for data in progressbar(train_dataloader):
+        batch_num += 1
+        # As before, get the loss for this mini-batch of inputs/outputs
+        for d in data["ids_and_mask"]:
+            d["input_ids"] = d["input_ids"].to(config.device)
+            d["attention_mask"] = d["attention_mask"].to(config.device)
+        labels = data["target"].to(config.device)
+        optimizer.zero_grad()
+        outputs = net(data["ids_and_mask"])
+        loss = criterion(outputs, labels)
+        # Compute the smoothed loss
+        avg_loss = beta * avg_loss + (1-beta) * loss.item()
+        smoothed_loss = avg_loss / (1 - beta**batch_num)
+        # Stop if the loss is exploding
+        if batch_num > 1 and smoothed_loss > 4 * best_loss:
+            return log_lrs, losses
+        # Record the best loss
+        if smoothed_loss < best_loss or batch_num == 1:
+            best_loss = smoothed_loss
+        # Store the values
+        losses.append(smoothed_loss)
+        log_lrs.append(math.log10(lr))
+        # Do the SGD step
+        loss.backward()
+        optimizer.step()
+        # Update the lr for the next step
+        lr *= mult
+        optimizer.param_groups[0]['lr'] = lr
+
+    plt.figure(figsize=(15, 5))
+    # The skip of the first 10 values and the last 5 is another thing that the fastai library does by default, to
+    # remove the initial and final high losses and focus on the interesting parts of the graph.
+    plt.plot(log_lrs[10:-5], losses[10:-5])
+    plt.xlabel("Learning Rate")
+    plt.ylabel("Loss")
+    plt.grid()
+    plt.show()
+
+
+# First version without progress bar
 def main():
     # df = load_data(
     #     ticker_name="GOOG",
@@ -652,6 +826,7 @@ def main():
     plot_history(history)
 
 
+# Second version with progress bar
 def main2():
     print("Loading data...")
     train_data = joblib.load("./data/train.bin")
@@ -659,11 +834,29 @@ def main2():
     print("Load data successfully!")
 
     model = ReutersClassifier(n_classes=2, top_k=config.TOP_K)
+    model.unfreeze_bert_encoder()
     model.to(config.device)
     print("Load model successfully!")
 
     train_baseline(train_data, valid_data, model, optim_name="adam", lr_scheduler_type="hd", verbose=0)
 
 
+# Find best learning rate
+def main3():
+    print("Loading data...")
+    train_data = joblib.load("./data/train.bin")
+    valid_data = joblib.load("./data/valid.bin")
+    print("Load data successfully!")
+
+    model = ReutersClassifier(n_classes=2, top_k=config.TOP_K)
+    model.unfreeze_bert_encoder()
+    model.to(config.device)
+    print("Load model successfully!")
+
+    criterion = nn.CrossEntropyLoss().to(config.device)
+    optimizer = optim.Adam(model.parameters(), lr=1e-1)
+    plt_find_lr(train_data, model, optimizer, criterion, init_value=1e-8, final_value=10., beta=0.98)
+
+
 if __name__ == "__main__":
-    main2()
+    main3()
