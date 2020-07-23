@@ -82,16 +82,6 @@ def matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg):
     return (nominator / denominator)
 
 
-def add_metrics_to_log(log, metrics, results, prefix=''):
-    for metric, result in metrics, results:
-        log[prefix + metric] = str(result)
-
-
-def log_to_message(log, precision=4):
-    fmt = "{0}: {1:." + str(precision) + "f}"
-    return "    ".join(fmt.format(k, v) for k, v in log.items())
-
-
 def progressbar(iter, prefix="", size=60, file=sys.stdout):
     # Reference from https://stackoverflow.com/questions/3160699/python-progress-bar
     count = len(iter)
@@ -108,37 +98,8 @@ def progressbar(iter, prefix="", size=60, file=sys.stdout):
     file.flush()
 
 
-class ProgressBar(object):
-    """Cheers @ajratner"""
-    def __init__(self, n, length=40):
-        # Protect against division by zero
-        self.n = max(1, n)
-        self.nf = float(n)
-        self.length = length
-
-        # Pre-calculate the i values that should trigger a write operation
-        self.ticks = set([round(i/100.0 * n) for i in range(101)])
-        self.ticks.add(n-1)
-        self.bar(0)
-
-    def bar(self, i, message=""):
-        """Assumes i ranges through [0, n-1]"""
-        if i in self.ticks:
-            b = int(np.ceil(((i+1) / self.nf) * self.length))
-            sys.stdout.write("\r[{0}{1}] {2}%\t{3}".format(
-                "="*b, " "*(self.length-b), int(100*((i+1) / self.nf)), message
-            ))
-            sys.stdout.flush()
-
-    def close(self, message=""):
-        # Move the bar to 100% before closing
-        self.bar(self.n-1)
-        sys.stdout.write("{0}\n\n".format(message))
-        sys.stdout.flush()
-
-
 def train_baseline(
-        train_data, valid_data, model, optim_name, lr_scheduler_type, verbose=1, momentum=0.0,
+        train_data, valid_data, model, optim_name, lr_scheduler_type, momentum=0.0,
         weight_decay=5e-4, lr_decay=1.0, hyper_lr=1e-8, step_size=30, t_0=10, t_mult=2):
     """
     Reference from https://github.com/awslabs/adatune/blob/master/bin/baselines.py
@@ -181,7 +142,7 @@ def train_baseline(
                 model.parameters(), lr=config.LEARNING_RATE, momentum=momentum,
                 weight_decay=weight_decay, hypergrad_lr=hyper_lr)
         else:
-            print("Only can choose either adam or sgd so far...")
+            print("In HD, only can choose either ADAM or SGD so far...")
     else:
         if optim_name == 'adam':
             optimizer = optim.Adam(
@@ -208,15 +169,11 @@ def train_baseline(
             total_steps = len(train_dataloader) * config.EPOCHS
             scheduler = OneCycleLR(optimizer, num_steps=total_steps, lr_range=(1e-8, 1e-3))
 
-    logs = []
     print("\nTrain on {} samples, validate on {} samples".format(train_data.shape[0], valid_data.shape[0]))
+    print("Optimizer using {} | Scheduler using {}".format(optim_name, lr_scheduler_type))
     for epoch in range(config.EPOCHS):
         model = model.train()
         print("Epoch {}/{}".format(epoch + 1, config.EPOCHS))
-
-        if verbose:
-            pb = ProgressBar(len(train_data))
-        log = OrderedDict()
 
         losses = []
         correct_predictions = 0
@@ -250,16 +207,15 @@ def train_baseline(
             optimizer.step()
             optimizer.zero_grad()
             if scheduler and lr_scheduler_type == 'cyclic':
-                scheduler.step(epoch + (i / len(train_data)))
+                scheduler.step(int(epoch+(i/len(train_data))))
+
+            if scheduler and lr_scheduler_type == 'one_cycle':
+                scheduler.step()
 
             for d in data["ids_and_mask"]:
                 d["input_ids"] = d["input_ids"].to("cpu")
                 d["attention_mask"] = d["attention_mask"].to("cpu")
             targets = data["target"].to("cpu")
-
-            log['loss'] = np.mean(losses)
-            if verbose:
-                pb.bar(i, log_to_message(log))
 
         train_recall = float(true_pos) / float(true_pos + false_neg + 1e-7)
         train_precision = float(true_pos) / float(true_pos + false_pos + 1e-7)
@@ -272,7 +228,6 @@ def train_baseline(
 
         val_acc, val_f1, val_mcc, val_loss = eval_distilbert(
             model, val_dataloader, loss_function, config.device, len(valid_data))
-        log['val_loss'] = val_loss
 
         print("Valid | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
             val_loss, val_acc, val_f1, val_mcc))
@@ -290,16 +245,13 @@ def train_baseline(
             torch.save(model.state_dict(), config.MODEL_PATH)
             best_loss = val_loss
 
-        logs.append(log)
-        if verbose:
-            pb.close(log_to_message(log))
-
         cur_lr = 0.0
         for param_group in optimizer.param_groups:
             cur_lr = param_group['lr']
         print('Learning rate after epoch {} is: {:.6f}\n'.format(epoch+1, cur_lr))
 
-    plot_history(history)
+    # plot_history(history)
+    return history
 
 
 def train_distilbert(model, data_loader, loss_function, optimizer, device, scheduler, n_examples):
@@ -826,7 +778,7 @@ def main():
     plot_history(history)
 
 
-# Second version with progress bar
+# Second version with progress bar, different optimizer, and different scheduler
 def main2():
     print("Loading data...")
     train_data = joblib.load("./data/train.bin")
@@ -838,7 +790,8 @@ def main2():
     model.to(config.device)
     print("Load model successfully!")
 
-    train_baseline(train_data, valid_data, model, optim_name="adam", lr_scheduler_type="hd", verbose=0)
+    history = train_baseline(train_data, valid_data, model, optim_name="adam", lr_scheduler_type="one_cycle")
+    plot_history(history)
 
 
 # Find best learning rate
@@ -859,4 +812,4 @@ def main3():
 
 
 if __name__ == "__main__":
-    main3()
+    main2()
