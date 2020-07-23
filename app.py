@@ -12,6 +12,7 @@ from test_cases import test_cases
 
 app = Flask(__name__)
 app.config.from_object(Config())
+app.config['MYSQL_DATABASE_CHARSET'] = 'utf8mb4'
 scheduler = APScheduler()
 
 app.register_blueprint(front_end)
