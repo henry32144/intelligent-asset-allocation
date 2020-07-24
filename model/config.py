@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from transformers import AutoTokenizer
-RANDOM_SEED = 308
+RANDOM_SEED = 224
 np.random.seed(RANDOM_SEED)
 torch.manual_seed(RANDOM_SEED)
 
@@ -16,9 +16,9 @@ TEST_START_DATE = "2017-01-01"
 TEST_END_DATE = "2020-07-01"
 
 # Model configuration
-BATCH_SIZE = 8
-MAX_LEN = 16
-EPOCHS = 10
+BATCH_SIZE = 16
+MAX_LEN = 32
+EPOCHS = 50
 DROPOUT_RATE = 0.1
 PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
 tokenizer = AutoTokenizer.from_pretrained(PRE_TRAINED_MODEL_NAME)
@@ -28,9 +28,9 @@ MODEL_PATH = "./weights/distilbert.bin"
 # Optimization
 # Best fine-tuning learning rate (among 5e-5, 4e-5, 3e-5, and 2e-5) from BERT paper
 FIND_BEST_LR = False
-LEARNING_RATE = 2e-5
+LEARNING_RATE = 2e-6
 WEIGHT_DECAY = 0.224
-FOCAL_WEIGHT = 0.5
-CE_WEIGHT = 0.5
+FOCAL_WEIGHT = 0.3
+CE_WEIGHT = 0.7
 OPTIMIZER = "adam"
-SCHEDULER = "one_cycle"
+SCHEDULER = "hd"
