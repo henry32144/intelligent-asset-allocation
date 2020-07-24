@@ -1,5 +1,6 @@
 import warnings
 import joblib
+import time
 import torch
 from tqdm import tqdm
 from collections import defaultdict
@@ -7,6 +8,18 @@ from transformers import AutoTokenizer
 from transformers import AutoModel
 from torch.nn import functional as F
 warnings.filterwarnings("ignore")
+
+
+def print_time(func):
+    def decorated_func(*args, **kwargs):
+        s = time.time()
+        ret = func(*args, **kwargs)
+        e = time.time()
+
+        print(f"Spend {e - s:.3f} s")
+        return ret
+
+    return decorated_func
 
 
 class SentenceBert():
@@ -48,6 +61,9 @@ class SentenceBert():
             
         return sim_dict
 
+
+
+@print_time
 def extend_df_with_cos_sim(df, col, labels, sort_by):
     """
     :param df: pandas dataframe

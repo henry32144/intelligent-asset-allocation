@@ -1,4 +1,5 @@
 import sys
+import time
 import warnings
 import logging
 import config
@@ -9,7 +10,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import torch.optim as optim
-from collections import OrderedDict
 from functools import reduce
 from collections import defaultdict
 from model import ReutersClassifier
@@ -18,9 +18,9 @@ from torch.utils.data import DataLoader
 from torch import nn
 from torch.optim.optimizer import Optimizer
 from torch.optim.optimizer import required
-from torch.autograd import Variable
 from transformers import AdamW
 from transformers import get_linear_schedule_with_warmup
+from sklearn.metrics import (accuracy_score, roc_curve, auc)
 from visualise import plot_history
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.ERROR)
@@ -79,7 +79,50 @@ def create_dataloader(df, tokenizer, max_len, top_k, batch_size):
 def matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg):
     nominator = (true_pos*true_neg-false_pos*false_neg)
     denominator = np.sqrt((true_pos+false_pos)*(true_pos+false_neg)*(true_neg+false_pos)*(true_neg+false_neg)) + 1e-7
-    return (nominator / denominator)
+    return nominator/denominator
+
+
+def evaluate_roc(probs, y_true):
+    """
+    - Print AUC and accuracy on the test set
+    - Plot ROC
+    @params    probs (np.array): an array of predicted probabilities with shape (len(y_true), 2)
+    @params    y_true (np.array): an array of the true values with shape (len(y_true),)
+    """
+    preds = probs[:, 1]
+    fpr, tpr, threshold = roc_curve(y_true, preds)
+    roc_auc = auc(fpr, tpr)
+    print(f'AUC: {roc_auc:.4f}')
+
+    # Get accuracy over the test set
+    y_pred = np.where(preds >= 0.5, 1, 0)
+    accuracy = accuracy_score(y_true, y_pred)
+    print(f'Accuracy: {accuracy * 100:.2f}%')
+
+    # Plot ROC AUC
+    plt.figure(figsize=(15, 5))
+    plt.title('Receiver Operating Characteristic')
+    plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % roc_auc)
+    plt.legend(loc='lower right')
+    plt.plot([0, 1], [0, 1], 'r--')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.grid()
+    plt.show()
+
+
+def print_time(func):
+    def decorated_func(*args, **kwargs):
+        s = time.time()
+        ret = func(*args, **kwargs)
+        e = time.time()
+
+        print(f"Spend {e - s:.3f} s")
+        return ret
+
+    return decorated_func
 
 
 def progressbar(iter, prefix="", size=60, file=sys.stdout):
@@ -108,8 +151,7 @@ def train_baseline(
         valid_data: pandas dataframe
         model: pytorch class
         optim_name: str ('sgd', 'adam', 'adamw)
-        lr_scheduler_type: str ('hd', 'ed', 'cyclic', 'staircase', 'one_cycle)
-        verbose: bool (0, 1)
+        lr_scheduler_type: str ('hd', 'ed', 'cyclic', 'staircase', 'one_cycle', 'linear')
         momentum: float
         weight_decay: float
         lr_decay: float
@@ -168,14 +210,22 @@ def train_baseline(
         elif lr_scheduler_type == 'one_cycle':
             total_steps = len(train_dataloader) * config.EPOCHS
             scheduler = OneCycleLR(optimizer, num_steps=total_steps, lr_range=(1e-8, 1e-3))
+            # One Cycle Policy Learning Rate Scheduler
+        elif lr_scheduler_type == 'linear':
+            total_steps = len(train_dataloader) * config.EPOCHS
+            scheduler = get_linear_schedule_with_warmup(
+                optimizer, num_warmup_steps=0, num_training_steps=total_steps)
 
     print("\nTrain on {} samples, validate on {} samples".format(train_data.shape[0], valid_data.shape[0]))
     print("Optimizer using {} | Scheduler using {}".format(optim_name, lr_scheduler_type))
+    print("Total Epoch: {} | Batch Size {}".format(config.EPOCHS, config.BATCH_SIZE))
     for epoch in range(config.EPOCHS):
+        t0_epoch, t0_batch = time.time(), time.time()
         model = model.train()
         print("Epoch {}/{}".format(epoch + 1, config.EPOCHS))
 
         losses = []
+        batch_time_elapsed = []
         correct_predictions = 0
         true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
 
@@ -206,16 +256,20 @@ def train_baseline(
             nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             optimizer.zero_grad()
+
             if scheduler and lr_scheduler_type == 'cyclic':
                 scheduler.step(int(epoch+(i/len(train_data))))
 
-            if scheduler and lr_scheduler_type == 'one_cycle':
+            if scheduler and lr_scheduler_type != 'cyclic':
                 scheduler.step()
 
             for d in data["ids_and_mask"]:
                 d["input_ids"] = d["input_ids"].to("cpu")
                 d["attention_mask"] = d["attention_mask"].to("cpu")
             targets = data["target"].to("cpu")
+
+            time_elapsed = time.time() - t0_batch
+            batch_time_elapsed.append(time_elapsed)
 
         train_recall = float(true_pos) / float(true_pos + false_neg + 1e-7)
         train_precision = float(true_pos) / float(true_pos + false_pos + 1e-7)
@@ -228,6 +282,7 @@ def train_baseline(
 
         val_acc, val_f1, val_mcc, val_loss = eval_distilbert(
             model, val_dataloader, loss_function, config.device, len(valid_data))
+        time_elapsed = time.time() - t0_epoch
 
         print("Valid | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
             val_loss, val_acc, val_f1, val_mcc))
@@ -249,6 +304,7 @@ def train_baseline(
         for param_group in optimizer.param_groups:
             cur_lr = param_group['lr']
         print('Learning rate after epoch {} is: {:.6f}\n'.format(epoch+1, cur_lr))
+        print("Elapsed time per batch: {}\nTotal time elapsed: {}".format(np.mean(batch_time_elapsed), time_elapsed))
 
     # plot_history(history)
     return history
@@ -469,13 +525,7 @@ class OneCycleLR:
         annihilation_frac:     (float), fracion of steps to annihilate the learning rate
         reduce_factor:         (float), denotes the factor by which we annihilate the learning rate at the end
         last_step:             (int), denotes the last step. Set to -1 to start training from the beginning
-    Example:
-        >>> optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
-        >>> scheduler = OneCycleLR(optimizer, num_steps=num_steps, lr_range=(0.1, 1.))
-        >>> for epoch in range(epochs):
-        >>>     for step in train_dataloader:
-        >>>         train(...)
-        >>>         scheduler.step()
+
     Useful resources:
         https://towardsdatascience.com/finding-good-learning-rate-and-the-one-cycle-policy-7159fe1db5d6
         https://medium.com/vitalify-asia/whats-up-with-deep-learning-optimizers-since-adam-5c1d862b9db0
@@ -534,7 +584,8 @@ class OneCycleLR:
         return self.optimizer.param_groups[0]['momentum']
 
     def step(self):
-        """Conducts one step of learning rate and momentum update
+        """
+        Conducts one step of learning rate and momentum update
         """
         current_step = self.last_step + 1
         self.last_step = current_step
@@ -654,7 +705,7 @@ class SGDHD(Optimizer):
         return loss
 
 
-def plt_find_lr(train_data, net, optimizer, criterion, init_value=1e-8, final_value=10., beta=0.98):
+def plot_find_lr(train_data, net, optimizer, criterion, init_value=1e-8, final_value=10., beta=0.98):
     # Reference from https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html?utm_source=hacpai.com
     train_dataloader = create_dataloader(train_data, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
     num = len(train_dataloader)-1
@@ -781,8 +832,8 @@ def main():
 # Second version with progress bar, different optimizer, and different scheduler
 def main2():
     print("Loading data...")
-    train_data = joblib.load("./data/train.bin")
-    valid_data = joblib.load("./data/valid.bin")
+    train_data = joblib.load("./data/train_top10.bin")
+    valid_data = joblib.load("./data/valid_top10.bin")
     print("Load data successfully!")
 
     model = ReutersClassifier(n_classes=2, top_k=config.TOP_K)
@@ -797,8 +848,8 @@ def main2():
 # Find best learning rate
 def main3():
     print("Loading data...")
-    train_data = joblib.load("./data/train.bin")
-    valid_data = joblib.load("./data/valid.bin")
+    train_data = joblib.load("./data/train_top10.bin")
+    valid_data = joblib.load("./data/valid_top10.bin")
     print("Load data successfully!")
 
     model = ReutersClassifier(n_classes=2, top_k=config.TOP_K)
@@ -808,7 +859,7 @@ def main3():
 
     criterion = nn.CrossEntropyLoss().to(config.device)
     optimizer = optim.Adam(model.parameters(), lr=1e-1)
-    plt_find_lr(train_data, model, optimizer, criterion, init_value=1e-8, final_value=10., beta=0.98)
+    plot_find_lr(train_data, model, optimizer, criterion, init_value=1e-8, final_value=10., beta=0.98)
 
 
 if __name__ == "__main__":

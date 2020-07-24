@@ -1,5 +1,6 @@
 import re
 import sys
+import time
 import config
 import warnings
 import joblib
@@ -12,6 +13,18 @@ from contractions import contractions_dict
 from zero_shot_learner import extend_df_with_cos_sim
 warnings.filterwarnings("ignore")
 sys.setrecursionlimit(1000000)
+
+
+def print_time(func):
+    def decorated_func(*args, **kwargs):
+        s = time.time()
+        ret = func(*args, **kwargs)
+        e = time.time()
+
+        print(f"Spend {e - s:.3f} s")
+        return ret
+
+    return decorated_func
 
 
 class NewsPreprocessor:
@@ -69,6 +82,8 @@ class NewsPreprocessor:
         text = self.remove_digits(text)
         return text
 
+
+@print_time
 def transform_df(df, sort_by, k=10):
     """
     Transform dataframe into another dataframe with top k news using zero-shot learner.

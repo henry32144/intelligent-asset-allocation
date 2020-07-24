@@ -1,13 +1,13 @@
 import torch
 import numpy as np
 from transformers import AutoTokenizer
-RANDOM_SEED = 2020
+RANDOM_SEED = 308
 np.random.seed(RANDOM_SEED)
 torch.manual_seed(RANDOM_SEED)
 
 
 # Data configuration
-TOP_K = 3
+TOP_K = 10
 TRAIN_START_DATE = "2012-01-01"
 TRAIN_END_DATE = "2015-12-31"
 VALID_START_DATE = "2016-01-01"
@@ -17,12 +17,9 @@ TEST_END_DATE = "2020-07-01"
 
 # Model configuration
 BATCH_SIZE = 16
-MAX_LEN = 32
-<<<<<<< HEAD
-EPOCHS = 50
-=======
+MAX_LEN = 16
 EPOCHS = 4
->>>>>>> 42edb8da52d7a3903f94386b0bd04a2f6fef21e5
+DROPOUT_RATE = 0.1
 PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
 tokenizer = AutoTokenizer.from_pretrained(PRE_TRAINED_MODEL_NAME)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -30,5 +27,5 @@ MODEL_PATH = "./weights/distilbert.bin"
 
 # Optimization
 # Best fine-tuning learning rate (among 5e-5, 4e-5, 3e-5, and 2e-5) from BERT paper
-LEARNING_RATE = 3e-8
+LEARNING_RATE = 5e-5
 WEIGHT_DECAY = 0.224
