@@ -877,10 +877,11 @@ def main():
     model.to(config.device)
     print("Done!")
 
-    print("Finding the best learning rate...")
-    criterion = FocalCrossEntropyLoss().to(config.device)
-    optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
-    plot_find_lr(train_data, model, optimizer, criterion)
+    if config.FIND_BEST_LR:
+        print("Finding the best learning rate...")
+        criterion = FocalCrossEntropyLoss().to(config.device)
+        optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
+        plot_find_lr(train_data, model, optimizer, criterion)
 
     history = train_baseline(
         train_data, valid_data, model, optim_name=config.OPTIMIZER, lr_scheduler_type=config.SCHEDULER)

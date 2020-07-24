@@ -27,6 +27,7 @@ MODEL_PATH = "./weights/distilbert.bin"
 
 # Optimization
 # Best fine-tuning learning rate (among 5e-5, 4e-5, 3e-5, and 2e-5) from BERT paper
+FIND_BEST_LR = False
 LEARNING_RATE = 2e-5
 WEIGHT_DECAY = 0.224
 FOCAL_WEIGHT = 0.5
