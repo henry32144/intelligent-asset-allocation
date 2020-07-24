@@ -129,7 +129,7 @@ class ReutersClassifier(nn.Module):
             branch = self.dropout(pooled_output[0][:, 0, :])
             pool_list.append(branch)
         main = torch.cat([br for br in pool_list], 1)
-        return F.softmax(self.classifier(main))
+        return self.classifier(main)
 
     def freeze_bert_encoder(self):
         for param in self.distilbert_layer.parameters():
@@ -709,6 +709,7 @@ def train_baseline(
             targets = data["target"].to(config.device)
 
             outputs = model(data["ids_and_mask"])
+            outputs = F.softmax(outputs)
             _, preds = torch.max(outputs, dim=1)
             loss = loss_function(outputs, targets)
 
