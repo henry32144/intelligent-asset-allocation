@@ -433,11 +433,11 @@ def one_hot(index, classes):
     return mask.scatter_(1, index, ones)
 
 
-class FocalLoss(nn.Module):
+class FocalCrossEntropyLoss(nn.Module):
     # Reference from https://www.kaggle.com/c/bengaliai-cv19/discussion/128665
 
-   def __init__(self, class_num=2, alpha=None, gamma=2, size_average=True):
-       super(FocalLoss, self).__init__()
+   def __init__(self, class_num=2, alpha=None, gamma=2, size_average=True, fc_w=0.2, ce_w=0.8):
+       super(FocalCrossEntropyLoss, self).__init__()
        if alpha is None:
            self.alpha = Variable(torch.ones(class_num, 1))
        else:
@@ -448,6 +448,8 @@ class FocalLoss(nn.Module):
        self.gamma = gamma
        self.class_num = class_num
        self.size_average = size_average
+       self.fc_w = fc_w
+       self.ce_w = ce_w
 
    def forward(self, inputs, targets):
        N = inputs.size(0)
@@ -470,7 +472,7 @@ class FocalLoss(nn.Module):
            loss = batch_loss.mean()
        else:
            loss = batch_loss.sum()
-       return 0.2 * loss + 0.8 * F.cross_entropy(inputs, targets)
+       return self.fc_w * loss + self.ce_w * F.cross_entropy(inputs, targets)
 
 
 # =======================================
@@ -507,7 +509,7 @@ def evaluate_roc(probs, y_true):
     plt.show()
 
 
-def plot_find_lr(train_data, net, optimizer, criterion, init_value=1e-8, final_value=10., beta=0.98):
+def plot_find_lr(train_data, net, optimizer, criterion, init_value=1e-8, final_value=10., beta=0.98, plot=True):
     # Reference from https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html?utm_source=hacpai.com
     train_dataloader = create_dataloader(train_data, config.tokenizer, config.MAX_LEN, config.TOP_K, config.BATCH_SIZE)
     num = len(train_dataloader)-1
@@ -549,14 +551,15 @@ def plot_find_lr(train_data, net, optimizer, criterion, init_value=1e-8, final_v
         lr *= mult
         optimizer.param_groups[0]['lr'] = lr
 
-    plt.figure(figsize=(15, 5))
-    # The skip of the first 10 values and the last 5 is another thing that the fastai library does by default, to
-    # remove the initial and final high losses and focus on the interesting parts of the graph.
-    plt.plot(log_lrs[10:-5], losses[10:-5])
-    plt.xlabel("Learning Rate")
-    plt.ylabel("Loss")
-    plt.grid()
-    plt.show()
+    if plot:
+        plt.figure(figsize=(15, 5))
+        # The skip of the first 10 values and the last 5 is another thing that the fastai library does by default, to
+        # remove the initial and final high losses and focus on the interesting parts of the graph.
+        plt.plot(log_lrs[10:-5], losses[10:-5])
+        plt.xlabel("Learning Rate")
+        plt.ylabel("Loss")
+        plt.grid()
+        plt.show()
 
 
 def plot_history(history):
@@ -638,7 +641,7 @@ def train_baseline(
     cur_lr = config.LEARNING_RATE
     scheduler, optimizer = None, None
     # loss_function = nn.CrossEntropyLoss().to(config.device)
-    loss_function = FocalLoss().to(config.device)
+    loss_function = FocalCrossEntropyLoss(fc_w=config.FOCAL_WEIGHT, ce_w=config.CE_WEIGHT).to(config.device)
     history = defaultdict(list)
     best_loss = np.inf
 
@@ -686,10 +689,10 @@ def train_baseline(
                 optimizer, num_warmup_steps=0, num_training_steps=total_steps)
 
     print("\nTrain on {} samples, validate on {} samples".format(train_data.shape[0], valid_data.shape[0]))
-    print("Optimizer using {} | Scheduler using {}".format(optim_name, lr_scheduler_type))
-    print("Total Epoch: {} | Batch Size {}".format(config.EPOCHS, config.BATCH_SIZE))
+    print("Optimizer: {}\nScheduler: {}".format(optim_name, lr_scheduler_type))
+    print("Total Epoch: {}\nBatch Size {}\n".format(config.EPOCHS, config.BATCH_SIZE))
     for epoch in range(config.EPOCHS):
-        t0_epoch, t0_batch = time.time(), time.time()
+        t0_epoch = time.time()
         model = model.train()
         print("Epoch {}/{}".format(epoch + 1, config.EPOCHS))
 
@@ -699,6 +702,7 @@ def train_baseline(
         true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
 
         for i, data in enumerate(progressbar(train_dataloader)):
+            t0_batch = time.time()
             for d in data["ids_and_mask"]:
                 d["input_ids"] = d["input_ids"].to(config.device)
                 d["attention_mask"] = d["attention_mask"].to(config.device)
@@ -865,14 +869,21 @@ def main():
     print("Loading data...")
     train_data = joblib.load("./data/train_top10.bin")
     valid_data = joblib.load("./data/valid_top10.bin")
-    print("Load data successfully!")
+    print("Done!")
 
+    print("Loading model...")
     model = ReutersClassifier(n_classes=2, top_k=config.TOP_K, p=config.DROPOUT_RATE)
     model.unfreeze_bert_encoder()
     model.to(config.device)
-    print("Load model successfully!")
+    print("Done!")
 
-    history = train_baseline(train_data, valid_data, model, optim_name="adam", lr_scheduler_type="one_cycle")
+    print("Finding the best learning rate...")
+    criterion = FocalCrossEntropyLoss().to(config.device)
+    optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
+    plot_find_lr(train_data, model, optimizer, criterion)
+
+    history = train_baseline(
+        train_data, valid_data, model, optim_name=config.OPTIMIZER, lr_scheduler_type=config.SCHEDULER)
     plot_history(history)
 
 
