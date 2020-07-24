@@ -7,14 +7,17 @@ import MessageDialog from '../components/MessageDialog'
 import InvestmentStrategyRadios from '../components/InvestmentStrategyRadios'
 import SubmitSelectionButton from '../components/SubmitSelectionButton';
 import StockSelectSection from '../views/StockSelectSection'
-
+import PortfolioToolBar from '../components/PortfolioToolBar'
 import { BASEURL } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
+  root: {
+    maxHeight: '100%',
+  },
   title: {
     textAlign: 'initial',
     margin: theme.spacing(4, 0, 2),
-  },
+  }
 }));
 
 function PortfolioPage() {
@@ -74,30 +77,25 @@ function PortfolioPage() {
   return (
     <div className={classes.root}>
       <MessageDialog
-          isOpen={isMessageDialogOpen}
-          handleClose={handleMessageDialogClose}
-          title={dialogTitle}
-          message={dialogMessage}
-        >
+        isOpen={isMessageDialogOpen}
+        handleClose={handleMessageDialogClose}
+        title={dialogTitle}
+        message={dialogMessage}
+      >
       </MessageDialog>
+      <PortfolioToolBar
+        selectedStocks={selectedStocks}
+        setSelectedStocks={setSelectedStocks}
+        companyData={companyData}
+        setDialogMessage={setDialogMessage}
+        openMessageDialog={handleMessageDialogOpen}
+      >
+      </PortfolioToolBar>
       <Grid container direction="column" justify="center" alignItems="center">
-        <Grid className={classes.title} item xs={12}>
-          <Typography variant="h6">
-            Choose your strategy
-          </Typography>
-        </Grid>
-        <Grid className={classes.gridItem} item xs={12}>
-          <InvestmentStrategyRadios />
-        </Grid>
-        <Grid className={classes.title} item xs={12}>
-          <Typography variant="h6">
-            Select Stocks
-          </Typography>
-        </Grid>
         <Grid className={classes.gridItem} item xs={12} >
-          <StockSelectSection 
-            selectedStocks={selectedStocks} 
-            setSelectedStocks={setSelectedStocks} 
+          <StockSelectSection
+            selectedStocks={selectedStocks}
+            setSelectedStocks={setSelectedStocks}
             companyData={companyData}
             setDialogMessage={setDialogMessage}
             openMessageDialog={handleMessageDialogOpen}

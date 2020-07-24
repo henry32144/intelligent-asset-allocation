@@ -8,13 +8,10 @@ import SearchIcon from '@material-ui/icons/Search';
 import matchSorter from 'match-sorter'
 
 const useStyles = makeStyles((theme) => ({
-  root: {},
-  stockComponent: {},
   searchBox: {
-    padding: '2px 4px',
     display: 'flex',
     alignItems: 'center',
-    minWidth: 330,
+    minWidth: 300,
   },
 }));
 
@@ -43,12 +40,13 @@ function StockSearchBox(props) {
 
 
   return (
-    <div className={additionalStyles.stockComponent}>
+    <div>
       <Autocomplete
         freeSolo
         className={classes.searchBox}
         id="search-box"
         disableClearable
+        size="small"
         onChange={stockOnSelected}
         options={companyData}
         getOptionLabel={(option) => option.company_name}

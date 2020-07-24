@@ -3,16 +3,15 @@ import { makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    '& > *': {
-      margin: theme.spacing(1),
-    },
-  },
+  submitButton: {
+    position: "fixed",
+    margin: theme.spacing(1),
+    bottom: 0,
+  }
 }));
 
 
-
-export default function CreatePortfolioButton() {
+export default function SubmitSelectionButton() {
   const classes = useStyles();
 
   const submitSelection = async () => {
@@ -40,7 +39,7 @@ export default function CreatePortfolioButton() {
   }
 
   return (
-    <div className={classes.root}>
+    <div className={classes.submitButton}>
       <Button variant="contained" color="primary" size='large' onClick={(e) => {submitSelection()}}>
         Create Portfolio
       </Button>

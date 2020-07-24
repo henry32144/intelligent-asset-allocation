@@ -6,7 +6,7 @@ import StockSearchBox from '../components/StockSearchBox'
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    padding: theme.spacing(2, 2, 2),
+    padding: theme.spacing(1, 1, 1),
     flexGrow: 1,
   },
   stockComponent: {

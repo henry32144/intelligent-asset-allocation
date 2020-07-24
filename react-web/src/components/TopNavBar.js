@@ -7,10 +7,16 @@ import NavBarAccountButton from './NavBarAccountButton'
 import LoginDialog from './LoginDialog'
 import SignupDialog from './SignupDialog'
 import MessageDialog from './MessageDialog'
+import IconButton from '@material-ui/core/IconButton';
+import MenuIcon from '@material-ui/icons/Menu';
+import Drawer from '@material-ui/core/Drawer';
 
 const useStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
+  },
+  menuButton: {
+    marginRight: theme.spacing(2),
   },
   brandButton: {
     marginRight: theme.spacing(2),
@@ -24,10 +30,15 @@ const useStyles = makeStyles((theme) => ({
 export default function TopNavBar(props) {
   //This component is the navigation bar on the top of the page
   const classes = useStyles();
+  const [isDrawerOpen, setDrawerOpen] = React.useState(false);
   const [isLoginDialogOpen, setLoginDialogOpen] = React.useState(false);
   const [isSignupDialogOpen, setSignupDialogOpen] = React.useState(false);
   const [isMessageDialogOpen, setMessageDialogOpen] = React.useState(false);
   const [dialogMessage, setDialogMessage] = React.useState("");
+
+  const toogleDrawer = () => {
+    setDrawerOpen(!isDrawerOpen);
+  };
 
   const handleLoginDialogOpen = () => {
     setLoginDialogOpen(true);
@@ -55,6 +66,16 @@ export default function TopNavBar(props) {
 
   return (
     <div className={classes.root}>
+      <Drawer
+          className={classes.drawer}
+          variant="persistent"
+          anchor="left"
+          open={isDrawerOpen}
+          classes={{
+            paper: classes.drawerPaper,
+          }}
+        >
+      </Drawer>
       <AppBar position="static">
         <LoginDialog
           isOpen={isLoginDialogOpen}
@@ -74,8 +95,16 @@ export default function TopNavBar(props) {
           handleClose={handleMessageDialogClose}
           message={dialogMessage}
         >
-        </MessageDialog>
+        </MessageDialog> 
         <Toolbar>
+          <IconButton 
+            edge="start" 
+            className={classes.menuButton}
+            onClick={toogleDrawer}
+            color="inherit" 
+            aria-label="menu">
+            <MenuIcon />
+          </IconButton>
           <Button className={classes.brandButton} color="inherit" size="large">
             AI Asset
           </Button>
