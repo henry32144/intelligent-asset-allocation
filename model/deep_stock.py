@@ -868,8 +868,8 @@ def test_distilbert(model, data_loader, device):
 
 def main():
     print("Loading data...")
-    train_data = joblib.load("./data/train_top10.bin")
-    valid_data = joblib.load("./data/valid_top10.bin")
+    train_data = joblib.load("./data/train_top10_v2.bin")
+    valid_data = joblib.load("./data/valid_top10_v2.bin")
     print("Done!")
 
     print("Loading model...")
