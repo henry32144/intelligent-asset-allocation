@@ -8,28 +8,41 @@ import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import { makeStyles } from '@material-ui/core/styles';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import Cookies from 'universal-cookie';
+import AddIcon from '@material-ui/icons/Add';
+import Typography from '@material-ui/core/Typography';
+import IconButton from '@material-ui/core/IconButton';
+import MenuIcon from '@material-ui/icons/Menu';
+import Divider from '@material-ui/core/Divider';
 
 const useStyles = makeStyles((theme) => ({
   root: {
     display: 'flex',
-
   },
   expandButton: {
     color: 'inherit'
   },
   popperRoot: {
     zIndex: 1400,
-  }
+  },
+  popperMenuItem: {
+    paddingRight: "8px"
+  },
+  menuButton: {
+    marginRight: theme.spacing(2),
+  },
 }));
 
 export default function SelectPortfolioButton(props) {
   const classes = useStyles();
   const [open, setOpen] = React.useState(false);
+  const [isDrawerOpen, setDrawerOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
-  const cookies = new Cookies();
 
-  const handleToggle = () => {
+  const toogleDrawer = () => {
+    setDrawerOpen(!isDrawerOpen);
+  };
+
+  const handlePortfolioToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
 
@@ -41,7 +54,29 @@ export default function SelectPortfolioButton(props) {
   };
 
   const createPortfolioOnClick = (e) => {
-
+    // const submitSelection = async () => {
+    //   // Submit user's stock selection to the server
+    //   const settings = {
+    //       method: 'POST',
+    //       headers: {
+    //           Accept: 'application/json',
+    //           'Content-Type': 'application/json',
+    //       },
+    //       body: JSON.stringify({
+    //         'selectedStocks': ['123']
+    //       })
+    //   }
+    //   try {
+    //     const response = await fetch("http://127.0.0.1:5000/post-test", settings)
+    //     if (response.ok) {
+    //       const jsonData = await response.json();
+    //       console.log(jsonData);
+    //     }
+    //   }
+    //   catch (err) {
+    //     console.log('fetch failed', err);
+    //   }
+    // }
     handleClose(e)
   };
 
@@ -75,29 +110,41 @@ export default function SelectPortfolioButton(props) {
 
   const portfolioMenuItems = userPortfolios.map((portfolio) =>
     <MenuItem key={portfolio.protfolioId.toString()} onClick={handleClose}>
-      {portfolio.portfolioName}
+      <Typography variant="inherit" noWrap>
+        {portfolio.portfolioName}
+      </Typography>
     </MenuItem>
   );
 
   return (
     <div className={classes.root}>
       <div>
+        <IconButton
+          edge="start"
+          className={classes.menuButton}
+          onClick={toogleDrawer}
+          color="inherit"
+          aria-label="menu">
+          <MenuIcon />
+        </IconButton>
         <Button
           endIcon={<ExpandMoreIcon />}
           ref={anchorRef}
           aria-controls={open ? 'menu-list-grow' : undefined}
           aria-haspopup="true"
           className={classes.expandButton}
-          onClick={handleToggle}
+          onClick={handlePortfolioToggle}
         >
-          My Portfolio
+          <Typography variant="inherit" noWrap>
+            My Portfolio
+          </Typography>
         </Button>
-        <Popper 
+        <Popper
           className={classes.popperRoot}
-          open={open} 
-          anchorEl={anchorRef.current} 
-          role={undefined} 
-          transition 
+          open={open}
+          anchorEl={anchorRef.current}
+          role={undefined}
+          transition
           disablePortal>
           {({ TransitionProps, placement }) => (
             <Grow
@@ -108,7 +155,13 @@ export default function SelectPortfolioButton(props) {
                 <ClickAwayListener onClickAway={handleClose}>
                   <MenuList autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
                     {portfolioMenuItems}
-                    <MenuItem onClick={createPortfolioOnClick}>Create New Portfolio</MenuItem>
+                    <Divider light component="li" />
+                    <MenuItem onClick={createPortfolioOnClick}>
+                      <Typography variant="inherit" noWrap className={classes.popperMenuItem}>
+                        Create New Portfolio
+                      </Typography>
+                      <AddIcon fontSize="small" className={classes.popperMenuItem} />
+                    </MenuItem>
                   </MenuList>
                 </ClickAwayListener>
               </Paper>

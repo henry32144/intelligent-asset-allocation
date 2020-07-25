@@ -1,22 +1,29 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-
-import Typography from '@material-ui/core/Typography';
 import MessageDialog from '../components/MessageDialog'
-import InvestmentStrategyRadios from '../components/InvestmentStrategyRadios'
-import SubmitSelectionButton from '../components/SubmitSelectionButton';
 import StockSelectSection from '../views/StockSelectSection'
 import PortfolioToolBar from '../components/PortfolioToolBar'
 import { BASEURL } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    maxHeight: '100%',
+  portfolioPage: {
+    height: 'calc(100% - 56px)',
+    [`${theme.breakpoints.up('xs')} and (orientation: landscape)`]: {
+      height: 'calc(100% - 48px)',
+    },
+    [theme.breakpoints.up('sm')]: {
+      height: 'calc(100% - 64px)',
+    },
+    display: 'flex',
+    flexDirection: 'column',
   },
   title: {
     textAlign: 'initial',
     margin: theme.spacing(4, 0, 2),
+  },
+  portfolioContent: {
+    flex: 'auto'
   }
 }));
 
@@ -75,7 +82,7 @@ function PortfolioPage() {
   }, [dataLoaded]);
 
   return (
-    <div className={classes.root}>
+    <div className={classes.portfolioPage}>
       <MessageDialog
         isOpen={isMessageDialogOpen}
         handleClose={handleMessageDialogClose}
@@ -91,19 +98,13 @@ function PortfolioPage() {
         openMessageDialog={handleMessageDialogOpen}
       >
       </PortfolioToolBar>
-      <Grid container direction="column" justify="center" alignItems="center">
-        <Grid className={classes.gridItem} item xs={12} >
+      <Grid item container direction="row" justify="flex-start" alignItems="stretch" className={classes.portfolioContent}>
+        <Grid item xs={9} sm={3} >
           <StockSelectSection
             selectedStocks={selectedStocks}
             setSelectedStocks={setSelectedStocks}
-            companyData={companyData}
-            setDialogMessage={setDialogMessage}
-            openMessageDialog={handleMessageDialogOpen}
           >
           </StockSelectSection>
-        </Grid>
-        <Grid className={classes.gridItem} item xs={12} >
-          <SubmitSelectionButton />
         </Grid>
       </Grid>
     </div>

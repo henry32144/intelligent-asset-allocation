@@ -10,7 +10,6 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     minHeight: '60px',
     padding: theme.spacing(1, 2, 1),
-    flexGrow: 1,
     boxShadow: '0 0 1px 1px rgba(0, 0, 0 ,.1)'
   },
 }));

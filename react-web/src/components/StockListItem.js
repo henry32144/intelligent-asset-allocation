@@ -22,13 +22,11 @@ export default function StockListItem(props) {
 
 
   return (
-    <div className={classes.root}>
-      <ListItem alignItems="flex-start">
-        <ListItemText primary={props.companyName} secondary={props.companySymbol} />
-        <IconButton edge="end" aria-label="delete" onClick={deleteButtonOnClick}>
-          <DeleteIcon />
-        </IconButton>
-      </ListItem>
-    </div>
+    <ListItem alignItems="flex-start">
+      <ListItemText primary={props.companyName} secondary={props.companySymbol} />
+      <IconButton edge="end" aria-label="delete" onClick={deleteButtonOnClick}>
+        <DeleteIcon />
+      </IconButton>
+    </ListItem>
   );
 }
