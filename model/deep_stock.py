@@ -111,14 +111,31 @@ def create_dataloader(df, tokenizer, max_len, top_k, batch_size):
         num_workers=0)
 
 
+class CnnMaxPooling(nn.Module):
+
+    def __init__(self, word_dim, window_size, out_channels):
+        super(CnnMaxPooling, self).__init__()
+        self.cnn = nn.Conv2d(in_channels=1, out_channels=out_channels, kernel_size=(window_size, config.TOP_K))
+
+    def forward(self, x):
+        # x input: (batch, seq_len, word_dim)
+        x_unsqueeze = x.unsqueeze(1)
+        x_cnn = self.cnn(x_unsqueeze)
+        x_cnn_result = x_cnn.squeeze(3)
+        res, _ = x_cnn_result.max(dim=2)
+        return res
+
+
 class ReutersClassifier(nn.Module):
 
-    def __init__(self, n_classes, top_k, p):
+    def __init__(self, n_classes, top_k, p, window_size, out_channels):
         super(ReutersClassifier, self).__init__()
         self.PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
         self.distilbert_layer = AutoModel.from_pretrained(self.PRE_TRAINED_MODEL_NAME)
         self.dropout = nn.Dropout(p=p)
-        self.classifier = nn.Linear(self.distilbert_layer.config.dim*top_k, n_classes)
+        self.cnn_max_pool = CnnMaxPooling(
+            word_dim=self.distilbert_layer.config.dim, window_size=window_size, out_channels=out_channels)
+        self.classifier = nn.Linear(in_features=out_channels, out_features=n_classes)
 
     def forward(self, ids_and_mask):
         pool_list = []
@@ -127,9 +144,11 @@ class ReutersClassifier(nn.Module):
                 input_ids=enc["input_ids"],
                 attention_mask=enc["attention_mask"])
             branch = self.dropout(pooled_output[0][:, 0, :])
-            pool_list.append(branch)
-        main = torch.cat([br for br in pool_list], 1)
-        return self.classifier(main)
+            pool_list.append(branch.unsqueeze(2))
+        concat = torch.cat([br for br in pool_list], 2)
+        doc_embed = self.cnn_max_pool(concat)
+        class_score = self.classifier(doc_embed)
+        return class_score
 
     def freeze_bert_encoder(self):
         for param in self.distilbert_layer.parameters():
@@ -563,6 +582,8 @@ def plot_find_lr(train_data, net, optimizer, criterion, init_value=1e-8, final_v
 
 
 def plot_history(history):
+    plt.rcParams['font.sans-serif'] = ['SimHei']
+    plt.rcParams['axes.unicode_minus'] = False
     plt.figure(figsize=(15, 6))
 
     plt.subplot(2, 2, 1)
@@ -591,7 +612,7 @@ def plot_history(history):
     plt.title("Training Accuracy History")
     plt.ylabel("Accuracy")
     plt.xlabel("Epoch")
-    plt.ylim([0, 1])
+    plt.ylim([0.4, 0.6])
     plt.legend()
     plt.grid()
 
@@ -601,7 +622,7 @@ def plot_history(history):
     plt.title("Training Loss History")
     plt.ylabel("Loss")
     plt.xlabel("Epoch")
-    plt.ylim([0, 1])
+    plt.ylim([0.5, 0.7])
     plt.legend()
     plt.grid()
 
@@ -621,7 +642,7 @@ def train_baseline(
         train_data: pandas dataframe
         valid_data: pandas dataframe
         model: pytorch class
-        optim_name: str ('sgd', 'adam', 'adamw)
+        optim_name: str ('sgd', 'adam', 'adamw')
         lr_scheduler_type: str ('hd', 'ed', 'cyclic', 'staircase', 'one_cycle', 'linear')
         momentum: float
         weight_decay: float
@@ -641,7 +662,7 @@ def train_baseline(
     cur_lr = config.LEARNING_RATE
     scheduler, optimizer = None, None
     # loss_function = nn.CrossEntropyLoss().to(config.device)
-    loss_function = FocalCrossEntropyLoss(fc_w=config.FOCAL_WEIGHT, ce_w=config.CE_WEIGHT).to(config.device)
+    loss_function = FocalCrossEntropyLoss(fc_w=config.FC_WEIGHT, ce_w=config.CE_WEIGHT).to(config.device)
     history = defaultdict(list)
     best_loss = np.inf
 
@@ -868,12 +889,14 @@ def test_distilbert(model, data_loader, device):
 
 def main():
     print("Loading data...")
-    train_data = joblib.load("./data/train_top10_v2.bin")
-    valid_data = joblib.load("./data/valid_top10_v2.bin")
+    train_data = joblib.load("./data/train_top10_v3.bin")
+    # train_data = train_data[train_data["sector"] == "Financials"]
+    valid_data = joblib.load("./data/valid_top10_v3.bin")
+    valid_data = valid_data[valid_data["sector"] == "Financials"]
     print("Done!")
 
     print("Loading model...")
-    model = ReutersClassifier(n_classes=2, top_k=config.TOP_K, p=config.DROPOUT_RATE)
+    model = ReutersClassifier(n_classes=2, top_k=config.TOP_K, p=config.DROPOUT_RATE, window_size=3, out_channels=64)
     model.unfreeze_bert_encoder()
     model.to(config.device)
     print("Done!")
