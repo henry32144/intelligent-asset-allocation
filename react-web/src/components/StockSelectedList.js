@@ -14,7 +14,7 @@ const useStyles = makeStyles((theme) => ({
   },
   listSubHeader: {
     textAlign: 'initial'
-  }
+  },
 }));
 
 

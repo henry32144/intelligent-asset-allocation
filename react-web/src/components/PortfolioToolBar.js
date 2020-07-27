@@ -3,7 +3,9 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import StockSearchBox from '../components/StockSearchBox'
-import SelectPortfolioButton from '../components/SelectPortfolioButton';
+import PortfolioMenuButtons from './PortfolioMenuButtons';
+import PortfolioDetailButtons from './PortfolioDetailButtons';
+import Hidden from '@material-ui/core/Hidden';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -12,6 +14,9 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(1, 2, 1),
     boxShadow: '0 0 1px 1px rgba(0, 0, 0 ,.1)'
   },
+  menuButtons: {
+    display: 'inline-flex'
+  }
 }));
 
 export default function PortfolioToolBar(props) {
@@ -25,9 +30,18 @@ export default function PortfolioToolBar(props) {
       justify="flex-start"
       alignItems="center"
     >
-      <Grid item xs={12} sm={3}>
-        <SelectPortfolioButton >
-        </SelectPortfolioButton>
+      <Grid item xs={12} sm={3} className={classes.menuButtons}>
+        <PortfolioMenuButtons
+          isSideBarExpanded={props.isSideBarExpanded}
+          setSideBarExpand={props.setSideBarExpand}
+        >
+        </PortfolioMenuButtons>
+        <Hidden smUp>
+          <PortfolioDetailButtons
+            showSearchButton={true}
+          >
+          </PortfolioDetailButtons>
+        </Hidden>
       </Grid>
       <Grid item container xs={12} sm={6} justify = "center" >
         <StockSearchBox
@@ -39,6 +53,12 @@ export default function PortfolioToolBar(props) {
           >
         </StockSearchBox>
       </Grid>
+      <Hidden xsDown>
+        <Grid item container sm={3} justify = "center" >
+          <PortfolioDetailButtons>
+          </PortfolioDetailButtons>
+        </Grid>
+      </Hidden>
     </Grid>
   );
 }

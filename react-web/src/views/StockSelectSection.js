@@ -5,9 +5,19 @@ import StockSelectedList from '../components/StockSelectedList'
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    height: 'calc(100% - 16px)',
+    height: '100vh',
     padding: theme.spacing(1, 1, 1),
     flexGrow: 1,
+    [theme.breakpoints.up('xs')]: {
+      width: '60vw',
+    },
+    [theme.breakpoints.up('md')]: {
+      width: '50vw',
+    },
+    [theme.breakpoints.up('lg')]: {
+      width: '25vw',
+    },
+    position: "fixed",
   },
 }));
 

@@ -27,19 +27,15 @@ const useStyles = makeStyles((theme) => ({
   popperMenuItem: {
     paddingRight: "8px"
   },
-  menuButton: {
-    marginRight: theme.spacing(2),
-  },
 }));
 
-export default function SelectPortfolioButton(props) {
+export default function PortfolioMenuButtons(props) {
   const classes = useStyles();
   const [open, setOpen] = React.useState(false);
-  const [isDrawerOpen, setDrawerOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
 
   const toogleDrawer = () => {
-    setDrawerOpen(!isDrawerOpen);
+    props.setSideBarExpand(!props.isSideBarExpanded);
   };
 
   const handlePortfolioToggle = () => {
@@ -118,57 +114,55 @@ export default function SelectPortfolioButton(props) {
 
   return (
     <div className={classes.root}>
-      <div>
-        <IconButton
-          edge="start"
-          className={classes.menuButton}
-          onClick={toogleDrawer}
-          color="inherit"
-          aria-label="menu">
-          <MenuIcon />
-        </IconButton>
-        <Button
-          endIcon={<ExpandMoreIcon />}
-          ref={anchorRef}
-          aria-controls={open ? 'menu-list-grow' : undefined}
-          aria-haspopup="true"
-          className={classes.expandButton}
-          onClick={handlePortfolioToggle}
-        >
-          <Typography variant="inherit" noWrap>
-            My Portfolio
+      <IconButton
+        edge="start"
+        className={classes.menuButton}
+        onClick={toogleDrawer}
+        color="inherit"
+        aria-label="menu">
+        <MenuIcon />
+      </IconButton>
+      <Button
+        endIcon={<ExpandMoreIcon />}
+        ref={anchorRef}
+        aria-controls={open ? 'menu-list-grow' : undefined}
+        aria-haspopup="true"
+        className={classes.expandButton}
+        onClick={handlePortfolioToggle}
+      >
+        <Typography variant="inherit" noWrap>
+          My Portfolio
           </Typography>
-        </Button>
-        <Popper
-          className={classes.popperRoot}
-          open={open}
-          anchorEl={anchorRef.current}
-          role={undefined}
-          transition
-          disablePortal>
-          {({ TransitionProps, placement }) => (
-            <Grow
-              {...TransitionProps}
-              style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
-            >
-              <Paper>
-                <ClickAwayListener onClickAway={handleClose}>
-                  <MenuList autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
-                    {portfolioMenuItems}
-                    <Divider light component="li" />
-                    <MenuItem onClick={createPortfolioOnClick}>
-                      <Typography variant="inherit" noWrap className={classes.popperMenuItem}>
-                        Create New Portfolio
+      </Button>
+      <Popper
+        className={classes.popperRoot}
+        open={open}
+        anchorEl={anchorRef.current}
+        role={undefined}
+        transition
+        disablePortal>
+        {({ TransitionProps, placement }) => (
+          <Grow
+            {...TransitionProps}
+            style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
+          >
+            <Paper>
+              <ClickAwayListener onClickAway={handleClose}>
+                <MenuList autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
+                  {portfolioMenuItems}
+                  <Divider light component="li" />
+                  <MenuItem onClick={createPortfolioOnClick}>
+                    <Typography variant="inherit" noWrap className={classes.popperMenuItem}>
+                      Create New Portfolio
                       </Typography>
-                      <AddIcon fontSize="small" className={classes.popperMenuItem} />
-                    </MenuItem>
-                  </MenuList>
-                </ClickAwayListener>
-              </Paper>
-            </Grow>
-          )}
-        </Popper>
-      </div>
+                    <AddIcon fontSize="small" className={classes.popperMenuItem} />
+                  </MenuItem>
+                </MenuList>
+              </ClickAwayListener>
+            </Paper>
+          </Grow>
+        )}
+      </Popper>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Grid from '@material-ui/core/Grid';
 import MessageDialog from '../components/MessageDialog'
 import StockSelectSection from '../views/StockSelectSection'
 import PortfolioToolBar from '../components/PortfolioToolBar'
+import { motion, AnimatePresence } from "framer-motion"
 import { BASEURL } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
@@ -30,12 +31,30 @@ const useStyles = makeStyles((theme) => ({
 function PortfolioPage() {
   const classes = useStyles();
 
-  const [dataLoaded, setDataLoaded] = React.useState(false);
   const [companyData, setCompanyData] = React.useState([]);
   const [selectedStocks, setSelectedStocks] = React.useState([]);
+  const [dataLoaded, setDataLoaded] = React.useState(false);
+  const [isSideBarExpanded, setSideBarExpand] = React.useState(true);
   const [isMessageDialogOpen, setMessageDialogOpen] = React.useState(false);
   const [dialogTitle, setDialogTitle] = React.useState("Error");
   const [dialogMessage, setDialogMessage] = React.useState("");
+
+  const sideBarTransitions = {
+    open: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.5
+      }
+    },
+    closed: {
+      opacity: 0.5,
+      x: '-100%',
+      transition: {
+        duration: 1.0
+      }
+    }
+  };
 
   const handleMessageDialogOpen = () => {
     setMessageDialogOpen(true);
@@ -95,16 +114,24 @@ function PortfolioPage() {
         setSelectedStocks={setSelectedStocks}
         companyData={companyData}
         setDialogMessage={setDialogMessage}
+        isSideBarExpanded={isSideBarExpanded}
+        setSideBarExpand={setSideBarExpand}
         openMessageDialog={handleMessageDialogOpen}
       >
       </PortfolioToolBar>
+      <motion.div
+        className="side-bar"
+        animate={isSideBarExpanded ? "open" : "closed"}
+        variants={sideBarTransitions}
+      >
+        <StockSelectSection
+          selectedStocks={selectedStocks}
+          setSelectedStocks={setSelectedStocks}
+        >
+        </StockSelectSection>
+      </motion.div>
       <Grid item container direction="row" justify="flex-start" alignItems="stretch" className={classes.portfolioContent}>
-        <Grid item xs={9} sm={3} >
-          <StockSelectSection
-            selectedStocks={selectedStocks}
-            setSelectedStocks={setSelectedStocks}
-          >
-          </StockSelectSection>
+        <Grid item >
         </Grid>
       </Grid>
     </div>
