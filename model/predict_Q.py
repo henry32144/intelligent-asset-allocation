@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import GRU
@@ -17,6 +18,12 @@ from tensorflow.keras import optimizers
 from database.database import db
 from database.tables.price import StockPrice 
 
+try:
+  physical_devices = tf.config.list_physical_devices('GPU')
+  tf.config.experimental.set_memory_growth(physical_devices[0], True)
+except:
+  # Invalid device or cannot modify virtual devices once initialized.
+  pass
 
 def to_model_input(time_step, dataset, target_col_idx):
     X = []
