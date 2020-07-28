@@ -3,14 +3,18 @@ import sys
 import time
 import config
 import warnings
+import requests
 import joblib
+import pysentiment as ps
 import pandas as pd
 import numpy as np
 import yfinance as yf
 from tqdm import tqdm
+from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from contractions import contractions_dict
 from zero_shot_learner import extend_df_with_cos_sim
+from summarizer import Summarizer
 warnings.filterwarnings("ignore")
 sys.setrecursionlimit(1000000)
 
@@ -25,6 +29,36 @@ def print_time(func):
         return ret
 
     return decorated_func
+
+
+def add_content(url, ratio=0.8):
+    """
+    Return:
+        res_origin: complete paragraph string
+        res_ps: important sentence string
+        res_bertsum: filtered string by BertSum
+    """
+    resp = requests.get(url)
+    soup = BeautifulSoup(resp.text, 'html.parser')
+    paragraph = soup.find_all('p')
+    paragraph = [p.text for p in paragraph]
+    paragraph = paragraph[1:-1]
+    res_origin = "".join(paragraph)
+    hiv4_function = ps.hiv4.HIV4()
+    po = []
+    for p in paragraph:
+        tokens = hiv4_function.tokenize(p)
+        s = hiv4_function.get_score(tokens)
+        po.append(s['Polarity'])
+    res = []
+    for i, p in enumerate(po):
+        if(float(p) >= 0.85 or float(p) <= -0.85):
+            res.append(paragraph[i])
+    res_ps = "".join(res)
+    bert_summarizer = Summarizer()
+    result = bert_summarizer(res_origin, ratio=ratio)
+    res_bertsum = ''.join(result)
+    return (res_origin, res_ps, res_bertsum)
 
 
 class NewsPreprocessor:
@@ -175,9 +209,18 @@ def load_data(ticker_name, news_filename, labels, sort_by, top_k):
     return news_and_fx
 
 def main():
-    df = load_data()
-    print(df.index.min())
-    print(df.index.max())
+	# Load data
+    df = joblib.load("./data/sp500_top100_v1.bin")
+    df.drop_duplicates(subset="title", inplace=True)
+    df[["content", "ps_content", "bs_content"]] = df.apply(lambda row: pd.Series(add_content(row["url"])), axis=1)
+
+    # Clean data
+    preprocessor = NewsPreprocessor(contractions_dict=contractions_dict)
+    df["clean_title"] = df["title"].apply(lambda x: preprocessor.ultimate_clean(x))
+    df["clean_ps_content"] = df["ps_content"].apply(lambda x: preprocessor.ultimate_clean(x))
+    df["clean_bs_content"] = df["bs_content"].apply(lambda x: preprocessor.ultimate_clean(x))
+    df = extend_df_with_cos_sim(df=df, col="clean_ps_content", labels=["stock"], sort_by="stock")
+
 
 if __name__ == "__main__":
     main()
