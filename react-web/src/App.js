@@ -42,6 +42,7 @@ function App() {
   // Try to get user data from cookies
   const cookies = new Cookies();
   const [userData, setUserData] = React.useState({
+    userId: cookies.get('userId'),
     userName: cookies.get('userName'),
     userEmail: cookies.get('userEmail'),
   });
@@ -49,7 +50,10 @@ function App() {
   return (
     <div className={classes.root}>
       <TopNavBar userData={userData} setUserData={setUserData}></TopNavBar>
-      <PortfolioPage></PortfolioPage>
+      <PortfolioPage
+        userData={userData}
+      >
+      </PortfolioPage>
     </div>
   );
 }

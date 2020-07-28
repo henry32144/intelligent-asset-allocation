@@ -49,34 +49,22 @@ export default function PortfolioMenuButtons(props) {
     setOpen(false);
   };
 
+  const portfolioButtonOnClick = (id) => {
+    console.log(id);
+  }
+
   const createPortfolioOnClick = (e) => {
-    // const submitSelection = async () => {
-    //   // Submit user's stock selection to the server
-    //   const settings = {
-    //       method: 'POST',
-    //       headers: {
-    //           Accept: 'application/json',
-    //           'Content-Type': 'application/json',
-    //       },
-    //       body: JSON.stringify({
-    //         'selectedStocks': ['123']
-    //       })
-    //   }
-    //   try {
-    //     const response = await fetch("http://127.0.0.1:5000/post-test", settings)
-    //     if (response.ok) {
-    //       const jsonData = await response.json();
-    //       console.log(jsonData);
-    //     }
-    //   }
-    //   catch (err) {
-    //     console.log('fetch failed', err);
-    //   }
-    // }
+    if (props.userData.userId == undefined) {
+      props.setDialogTitle("Error")
+      props.setDialogMessage("Please login first");
+      props.openMessageDialog();
+    } else {
+      props.handleCreatePortfolioDialogOpen();
+    }
     handleClose(e)
   };
 
-  function handleListKeyDown(event) {
+  const handleListKeyDown = (event) => {
     if (event.key === 'Tab') {
       event.preventDefault();
       setOpen(false);
@@ -92,20 +80,9 @@ export default function PortfolioMenuButtons(props) {
     prevOpen.current = open;
   }, [open]);
 
-  const userPortfolios = [{
-    "protfolioId": 0,
-    "portfolioName": "Portfolio 1",
-    "portfolioStockIds": [0, 1, 2],
-  },
-  {
-    "protfolioId": 1,
-    "portfolioName": "Portfolio 2",
-    "portfolioStockIds": [3, 4, 5],
-  }
-  ];
 
-  const portfolioMenuItems = userPortfolios.map((portfolio) =>
-    <MenuItem key={portfolio.protfolioId.toString()} onClick={handleClose}>
+  const portfolioMenuItems = props.userPortfolios.map((portfolio) =>
+    <MenuItem key={portfolio.protfolioId.toString()} onClick={() => {portfolioButtonOnClick(portfolio.protfolioId)}}>
       <Typography variant="inherit" noWrap>
         {portfolio.portfolioName}
       </Typography>
@@ -131,8 +108,8 @@ export default function PortfolioMenuButtons(props) {
         onClick={handlePortfolioToggle}
       >
         <Typography variant="inherit" noWrap>
-          My Portfolio
-          </Typography>
+          My Portfolios
+        </Typography>
       </Button>
       <Popper
         className={classes.popperRoot}
