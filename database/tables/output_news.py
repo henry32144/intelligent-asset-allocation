@@ -3,6 +3,7 @@ import json
 from flask import jsonify
 from sqlalchemy import Column, Integer, String, DateTime, Date
 from pprint import pprint
+
 class OutputNews(db.Model):
 	__tablename__ = "output_news"
 	id = db.Column(Integer, primary_key=True)

@@ -27,6 +27,8 @@ class Company(db.Model):
                 'company_name': self.company_name,
                 'industry': self.industry,
                 }
+
+                
 def company_name2dict():
     with open('./database/tables/ticker_name.txt', 'r') as f:
         _dict = {}
@@ -36,6 +38,8 @@ def company_name2dict():
             _dict[c[1].replace('\n','')] = c[0]
     f.close()
     return _dict
+
+
 
 def crawl_sp500_info():
     sp500_wiki_url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
