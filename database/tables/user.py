@@ -25,7 +25,6 @@ class User(db.Model):
         self.user_company_selection = concat_company(user_company_selection)
 
 
-
     def __repr__(self):
         return '<User %r>' % self.user_name
 

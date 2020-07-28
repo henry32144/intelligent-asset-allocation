@@ -6,9 +6,12 @@ from database.database import db
 from database.tables.company import output_news, news_to_json
 from database.tables.company import CrawlingData, daily_update
 from database.tables.user import User
-
+from model.get_news_keysent import KeysentGetter, test_url
+from datetime import datetime
 def interval():
+	print(datetime.date(), " daily update")
 	daily_update()
-	
-
-
+	getter = KeysentGetter()
+    getter.url2news()
+    getter.get_news()
+    getter.to_db()
