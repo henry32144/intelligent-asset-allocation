@@ -9,7 +9,7 @@ import pysentiment as ps
 import pandas as pd
 import numpy as np
 import yfinance as yf
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from contractions import contractions_dict
@@ -208,18 +208,27 @@ def load_data(ticker_name, news_filename, labels, sort_by, top_k):
     news_and_fx.set_index('date', inplace=True)
     return news_and_fx
 
+
 def main():
-	# Load data
+    # Load data
     df = joblib.load("./data/sp500_top100_v1.bin")
     df.drop_duplicates(subset="title", inplace=True)
-    df[["content", "ps_content", "bs_content"]] = df.apply(lambda row: pd.Series(add_content(row["url"])), axis=1)
+    print("Get content...")
+    tqdm.pandas()
+    df[["content", "ps_content", "bs_content"]] = df.progress_apply(lambda row: pd.Series(add_content(row["url"])), axis=1)
 
     # Clean data
     preprocessor = NewsPreprocessor(contractions_dict=contractions_dict)
+    print("Start cleaning title.")
     df["clean_title"] = df["title"].apply(lambda x: preprocessor.ultimate_clean(x))
+    print("Start cleaning pysentiment content.")
     df["clean_ps_content"] = df["ps_content"].apply(lambda x: preprocessor.ultimate_clean(x))
+    print("Start cleaning BertSum content.")
     df["clean_bs_content"] = df["bs_content"].apply(lambda x: preprocessor.ultimate_clean(x))
-    df = extend_df_with_cos_sim(df=df, col="clean_ps_content", labels=["stock"], sort_by="stock")
+    df = extend_df_with_cos_sim(df=df, col="clean_ps_content", labels=["stock", "finance"], sort_by="stock")
+    print(df)
+
+    joblib.dump(df, "./data/sp500_top100_v2.bin", compress=5)
 
 
 if __name__ == "__main__":

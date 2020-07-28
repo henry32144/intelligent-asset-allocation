@@ -2,6 +2,7 @@ import warnings
 import joblib
 import time
 import torch
+import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
 from transformers import AutoTokenizer
@@ -74,7 +75,7 @@ def extend_df_with_cos_sim(df, col, labels, sort_by):
     """
     SB = SentenceBert()
     print("Start zero-shot learner...")
-    df[labels] = df.apply(lambda row: pd.Series(add_content(row[col])), axis=1)
+    df[labels] = df.apply(lambda row: pd.Series(SB.get_similarity(row[col], labels=labels)), axis=1)
     # for index, row in df.iterrows():
     #     sim_dict = SB.get_similarity(row[col], labels)
     #     for i in range(len(labels)):
