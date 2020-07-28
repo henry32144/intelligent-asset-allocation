@@ -8,14 +8,11 @@ from bs4 import BeautifulSoup
 from database.database import db
 import pandas as pd
 from absl import logging
-import tensorflow as tf
-import tensorflow_hub as hub
-import matplotlib.pyplot as plt
+
 import numpy as np
 import os
 import pandas as pd
 import re
-import seaborn as sns
 import spacy
 import pysentiment as ps
 from tqdm import tqdm
@@ -25,6 +22,9 @@ import json
 from pprint import pprint
 from sqlalchemy import Column, Integer, String, DateTime, Date
 from datetime import datetime,timedelta
+
+
+
 class KeysentGetter():
 	def __init__(self):
 		self.title = [] #all the titles
@@ -50,7 +50,7 @@ class KeysentGetter():
 
 	def url2news(self):
 		company_idx = 0
-		for url in tqdm(self.url[:10]):
+		for url in tqdm(self.url):
 		    resp = requests.get(url)
 		    soup = BeautifulSoup(resp.text, 'html.parser')
 		    paragraph = soup.find_all('p')
@@ -162,5 +162,6 @@ def test_url():
 # get.url2news()
 # print(len(get.title))
 # get.get_news()
+
 
 
