@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 import pandas as pd
 
-<<<<<<< HEAD
+
 #https://www.reuters.com/search/news?blob=
 
 
@@ -21,7 +21,7 @@ class ArticleGetter:
     def get_daily_news(self, query):
         # get our search webpage
         search_url = self.base_url + query + '&sortBy=date&dateRange=all'
-=======
+
 
 class ArticleGetter:
     def __init__(self, query):
@@ -29,7 +29,7 @@ class ArticleGetter:
         self.query = query
         
     def get_daily_news(self):
->>>>>>> ba549e154bd59557908a38131bd7c667eaf8dd50
+
         # script = 'which Chrome'
         # a = os.system(script)
         # driver = webdriver.Chrome('C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe')
