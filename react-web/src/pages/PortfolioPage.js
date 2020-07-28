@@ -1,31 +1,60 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-
-import Typography from '@material-ui/core/Typography';
 import MessageDialog from '../components/MessageDialog'
-import InvestmentStrategyRadios from '../components/InvestmentStrategyRadios'
-import SubmitSelectionButton from '../components/SubmitSelectionButton';
 import StockSelectSection from '../views/StockSelectSection'
-
+import PortfolioToolBar from '../components/PortfolioToolBar'
+import { motion, AnimatePresence } from "framer-motion"
 import { BASEURL } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
+  portfolioPage: {
+    height: 'calc(100% - 56px)',
+    [`${theme.breakpoints.up('xs')} and (orientation: landscape)`]: {
+      height: 'calc(100% - 48px)',
+    },
+    [theme.breakpoints.up('sm')]: {
+      height: 'calc(100% - 64px)',
+    },
+    display: 'flex',
+    flexDirection: 'column',
+  },
   title: {
     textAlign: 'initial',
     margin: theme.spacing(4, 0, 2),
   },
+  portfolioContent: {
+    flex: 'auto'
+  }
 }));
 
 function PortfolioPage() {
   const classes = useStyles();
 
-  const [dataLoaded, setDataLoaded] = React.useState(false);
   const [companyData, setCompanyData] = React.useState([]);
   const [selectedStocks, setSelectedStocks] = React.useState([]);
+  const [dataLoaded, setDataLoaded] = React.useState(false);
+  const [isSideBarExpanded, setSideBarExpand] = React.useState(true);
   const [isMessageDialogOpen, setMessageDialogOpen] = React.useState(false);
   const [dialogTitle, setDialogTitle] = React.useState("Error");
   const [dialogMessage, setDialogMessage] = React.useState("");
+
+  const sideBarTransitions = {
+    open: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.5
+      }
+    },
+    closed: {
+      opacity: 0.5,
+      x: '-100%',
+      transition: {
+        duration: 1.0
+      }
+    }
+  };
 
   const handleMessageDialogOpen = () => {
     setMessageDialogOpen(true);
@@ -72,40 +101,37 @@ function PortfolioPage() {
   }, [dataLoaded]);
 
   return (
-    <div className={classes.root}>
+    <div className={classes.portfolioPage}>
       <MessageDialog
-          isOpen={isMessageDialogOpen}
-          handleClose={handleMessageDialogClose}
-          title={dialogTitle}
-          message={dialogMessage}
-        >
+        isOpen={isMessageDialogOpen}
+        handleClose={handleMessageDialogClose}
+        title={dialogTitle}
+        message={dialogMessage}
+      >
       </MessageDialog>
-      <Grid container direction="column" justify="center" alignItems="center">
-        <Grid className={classes.title} item xs={12}>
-          <Typography variant="h6">
-            Choose your strategy
-          </Typography>
-        </Grid>
-        <Grid className={classes.gridItem} item xs={12}>
-          <InvestmentStrategyRadios />
-        </Grid>
-        <Grid className={classes.title} item xs={12}>
-          <Typography variant="h6">
-            Select Stocks
-          </Typography>
-        </Grid>
-        <Grid className={classes.gridItem} item xs={12} >
-          <StockSelectSection 
-            selectedStocks={selectedStocks} 
-            setSelectedStocks={setSelectedStocks} 
-            companyData={companyData}
-            setDialogMessage={setDialogMessage}
-            openMessageDialog={handleMessageDialogOpen}
-          >
-          </StockSelectSection>
-        </Grid>
-        <Grid className={classes.gridItem} item xs={12} >
-          <SubmitSelectionButton />
+      <PortfolioToolBar
+        selectedStocks={selectedStocks}
+        setSelectedStocks={setSelectedStocks}
+        companyData={companyData}
+        setDialogMessage={setDialogMessage}
+        isSideBarExpanded={isSideBarExpanded}
+        setSideBarExpand={setSideBarExpand}
+        openMessageDialog={handleMessageDialogOpen}
+      >
+      </PortfolioToolBar>
+      <motion.div
+        className="side-bar"
+        animate={isSideBarExpanded ? "open" : "closed"}
+        variants={sideBarTransitions}
+      >
+        <StockSelectSection
+          selectedStocks={selectedStocks}
+          setSelectedStocks={setSelectedStocks}
+        >
+        </StockSelectSection>
+      </motion.div>
+      <Grid item container direction="row" justify="flex-start" alignItems="stretch" className={classes.portfolioContent}>
+        <Grid item >
         </Grid>
       </Grid>
     </div>
