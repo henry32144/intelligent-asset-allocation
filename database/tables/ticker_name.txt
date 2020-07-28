@@ -1,0 +1,99 @@
+Apple Inc.	AAPL
+Microsoft Corporation	MSFT
+Amazon.com, Inc.	AMZN
+Facebook Inc	FB
+Alphabet Inc	GOOG
+Johnson & Johnson	JNJ
+Berkshire Hathaway Inc.	BRK-B
+Visa Inc	V
+Procter & Gamble Co	PG
+JPMorgan Chase & Co.	JPM
+UnitedHealth Group Inc	UNH
+Home Depot Inc	HD
+Mastercard Inc	MA
+Intel Corporation	INTC
+NVIDIA Corporation	NVDA
+Netflix Inc	NFLX
+Verizon Communications Inc.	VZ
+Walt Disney Co	DIS
+Adobe Inc	ADBE
+Merck & Co., Inc.	MRK
+Paypal Holdings Inc	PYPL
+Pfizer Inc.	PFE
+Cisco Systems, Inc.	CSCO
+Comcast Corporation	CMCSA
+Exxon Mobil Corporation	XOM
+Walmart Inc	WMT
+Bank of America Corp	BAC
+PepsiCo, Inc.	PEP
+Coca-Cola Co	KO
+AbbVie Inc	ABBV
+Abbott Laboratories	ABT
+salesforce.com, inc.	CRM
+Chevron Corporation	CVX
+Thermo Fisher Scientific Inc.	TMO
+Amgen, Inc.	AMGN
+Costco Wholesale Corporation	COST
+Mcdonald's Corp	MCD
+Accenture Plc	ACN
+Eli Lilly And Co	LLY
+Bristol-Myers Squibb Co	BMY
+NextEra Energy Inc	NEE
+Medtronic PLC	MDT
+Linde PLC	LIN
+Broadcom Inc	AVGO
+Texas Instruments Incorporated	TXN
+Nike Inc	NKE
+Union Pacific Corporation	UNP
+Danaher Corporation	DHR
+Philip Morris International Inc.	PM
+Oracle Corporation	ORCL
+American Tower Corp	AMT
+International Business Machines Corp.	IBM
+Lowe`s Companies Inc	LOW
+Honeywell International Inc.	HON
+Citigroup Inc	C
+QUALCOMM, Inc.	QCOM
+Gilead Sciences, Inc.	GILD
+Boeing Co	BA
+Wells Fargo & Co	WFC
+Rtx A/S	RTX
+Lockheed Martin Corporation	LMT
+BlackRock, Inc.	BLK
+Starbucks Corporation	SBUX
+CVS Health Corp	CVS
+United Parcel Service, Inc.	UPS
+S&P Global Inc	SPGI
+Charter Communications Inc	CHTR
+Becton Dickinson and Co	BDX
+Altria Group Inc	MO
+Mondelez International Inc	MDLZ
+Vertex Pharmaceuticals Incorporated	VRTX
+Caterpillar Inc.	CAT
+Intuit Inc.	INTU
+Booking Holdings Inc	BKNG
+Intuitive Surgical, Inc.	ISRG
+Crown Castle International Corp	CCI
+Zoetis Inc	ZTS
+Prologis Inc	PLD
+Anthem Inc	ANTM
+Goldman Sachs Group Inc	GS
+Cigna Corp	CI
+Dominion Energy Inc	D
+TJX Companies Inc	TJX
+Advanced Micro Devices, Inc.	AMD
+Colgate-Palmolive Company	CL
+American Express Company	AXP
+Regeneron Pharmaceuticals Inc	REGN
+Equinix Inc	EQIX
+Morgan Stanley	MS
+Air Products & Chemicals, Inc.	APD
+Automatic Data Processing Inc	ADP
+Chubb Ltd	CB
+General Electric Company	GE
+Activision Blizzard, Inc.	ATVI
+Target Corporation	TGT
+AT%26T+Inc.	T
+3M	MMM
+Fidelity National Information	FIS
+ServiceNow	NOW

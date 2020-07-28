@@ -9,31 +9,30 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { FixedSizeList } from 'react-window';
 
 const useStyles = makeStyles((theme) => ({
-  root: {},
-  stockComponent: {},
+  stockComponent: {
+    margin: theme.spacing(0, 0, 2),
+  },
   listSubHeader: {
     textAlign: 'initial'
-  }
+  },
 }));
 
 
-// function renderRow(props) {
-//   const { data, index, style } = props;
-//   const rowItem = data[index];
-//   return (
-//     <div style={style}>
-//       {
-//         <StockListItem companyName={rowItem.companyName} companySymbol={rowItem.companySymbol}>
-//         </StockListItem>
-//       }
-//     </div>
-//   );
-// }
-
-
 function StockSelectedList(props) {
-  const { selectedStocks, additionalStyles } = props
+  const { selectedStocks } = props
   const classes = useStyles();
+
+  const tempSelectedStocks = [{
+    'companyName':'Apple',
+    'companySymbol': 'Apple',
+    'companyId':'Apple',
+  },
+  {
+    'companyName':'BANANA',
+    'companySymbol': 'BANANA',
+    'companyId':'BANANA',
+  }
+  ];
 
   const removeSelectedStock = (id) => {
     var selectedStocks = Array.from(props.selectedStocks);
@@ -63,12 +62,12 @@ function StockSelectedList(props) {
   };
 
   return (
-    <Box className={additionalStyles.stockComponent}>
+    <Box className={classes.stockComponent}>
       <FixedSizeList
         height={350}
         itemSize={60}
-        itemCount={selectedStocks.length}
-        itemData={selectedStocks}
+        itemCount={tempSelectedStocks.length}
+        itemData={tempSelectedStocks}
       >
         {renderRow}
       </FixedSizeList >

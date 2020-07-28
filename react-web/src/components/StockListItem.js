@@ -6,6 +6,9 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 
 const useStyles = makeStyles((theme) => ({
+  listItemText: {
+    textOverflow: 'ellipsis'
+  }
 }));
 
 export default function StockListItem(props) {
@@ -22,13 +25,11 @@ export default function StockListItem(props) {
 
 
   return (
-    <div className={classes.root}>
-      <ListItem alignItems="flex-start">
-        <ListItemText primary={props.companyName} secondary={props.companySymbol} />
-        <IconButton edge="end" aria-label="delete" onClick={deleteButtonOnClick}>
-          <DeleteIcon />
-        </IconButton>
-      </ListItem>
-    </div>
+    <ListItem alignItems="flex-start">
+      <ListItemText classes={{ primary: classes.listItemText }} primary={props.companyName} secondary={props.companySymbol} />
+      <IconButton edge="end" aria-label="delete" onClick={deleteButtonOnClick}>
+        <DeleteIcon />
+      </IconButton>
+    </ListItem>
   );
 }

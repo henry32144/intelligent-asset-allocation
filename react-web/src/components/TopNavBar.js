@@ -74,7 +74,7 @@ export default function TopNavBar(props) {
           handleClose={handleMessageDialogClose}
           message={dialogMessage}
         >
-        </MessageDialog>
+        </MessageDialog> 
         <Toolbar>
           <Button className={classes.brandButton} color="inherit" size="large">
             AI Asset

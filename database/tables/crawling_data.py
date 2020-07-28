@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Date
 import pandas as pd
 from database.tables.daily_crawler import ArticleGetter
-
+from database.tables.company import Company
 
 class CrawlingData(db.Model):
 	__tablename__ = "crawling_data"
@@ -34,8 +34,12 @@ def read_csv(filename):
 	db.session.commit()
 
 def daily_update():
+# 	company_name_terms = ['Inc.', 'corporation','Corporation', 'company','Company','']
 	base_url = 'https://www.reuters.com/search/news?blob='
-	querys = ['Google']
+	querys = []
+	company_names = Company.query.all()
+	for c in company_names:
+		querys.append( c.company_name )
 	article_getter = ArticleGetter(base_url)
 	for q in querys:
 		df = article_getter.get_daily_news(q)
