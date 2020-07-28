@@ -1,5 +1,6 @@
 class Config(object):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///database/database.db'
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
     JOBS = [
         {
             'id': 'interval_test',
