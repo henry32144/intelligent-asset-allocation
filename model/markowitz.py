@@ -61,7 +61,7 @@ class Markowitz(object):
             dataset_total = pd.concat([train_df, test_df], axis=0) 
             inputs = dataset_total[len(dataset_total)-len(test_df)-time_step:]['adj_close']
             all_data_df[ticker] = inputs
-        
+
         # 2. Prepare main markowitz inputs
         # 2-1. price_df -> price_list
         prices_list = []

@@ -5,6 +5,7 @@ import os
 import pickle
 from tqdm import tqdm
 from collections import defaultdict
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 from flask import Blueprint, abort, request, render_template
@@ -122,18 +123,18 @@ def get_predicted_Q():
 
 @test_cases.route('/test')
 def test():
-    selected_tickers = ['MMM', 'CLX', 'MS']
+    selected_tickers = ['GOOG', 'AAPL', 'MSFT', 'BLK', 'KO', 'NKE']
     marko = Markowitz(selected_tickers)
     all_weights = marko.get_all_weights()
-    all_values, all_return = marko.get_backtest_result()
+    # all_values, all_return = marko.get_backtest_result()
 
     print('all_weights:', all_weights)
-    print('all_values:', all_values)
-    print('all_return:', all_return)
+    # print('all_values:', all_values)
+    # print('all_return:', all_return)
 
-    matplotlib.use('agg')
-    plt.plot(all_values, label='Mean-Var Portfolio')
-    plt.show()
+    # matplotlib.use('agg')
+    # plt.plot(all_values, label='Mean-Var Portfolio')
+    # plt.show()
     # plt.savefig('markowitz.png')
 
     return ''
@@ -143,6 +144,5 @@ def test():
 def test_sp500():
     sp_500 = SP500()
     sp500_values, all_return = sp_500.get_backtest_result()
-    print(sp500_values)
 
     return ''
