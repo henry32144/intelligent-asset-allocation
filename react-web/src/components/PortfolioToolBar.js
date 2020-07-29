@@ -34,6 +34,7 @@ export default function PortfolioToolBar(props) {
         <PortfolioMenuButtons
           isSideBarExpanded={props.isSideBarExpanded}
           setSideBarExpand={props.setSideBarExpand}
+          setSelectedStocks={props.setSelectedStocks}
           userPortfolios={props.userPortfolios}
           setUserPortfolios={props.setUserPortfolios}
           currentSelectedPortfolio={props.currentSelectedPortfolio}

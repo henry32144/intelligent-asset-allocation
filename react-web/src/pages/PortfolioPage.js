@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(4, 0, 2),
   },
   sideBar: {
-    zIndex: 1400,
+    zIndex: 1300,
   }
 }));
 
@@ -42,17 +42,19 @@ function PortfolioPage(props) {
 
   const [companyData, setCompanyData] = React.useState([]);
   const [companyDataMapping, setCompanyDataMapping] = React.useState({});
-  const [userPortfolios, setUserPortfolios] = React.useState([]); 
-  const [selectedStocks, setSelectedStocks] = React.useState([]);
+  const [userPortfolios, setUserPortfolios] = React.useState([]);
+  const [selectedStocks, setPortfolioStocks] = React.useState([]);
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [isSideBarExpanded, setSideBarExpand] = React.useState(false);
   const [isMessageDialogOpen, setMessageDialogOpen] = React.useState(false);
+  const [saveButtonLoading, setSaveButtonLoading] = React.useState(false);
+  const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(false);
   const [isCreatePortfolioDialogOpen, setCreatePortfolioDialogOpen] = React.useState(false);
   const [dialogTitle, setDialogTitle] = React.useState("");
   const [dialogMessage, setDialogMessage] = React.useState("");
   const [currentSelectedPortfolio, setCurrentSelectedPortfolio] = React.useState(null);
   const [currentSelectedStock, setCurrentSelectedStock] = React.useState("APPL");
-
+  
   const sideBarTransitions = {
     open: {
       opacity: 1,
@@ -70,6 +72,17 @@ function PortfolioPage(props) {
     }
   };
 
+  const setSelectedStocks = (stockSymbols) => {
+    console.log(stockSymbols);
+    console.log(companyDataMapping);
+    var stocksDetail = []
+    for (var i = 0; i < stockSymbols.length; i++) {
+      stocksDetail.push(companyDataMapping[stockSymbols[i]]);
+    }
+    console.log(stocksDetail);
+    setPortfolioStocks(stocksDetail);
+  }
+
   const handleMessageDialogOpen = () => {
     setMessageDialogOpen(true);
   };
@@ -86,7 +99,7 @@ function PortfolioPage(props) {
     setCreatePortfolioDialogOpen(false);
   };
 
-  const getCompanyData = async (e) => {
+  const getCompanyData = async () => {
     const request = {
       method: 'GET',
     }
@@ -98,11 +111,20 @@ function PortfolioPage(props) {
       if (response.ok) {
         const jsonData = await response.json();
         if (jsonData.isSuccess) {
-          setCompanyData(jsonData.data);
           var newCompanyDataMapping = {}
-          for(var i = 0; i < jsonData.data.length; i++) {
-            newCompanyDataMapping[jsonData.data[i].symbol] = jsonData.data[i]
+          var newCompanyData = []
+          for (var i = 0; i < jsonData.data.length; i++) {
+            const companInfo = {
+              "companyIndustry": jsonData.data[i].industry,
+              "companyName": jsonData.data[i].company_name,
+              "companySymbol": jsonData.data[i].symbol,
+              "companyId": jsonData.data[i].id_
+            };
+            newCompanyDataMapping[jsonData.data[i].symbol] = companInfo
+            newCompanyData.push(companInfo);
           }
+          setCompanyData(newCompanyData);
+          setCompanyDataMapping(newCompanyDataMapping);
         } else {
           alert(jsonData.errorMsg);
         }
@@ -116,7 +138,44 @@ function PortfolioPage(props) {
     }
   };
 
-  const getUserPortfolio = async (e) => {
+  const createNewPortfolio = async (portfolioName) => {
+    const request = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        'portfolioName': portfolioName,
+        'userId': props.userData.userId,
+      })
+    }
+    try {
+      const response = await fetch(BASEURL + "/portfolio/create", request)
+      if (response.ok) {
+        const jsonData = await response.json();
+        console.log(jsonData);
+        if (jsonData.isSuccess) {
+          // get create object
+          var newPortfolio = {
+            'portfolioId': jsonData.data.id,
+            'userId': jsonData.data.user_id,
+            'portfolioName': jsonData.data.portfolio_name,
+            'portfolioStocks': jsonData.data.portfolio_stocks
+          }
+          setUserPortfolios([...userPortfolios, newPortfolio]);
+          handleCreatePortfolioDialogClose();
+        } else {
+          alert(jsonData.errorMsg);
+        }
+      }
+    }
+    catch (err) {
+      alert('create new portfolio failed', err);
+    }
+  }
+
+  const getUserPortfolio = async () => {
     if (props.userData.userId != undefined) {
       const request = {
         method: 'POST',
@@ -134,23 +193,30 @@ function PortfolioPage(props) {
         const response = await fetch(BASEURL + "/portfolio", request)
         if (response.ok) {
           const jsonData = await response.json();
+          console.log(jsonData);
           if (jsonData.isSuccess) {
+            // Get portfolio success
             setDataLoaded(true);
-            console.log(jsonData.data)
-            var newPortfolios = []
-            for (var i = 0; i < jsonData.data.length; i++) {
-              var newPortfolio = {
-                "portfolioId": jsonData.data[i].id,
-                "userId": jsonData.data[i].user_id,
-                "portfolioName": jsonData.data[i].portfolio_name,
-                "portfolioStocks": jsonData.data[i].portfolio_stocks,
-              };
-              newPortfolios.push(newPortfolio);
+            if (jsonData.data.length > 0) {
+              // If user have portfolios
+              var newPortfolios = []
+              for (var i = 0; i < jsonData.data.length; i++) {
+                var newPortfolio = {
+                  "portfolioId": jsonData.data[i].id,
+                  "userId": jsonData.data[i].user_id,
+                  "portfolioName": jsonData.data[i].portfolio_name,
+                  "portfolioStocks": jsonData.data[i].portfolio_stocks,
+                };
+                newPortfolios.push(newPortfolio);
+              }
+              setUserPortfolios(newPortfolios);
+            } else {
+              // If user don't have portfolios
+              // Create default one
+
             }
-            console.log(newPortfolios);
-            setUserPortfolios(newPortfolios);
-            console.log(jsonData.data[0]);
           } else {
+            // Get portfolio failed
             alert(jsonData.errorMsg);
             setDataLoaded(false);
           }
@@ -166,12 +232,69 @@ function PortfolioPage(props) {
     }
   };
 
+  const savePortfolio = async () => {
+    if (props.userData.userId != undefined) {
+      var currentPortfolioStocks = selectedStocks.map(function(item, index, array){
+        return item.companySymbol;
+      });
+      console.log(currentPortfolioStocks);
+      const request = {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          'portfolioId': currentSelectedPortfolio,
+          'portfolioStocks': currentPortfolioStocks
+        })
+      }
+      try {
+        console.log("Try to save portfolio: " + currentSelectedPortfolio);
+        console.log(request);
+        setSaveButtonLoading(true);
+        const response = await fetch(BASEURL + "/portfolio/save", request)
+        if (response.ok) {
+          const jsonData = await response.json();
+          if (jsonData.isSuccess) {
+            setDialogTitle("Success")
+            setDialogMessage("Portfolio has been updated!");
+            handleMessageDialogOpen();
+          } else {
+            alert(jsonData.errorMsg);
+          }
+        }
+      }
+      catch (err) {
+        console.log('Fetch company data failed', err);
+      }
+      finally {
+        setSaveButtonLoading(false);
+      }
+    } else if (props.userData.userId == undefined) {
+      setDialogMessage("Please login first");
+      handleMessageDialogOpen();
+    } else if (currentSelectedPortfolio == undefined) {
+      setDialogMessage("Create portfolio first");
+      handleMessageDialogOpen();
+    }
+  };
+
   React.useEffect(() => {
     if (!dataLoaded) {
       getCompanyData();
+    }
+    if (props.userData.userId !== undefined) {
       getUserPortfolio();
     }
-  }, [dataLoaded]);
+  }, [props.userData]);
+
+  React.useEffect(() => {
+    if (userPortfolios.length > 0 && currentSelectedPortfolio == undefined) {
+      setCurrentSelectedPortfolio(userPortfolios[0].portfolioId);
+      setSelectedStocks(userPortfolios[0].portfolioStocks);
+    }
+  }, [userPortfolios]);
 
   return (
     <div className={classes.portfolioPage}>
@@ -188,6 +311,7 @@ function PortfolioPage(props) {
         userPortfolios={userPortfolios}
         setUserPortfolios={setUserPortfolios}
         setCurrentSelectedPortfolio={setCurrentSelectedPortfolio}
+        createNewPortfolio={createNewPortfolio}
         userData={props.userData}
       >
       </CreatePortfolioDialog>
@@ -219,12 +343,15 @@ function PortfolioPage(props) {
           setSelectedStocks={setSelectedStocks}
           currentSelectedStock={currentSelectedStock}
           setCurrentSelectedStock={setCurrentSelectedStock}
+          savePortfolio={savePortfolio}
+          saveButtonLoading={saveButtonLoading}
+          saveButtonDisabled={saveButtonDisabled}
         >
         </StockSelectSection>
       </motion.div>
       <Grid item container direction="row" justify="center" alignItems="stretch" className={classes.portfolioContent}>
-        <Grid item xs={6}>
-          <Typography className={classes.companyName}  variant="h5">
+        <Grid item xs={10} md={6}>
+          <Typography className={classes.companyName} variant="h5">
             Apple Inc.
           </Typography>
           <NewsSection>

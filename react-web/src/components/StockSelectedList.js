@@ -2,6 +2,7 @@ import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import Box from '@material-ui/core/Box';
+import Grid from '@material-ui/core/Grid';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import StockListItem from './StockListItem'
 import ListItem from '@material-ui/core/ListItem';
@@ -9,6 +10,10 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { FixedSizeList } from 'react-window';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
+import { Button } from '@material-ui/core';
+import SaveIcon from '@material-ui/icons/Save';
+import CircularProgress from '@material-ui/core/CircularProgress';
+
 
 const useStyles = makeStyles((theme) => ({
   stockComponent: {
@@ -19,10 +24,23 @@ const useStyles = makeStyles((theme) => ({
   },
   listTitle: {
     margin: theme.spacing(1, 1, 1),
+    display: "inline-flex"
+  },
+  saveButton: {
+    marginLeft: "auto",
+    height: "36px",
+    width: "64px"
   },
   emptyText: {
     margin: theme.spacing(2, 0, 2),
     textAlign: 'center'
+  },
+  buttonProgress: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -12,
+    marginLeft: -12,
   }
 }));
 
@@ -30,24 +48,19 @@ const useStyles = makeStyles((theme) => ({
 function StockSelectedList(props) {
   const classes = useStyles();
 
-  const tempSelectedStocks = [{
-    'companyName':'Apple',
-    'companySymbol': 'Apple',
-    'companyId':'Apple',
-  },
-  {
-    'companyName':'BANANA',
-    'companySymbol': 'BANANA',
-    'companyId':'BANANA',
+  const saveButtonOnClick = () => {
+    props.savePortfolio();
   }
-  ];
 
   const removeSelectedStock = (id) => {
     var selectedStocks = Array.from(props.selectedStocks);
     var index = selectedStocks.findIndex(x => x.companyId === id);
     if (index !== -1) {
       selectedStocks.splice(index, 1);
-      props.setSelectedStocks(selectedStocks);
+      var newPortfolioStocks = selectedStocks.map(function(item, index, array){
+        return item.companySymbol;
+      });
+      props.setSelectedStocks(newPortfolioStocks);
     }
   };
 
@@ -78,10 +91,24 @@ function StockSelectedList(props) {
   };
 
   return (
-    <Box className={classes.stockComponent}>
-      <Typography variant="h6" className={classes.listTitle}>
-        Selected Stocks
-      </Typography>
+    <Box className={classes.stockComponent} component={Grid} container direction="column">
+      <Grid item className={classes.listTitle}>
+        <Typography variant="h6">
+          Stocks
+        </Typography>
+        <Button 
+          className={classes.saveButton} 
+          variant="outlined"
+          disabled={props.saveButtonLoading}
+          onClick={saveButtonOnClick}
+        >
+          {props.saveButtonLoading ?
+            <CircularProgress size={24} className={classes.buttonProgress} />
+          :
+            "Save"
+          }
+        </Button>
+      </Grid>
       <Divider></Divider>
       { props.selectedStocks.length > 0 ?
       <FixedSizeList

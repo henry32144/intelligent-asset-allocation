@@ -44,6 +44,6 @@ def news_to_json(company):
 
 	# pprint(result[0])
 	# return json.dumps(result) 
-	res = {"news":}
-	res['news'] = result
+	res = {}
+	res['data'] = result
 	return jsonify(res)

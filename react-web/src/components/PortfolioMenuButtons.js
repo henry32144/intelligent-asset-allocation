@@ -49,8 +49,14 @@ export default function PortfolioMenuButtons(props) {
     setOpen(false);
   };
 
-  const portfolioButtonOnClick = (id) => {
+  const portfolioButtonOnClick = (e, id) => {
+    props.setCurrentSelectedPortfolio(id);
     console.log(id);
+    var portfolioStocks = props.userPortfolios.find(function(item, index, array){
+      return item.portfolioId === id;
+    }).portfolioStocks;
+    props.setSelectedStocks(portfolioStocks);
+    handleClose(e)
   }
 
   const createPortfolioOnClick = (e) => {
@@ -82,7 +88,7 @@ export default function PortfolioMenuButtons(props) {
 
 
   const portfolioMenuItems = props.userPortfolios.map((portfolio) =>
-    <MenuItem key={portfolio.portfolioId.toString()} onClick={() => {portfolioButtonOnClick(portfolio.portfolioId)}}>
+    <MenuItem key={portfolio.portfolioId.toString()} onClick={(e) => {portfolioButtonOnClick(e, portfolio.portfolioId)}}>
       <Typography variant="inherit" noWrap>
         {portfolio.portfolioName}
       </Typography>
@@ -108,7 +114,13 @@ export default function PortfolioMenuButtons(props) {
         onClick={handlePortfolioToggle}
       >
         <Typography variant="inherit" noWrap>
-          My Portfolios
+          { props.currentSelectedPortfolio == undefined || props.userPortfolios.length == 0 ?
+            "My Portfolios"
+            :
+            props.userPortfolios.find(function(item, index, array){
+              return item.portfolioId === props.currentSelectedPortfolio;
+            }).portfolioName
+          }
         </Typography>
       </Button>
       <Popper

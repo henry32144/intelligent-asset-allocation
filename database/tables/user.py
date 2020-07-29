@@ -19,11 +19,6 @@ class User(db.Model):
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
-        self.user_name = user_name
-        self.user_email = user_email
-        self.user_password = user_password
-        self.user_style = user_style
-        self.user_company_selection = concat_company(user_company_selection)
 
 
     def __repr__(self):
