@@ -97,7 +97,7 @@ class ReutersDataset(Dataset):
         }
 
 
-def create_dataloader(df, tokenizer, max_len, top_k, batch_size):
+def create_dataloader(df, tokenizer, max_len, top_k, batch_size, shuffle=True):
     dataset = ReutersDataset(
         df=df,
         tokenizer=tokenizer,
@@ -107,7 +107,7 @@ def create_dataloader(df, tokenizer, max_len, top_k, batch_size):
     return DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=True,
+        shuffle=shuffle,
         num_workers=0)
 
 
