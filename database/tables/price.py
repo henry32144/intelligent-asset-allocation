@@ -73,6 +73,7 @@ def save_history_stock_price_to_db(sp500_file="./database/tables/sp500tickers.pk
         stock_list = []
         try:
             df = web.DataReader(ticker, 'yahoo', start, end)
+            print(ticker ,'found')
             # df = web.get_data_yahoo(ticker, start=start, end = end)
             df.reset_index(inplace=True)
 
@@ -82,7 +83,7 @@ def save_history_stock_price_to_db(sp500_file="./database/tables/sp500tickers.pk
                                                 row['Close'], row['Volume'], row['Adj Close'], ticker))
             
         except:
-            print(ticker + 'none')
+            print(ticker + ' not found')
             print('Get Nothing.')
 
         db.session.add_all(stock_list)

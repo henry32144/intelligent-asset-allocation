@@ -129,7 +129,7 @@ def test():
     all_weights = marko.get_all_weights()
     # all_values, all_return = marko.get_backtest_result()
 
-    print('all_weights:', all_weights)
+    print('all_weights:', len(all_weights))
     # print('all_values:', all_values)
     # print('all_return:', all_return)
 
