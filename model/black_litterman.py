@@ -9,7 +9,8 @@ import scipy
 from pandas_datareader import data
 import matplotlib.pyplot as plt
 
-class Markowitz(object):
+
+class Black_Litterman(object):
     def __init__(self, selected_tickers):
         self.selected_tickers = selected_tickers
 
@@ -75,6 +76,7 @@ class Markowitz(object):
 
         return prices_list, market_caps
 
+
     def assets_historical_returns_covariances(self, prices_list):
         all_exp_returns = []
         all_covars = []
@@ -117,74 +119,29 @@ class Markowitz(object):
 
     def portfolioMeanVar(self, W, R, C):
         return self.portfolioMean(W, R), self.portfolioVar(W, C)
-    
 
-    def solve_weights(self, R, C, rf):
-        def fitness(W, R, C, rf):
-            mean, var = self.portfolioMeanVar(W, R, C)
-            sharp_ratio = (mean - rf) / np.sqrt(var)  # sharp ratio
-            return 1 / sharp_ratio
+
+    def calculate_reverse_pi(self, W, all_R, all_C):
+        reverse_pi = []
+        rf = 0.015
+
+        for i in range(len(all_R)):
+            mean, var = self.portfolioMeanVar(W, all_R[i], all_C[i])
+            lmb = (mean - rf) / var  # Calculate risk aversion
+            temp = np.dot(lmb, all_C[i])
+            Pi = np.dot(temp, W)
+            reverse_pi.append(Pi)
+
+        return reverse_pi
+
+    def get_predicted_Q(self):
         
-        n = len(R)
-        W = np.ones([n]) / n
-        b_ = [(0., 1.) for i in range(n)]
-        c_ = ({'type': 'eq', 'fun': lambda W: sum(W) - 1.})
-        optimized = scipy.optimize.minimize(fitness, W, (R, C, rf), method='SLSQP', constraints=c_, bounds=b_)
-        return optimized.x
 
 
     def get_all_weights(self):
-        prices_list, _ = self.prepare_input()
+        prices_list, W = self.prepare_input() # W: market capitalization
         all_R, all_C = self.assets_historical_returns_covariances(prices_list)
-
-        all_weights = []
-        length = len(all_R)
-        rf = 0.015
-
-        for i in tqdm(range(length)):
-            weight = list(self.solve_weights(all_R[i], all_C[i], rf))
-            all_weights.append(weight)
-        
-        self.weights = all_weights
-        return all_weights
+        reverse_pi = self.calculate_reverse_pi(W, all_R, all_C)
 
 
-    def get_backtest_result(self):
-        # get testing section stock price data
-        log_return_df = pd.DataFrame({})
 
-        for ticker in self.selected_tickers:
-            _, test_df = self.read_stock_file(ticker)
-
-            # add log return col for calculate the performance
-            price = test_df['adj_close']
-            log_return = np.log(price) - np.log(price.shift(1))
-            log_return_df = pd.concat([log_return_df, log_return], axis=1)
-
-        log_return_df = log_return_df.iloc[1:, :]
-        log_return_df.columns = self.selected_tickers
-
-        # calculate the whole portfolio performance
-        length = len(log_return_df)
-        total_value = 1
-        all_values = []
-        all_return = []
-
-        for i in range(length):
-            portfolio_weights = self.weights[i]
-            returns = log_return_df.iloc[i, :].values
-            portfolio_return = sum(portfolio_weights * returns)
-            total_value = total_value * (1+portfolio_return)
-            
-            all_values.append(total_value)
-            all_return.append(portfolio_return)
-
-
-        return all_values, all_return
-
-        
-
-    
-
-    
-        

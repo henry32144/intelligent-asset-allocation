@@ -51,6 +51,9 @@ def save_history_stock_price_to_db(sp500_file):
     with open(sp500_file, 'rb') as f:
         tickers = pickle.load(f)
 
+    # add S&P 500 index
+    tickers.append('^GSPC')
+
     # get the history stock price
     start = dt.datetime(2012, 1, 1)
     end = dt.datetime(2020, 7, 1)
