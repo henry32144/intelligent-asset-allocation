@@ -13,7 +13,7 @@ import numpy as np
 import os
 import pandas as pd
 import re
-import spacy
+
 import pysentiment as ps
 from tqdm import tqdm
 from database.tables.crawling_data import CrawlingData
@@ -22,8 +22,6 @@ import json
 from pprint import pprint
 from sqlalchemy import Column, Integer, String, DateTime, Date
 from datetime import datetime,timedelta
-
-
 
 class KeysentGetter():
 	def __init__(self):
@@ -81,9 +79,6 @@ class KeysentGetter():
 		    self.polarity.append(po)
 		# print(self.doc[0])
 		# print(self.title_polarity)
-	def plot_hist(self):
-	 	plt.hist(self.polarity)
-	 	plt.show()
 
 	def get_jaccard_sim(self, str1, str2): 
 	    a = set(str1.split()) 

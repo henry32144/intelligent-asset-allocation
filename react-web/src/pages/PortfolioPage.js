@@ -2,9 +2,12 @@ import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import MessageDialog from '../components/MessageDialog'
+import CreatePortfolioDialog from '../components/CreatePortfolioDialog'
 import StockSelectSection from '../views/StockSelectSection'
 import PortfolioToolBar from '../components/PortfolioToolBar'
-import { motion, AnimatePresence } from "framer-motion"
+import NewsSection from '../views/NewsSection'
+import Typography from '@material-ui/core/Typography';
+import { motion } from "framer-motion"
 import { BASEURL } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
@@ -25,19 +28,30 @@ const useStyles = makeStyles((theme) => ({
   },
   portfolioContent: {
     flex: 'auto'
+  },
+  companyName: {
+    margin: theme.spacing(4, 0, 2),
+  },
+  sideBar: {
+    zIndex: 1400,
   }
 }));
 
-function PortfolioPage() {
+function PortfolioPage(props) {
   const classes = useStyles();
 
   const [companyData, setCompanyData] = React.useState([]);
+  const [companyDataMapping, setCompanyDataMapping] = React.useState({});
+  const [userPortfolios, setUserPortfolios] = React.useState([]); 
   const [selectedStocks, setSelectedStocks] = React.useState([]);
   const [dataLoaded, setDataLoaded] = React.useState(false);
-  const [isSideBarExpanded, setSideBarExpand] = React.useState(true);
+  const [isSideBarExpanded, setSideBarExpand] = React.useState(false);
   const [isMessageDialogOpen, setMessageDialogOpen] = React.useState(false);
-  const [dialogTitle, setDialogTitle] = React.useState("Error");
+  const [isCreatePortfolioDialogOpen, setCreatePortfolioDialogOpen] = React.useState(false);
+  const [dialogTitle, setDialogTitle] = React.useState("");
   const [dialogMessage, setDialogMessage] = React.useState("");
+  const [currentSelectedPortfolio, setCurrentSelectedPortfolio] = React.useState(null);
+  const [currentSelectedStock, setCurrentSelectedStock] = React.useState("APPL");
 
   const sideBarTransitions = {
     open: {
@@ -64,6 +78,14 @@ function PortfolioPage() {
     setMessageDialogOpen(false);
   };
 
+  const handleCreatePortfolioDialogOpen = () => {
+    setCreatePortfolioDialogOpen(true);
+  };
+
+  const handleCreatePortfolioDialogClose = () => {
+    setCreatePortfolioDialogOpen(false);
+  };
+
   const getCompanyData = async (e) => {
     const request = {
       method: 'GET',
@@ -76,17 +98,17 @@ function PortfolioPage() {
       if (response.ok) {
         const jsonData = await response.json();
         if (jsonData.isSuccess) {
-          setDataLoaded(true);
           setCompanyData(jsonData.data);
-          console.log(jsonData.data[0]);
+          var newCompanyDataMapping = {}
+          for(var i = 0; i < jsonData.data.length; i++) {
+            newCompanyDataMapping[jsonData.data[i].symbol] = jsonData.data[i]
+          }
         } else {
           alert(jsonData.errorMsg);
-          setDataLoaded(false);
         }
       }
     }
     catch (err) {
-      setDataLoaded(false);
       console.log('Fetch company data failed', err);
     }
     finally {
@@ -94,9 +116,60 @@ function PortfolioPage() {
     }
   };
 
+  const getUserPortfolio = async (e) => {
+    if (props.userData.userId != undefined) {
+      const request = {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          'userId': props.userData.userId,
+        })
+      }
+      try {
+        console.log("Try to get user portfolio data");
+        //setLoading(true);
+        const response = await fetch(BASEURL + "/portfolio", request)
+        if (response.ok) {
+          const jsonData = await response.json();
+          if (jsonData.isSuccess) {
+            setDataLoaded(true);
+            console.log(jsonData.data)
+            var newPortfolios = []
+            for (var i = 0; i < jsonData.data.length; i++) {
+              var newPortfolio = {
+                "portfolioId": jsonData.data[i].id,
+                "userId": jsonData.data[i].user_id,
+                "portfolioName": jsonData.data[i].portfolio_name,
+                "portfolioStocks": jsonData.data[i].portfolio_stocks,
+              };
+              newPortfolios.push(newPortfolio);
+            }
+            console.log(newPortfolios);
+            setUserPortfolios(newPortfolios);
+            console.log(jsonData.data[0]);
+          } else {
+            alert(jsonData.errorMsg);
+            setDataLoaded(false);
+          }
+        }
+      }
+      catch (err) {
+        setDataLoaded(false);
+        console.log('Fetch company data failed', err);
+      }
+      finally {
+        //setLoading(false);
+      }
+    }
+  };
+
   React.useEffect(() => {
     if (!dataLoaded) {
       getCompanyData();
+      getUserPortfolio();
     }
   }, [dataLoaded]);
 
@@ -109,29 +182,53 @@ function PortfolioPage() {
         message={dialogMessage}
       >
       </MessageDialog>
+      <CreatePortfolioDialog
+        isOpen={isCreatePortfolioDialogOpen}
+        handleClose={handleCreatePortfolioDialogClose}
+        userPortfolios={userPortfolios}
+        setUserPortfolios={setUserPortfolios}
+        setCurrentSelectedPortfolio={setCurrentSelectedPortfolio}
+        userData={props.userData}
+      >
+      </CreatePortfolioDialog>
       <PortfolioToolBar
         selectedStocks={selectedStocks}
         setSelectedStocks={setSelectedStocks}
         companyData={companyData}
+        setDialogTitle={setDialogTitle}
         setDialogMessage={setDialogMessage}
         isSideBarExpanded={isSideBarExpanded}
         setSideBarExpand={setSideBarExpand}
         openMessageDialog={handleMessageDialogOpen}
+        userPortfolios={userPortfolios}
+        setUserPortfolios={setUserPortfolios}
+        currentSelectedPortfolio={currentSelectedPortfolio}
+        setCurrentSelectedPortfolio={setCurrentSelectedPortfolio}
+        handleCreatePortfolioDialogOpen={handleCreatePortfolioDialogOpen}
+        userData={props.userData}
       >
       </PortfolioToolBar>
       <motion.div
-        className="side-bar"
+        className={classes.sideBar}
+        initial={'closed'}
         animate={isSideBarExpanded ? "open" : "closed"}
         variants={sideBarTransitions}
       >
         <StockSelectSection
           selectedStocks={selectedStocks}
           setSelectedStocks={setSelectedStocks}
+          currentSelectedStock={currentSelectedStock}
+          setCurrentSelectedStock={setCurrentSelectedStock}
         >
         </StockSelectSection>
       </motion.div>
-      <Grid item container direction="row" justify="flex-start" alignItems="stretch" className={classes.portfolioContent}>
-        <Grid item >
+      <Grid item container direction="row" justify="center" alignItems="stretch" className={classes.portfolioContent}>
+        <Grid item xs={6}>
+          <Typography className={classes.companyName}  variant="h5">
+            Apple Inc.
+          </Typography>
+          <NewsSection>
+          </NewsSection>
         </Grid>
       </Grid>
     </div>

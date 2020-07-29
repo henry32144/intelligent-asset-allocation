@@ -34,6 +34,15 @@ export default function PortfolioToolBar(props) {
         <PortfolioMenuButtons
           isSideBarExpanded={props.isSideBarExpanded}
           setSideBarExpand={props.setSideBarExpand}
+          userPortfolios={props.userPortfolios}
+          setUserPortfolios={props.setUserPortfolios}
+          currentSelectedPortfolio={props.currentSelectedPortfolio}
+          setCurrentSelectedPortfolio={props.setCurrentSelectedPortfolio}
+          handleCreatePortfolioDialogOpen={props.handleCreatePortfolioDialogOpen}
+          setDialogTitle={props.setDialogTitle}
+          setDialogMessage={props.setDialogMessage}
+          openMessageDialog={props.openMessageDialog}
+          userData={props.userData}
         >
         </PortfolioMenuButtons>
         <Hidden smUp>
@@ -48,6 +57,7 @@ export default function PortfolioToolBar(props) {
             selectedStocks={props.selectedStocks} 
             setSelectedStocks={props.setSelectedStocks}
             companyData={props.companyData}
+            setDialogTitle={props.setDialogTitle}
             setDialogMessage={props.setDialogMessage}
             openMessageDialog={props.openMessageDialog}
           >

@@ -113,10 +113,10 @@ def get_predicted_Q():
         Q_predict_dict[tick].append(predicted_price)
         real_price_dict[tick].append(real_stock_price)
 
-    with open('predict_dict', 'wb') as f:
+    with open('predict_dict.pkl', 'wb') as f:
         pickle.dump(Q_predict_dict, f)
 
-    with open('real_price_dict', 'wb') as f:
+    with open('real_price_dict.pkl', 'wb') as f:
         pickle.dump(real_price_dict, f)
 
     return ''
