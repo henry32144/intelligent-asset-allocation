@@ -81,7 +81,7 @@ export default function TopNavBar(props) {
           </Button>
           <section className={classes.rightButtons}>
             {
-              props.userData.userEmail == undefined
+              props.userData.userEmail === undefined
                 ?
                 <Button color="inherit" onClick={(e) => { handleLoginDialogOpen() }}>
                   Login
