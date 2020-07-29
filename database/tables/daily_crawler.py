@@ -11,12 +11,25 @@ from tqdm import tqdm
 import pandas as pd
 
 
+#https://www.reuters.com/search/news?blob=
+
+
+class ArticleGetter:
+    def __init__(self, base_url, query=""):
+        self.base_url = base_url
+        self.search_url = base_url + query + '&sortBy=date&dateRange=all'
+    def get_daily_news(self, query):
+        # get our search webpage
+        search_url = self.base_url + query + '&sortBy=date&dateRange=all'
+
+
 class ArticleGetter:
     def __init__(self, query):
         self.url = 'https://www.reuters.com/search/news?blob='
         self.query = query
         
     def get_daily_news(self):
+
         # script = 'which Chrome'
         # a = os.system(script)
         # driver = webdriver.Chrome('C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe')
