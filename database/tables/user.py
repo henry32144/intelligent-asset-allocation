@@ -8,6 +8,7 @@ user_style:
     2 : passive
 '''
 
+#cccc
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(80), nullable=False)
