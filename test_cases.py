@@ -100,7 +100,6 @@ def get_news():
 
 
 
-
 @test_cases.route('/get_stock_price')
 def get_predicted_Q():
     with open('./model/sp500tickers.pkl', 'rb') as f:

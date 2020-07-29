@@ -38,6 +38,8 @@ def company_name2dict():
     f.close()
     return _dict
 
+
+
 def crawl_sp500_info():
     sp500_wiki_url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
     resp = requests.get(sp500_wiki_url)
