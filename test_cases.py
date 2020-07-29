@@ -123,7 +123,7 @@ def get_predicted_Q():
 
 @test_cases.route('/test')
 def test():
-    selected_tickers = ['GOOG', 'AAPL', 'MSFT', 'BLK', 'KO', 'NKE']
+    selected_tickers = ['GOOG', 'AAPL', 'MSFT', 'BLK', 'KO']
     marko = Markowitz(selected_tickers)
     all_weights = marko.get_all_weights()
     # all_values, all_return = marko.get_backtest_result()
