@@ -41,7 +41,7 @@ class StockPrice(db.Model):
         return cls.query.filter_by(comp=comp).all()
 
 
-def save_history_stock_price_to_db(sp500_file):
+def save_history_stock_price_to_db(sp500_file="./database/tables/sp500tickers.pkl"):
     """
         The goal of the function is read the list of S&P500 from wiki (a pickle file).
         Then, get the history stock price through Yahoo Finance API.

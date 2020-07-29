@@ -82,7 +82,7 @@ export default function PortfolioMenuButtons(props) {
 
 
   const portfolioMenuItems = props.userPortfolios.map((portfolio) =>
-    <MenuItem key={portfolio.protfolioId.toString()} onClick={() => {portfolioButtonOnClick(portfolio.protfolioId)}}>
+    <MenuItem key={portfolio.portfolioId.toString()} onClick={() => {portfolioButtonOnClick(portfolio.portfolioId)}}>
       <Typography variant="inherit" noWrap>
         {portfolio.portfolioName}
       </Typography>

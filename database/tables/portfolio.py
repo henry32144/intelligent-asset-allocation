@@ -4,7 +4,7 @@ from database.database import db
 class Portfolio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
-    portfolio_name = db.Column(db.String(80), nullable=False),
+    portfolio_name = db.Column(db.String, nullable=False)
     portfolio_stocks = db.Column(db.String, nullable=False)
 
     def __init__(self, **kwargs):

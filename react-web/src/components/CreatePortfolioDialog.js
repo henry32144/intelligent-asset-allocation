@@ -83,22 +83,22 @@ export default function CreatePortfolioDialog(props) {
           'userId': props.userData.userId,
         })
       }
-
       try {
         setLoading(true);
         const response = await fetch(BASEURL + "/portfolio/create", request)
         if (response.ok) {
           const jsonData = await response.json();
+          console.log(jsonData);
           if (jsonData.isSuccess) {
             // get create object
-            newPortfolio = {
-              'portfolioId': jsonData.id,
-              'user_id': jsonData.user_id,
-              'portfolio_name': jsonData.portfolio_name,
-              'portfolio_stocks': jsonData.portfolio_stocks
+            var newPortfolio = {
+              'portfolioId': jsonData.data.id,
+              'userId': jsonData.data.user_id,
+              'portfolioName': jsonData.data.portfolio_name,
+              'portfolioStocks': jsonData.data.portfolio_stocks
             }
-            setCurrentSelectedPortfolio(jsonData.id);
-            setUserPortfolios([...userPortfolios, newPortfolio]);
+            props.setCurrentSelectedPortfolio(jsonData.data.id);
+            props.setUserPortfolios([...props.userPortfolios, newPortfolio]);
             props.handleClose();
           } else {
             setErrorMsg(jsonData.errorMsg);

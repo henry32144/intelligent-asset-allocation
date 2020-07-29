@@ -27,6 +27,7 @@ class Company(db.Model):
                 'company_name': self.company_name,
                 'industry': self.industry,
                 }
+                
 def company_name2dict():
     with open('./database/tables/ticker_name.txt', 'r') as f:
         _dict = {}

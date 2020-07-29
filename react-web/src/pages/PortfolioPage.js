@@ -41,6 +41,7 @@ function PortfolioPage(props) {
   const classes = useStyles();
 
   const [companyData, setCompanyData] = React.useState([]);
+  const [companyDataMapping, setCompanyDataMapping] = React.useState({});
   const [userPortfolios, setUserPortfolios] = React.useState([]); 
   const [selectedStocks, setSelectedStocks] = React.useState([]);
   const [dataLoaded, setDataLoaded] = React.useState(false);
@@ -68,13 +69,6 @@ function PortfolioPage(props) {
       }
     }
   };
-
-  // const userPortfolios = [{
-  //   "userId": 0,
-  //   "protfolioId": 0,
-  //   "portfolioName": "Default",
-  //   "portfolioStockIds": [0, 1, 2],
-  // },];
 
   const handleMessageDialogOpen = () => {
     setMessageDialogOpen(true);
@@ -104,9 +98,11 @@ function PortfolioPage(props) {
       if (response.ok) {
         const jsonData = await response.json();
         if (jsonData.isSuccess) {
-          console.log(jsonData.data.length)
           setCompanyData(jsonData.data);
-          console.log(jsonData.data[0]);
+          var newCompanyDataMapping = {}
+          for(var i = 0; i < jsonData.data.length; i++) {
+            newCompanyDataMapping[jsonData.data[i].symbol] = jsonData.data[i]
+          }
         } else {
           alert(jsonData.errorMsg);
         }
@@ -140,11 +136,19 @@ function PortfolioPage(props) {
           const jsonData = await response.json();
           if (jsonData.isSuccess) {
             setDataLoaded(true);
-            console.log(jsonData.data.length)
-            jsonData.data.forEach(function(item, index, array){
-              item.age = item.age + 1;
-            });
-            setUserPortfolios(jsonData.data);
+            console.log(jsonData.data)
+            var newPortfolios = []
+            for (var i = 0; i < jsonData.data.length; i++) {
+              var newPortfolio = {
+                "portfolioId": jsonData.data[i].id,
+                "userId": jsonData.data[i].user_id,
+                "portfolioName": jsonData.data[i].portfolio_name,
+                "portfolioStocks": jsonData.data[i].portfolio_stocks,
+              };
+              newPortfolios.push(newPortfolio);
+            }
+            console.log(newPortfolios);
+            setUserPortfolios(newPortfolios);
             console.log(jsonData.data[0]);
           } else {
             alert(jsonData.errorMsg);

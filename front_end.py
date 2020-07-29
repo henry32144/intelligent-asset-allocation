@@ -84,14 +84,11 @@ def get_user_portfolio():
         'isSuccess': False,
         'errorMsg': ""
     }
-    if len(result) > 0:
-        for r in result:
-            response['data'].append(r.to_json())
+    for r in result:
+        response['data'].append(r.to_json())
         
-        response['isSuccess'] = True
-    else:
-        response['errorMsg'] = "Get portfolio failed"
-    
+    response['isSuccess'] = True
+    print(response)
     return jsonify(response)
 
 @front_end.route("/portfolio/create", methods=['POST'])
@@ -100,17 +97,19 @@ def create_portfolio():
 
     new_portfolio = Portfolio(
         user_id=json_data.get("userId"),
-        portfolio_name=json_data.get("portfolioName"),
+        portfolio_name=str(json_data.get("portfolioName")),
         portfolio_stocks=''
     )
+
     db.session.add(new_portfolio)
     db.session.commit()
     db.session.refresh(new_portfolio)
 
-    print(new_portfolio.to_json())
+    print(new_portfolio.portfolio_name)
+
     response = {
-        'isSuccess': False,
-        'createdPortfolio': new_portfolio.to_json(),
+        'isSuccess': True,
+        'data': new_portfolio.to_json(),
         'errorMsg': ""
     }
     
