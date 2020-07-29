@@ -121,16 +121,19 @@ export default function LoginDialog(props) {
           const jsonData = await response.json();
           if (jsonData.isSuccess) {
             // Temp user name
+            const userId = jsonData.userId;
             const userName = "Steve";
             const userEmail = emailInput.current.value;
 
             props.setUserData({
+              userId: userId,
               userName: userName,
               userEmail: userEmail,
             });
 
             // Store user data into cookies
             const cookies = new Cookies();
+            cookies.set('userId', userId, { path: '/' });
             cookies.set('userName', userName, { path: '/' });
             cookies.set('userEmail', userEmail, { path: '/' });
             props.handleClose();

@@ -23,9 +23,13 @@ export default function StockListItem(props) {
     props.removeSelectedStock(props.companyId);
   };
 
+  const listItemOnClick = () => {
+    props.stockListItemOnclick(props.companySymbol);
+  };
+
 
   return (
-    <ListItem alignItems="flex-start">
+    <ListItem button alignItems="flex-start" onClick={listItemOnClick}>
       <ListItemText classes={{ primary: classes.listItemText }} primary={props.companyName} secondary={props.companySymbol} />
       <IconButton edge="end" aria-label="delete" onClick={deleteButtonOnClick}>
         <DeleteIcon />

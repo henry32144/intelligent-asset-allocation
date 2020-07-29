@@ -22,7 +22,12 @@ function StockSearchBox(props) {
   };
 
   const stockOnSelected = (event, newValue) => {
+    addStockToPortfolio(newValue);
+  };
+
+  const addStockToPortfolio = (newValue) => {
     if (selectedStocks.find(x => x.companyId === newValue.id_) != null) {
+      props.setDialogTitle("Error")
       props.setDialogMessage("The stock is already in the list");
       props.openMessageDialog();
     } else {
@@ -32,9 +37,11 @@ function StockSearchBox(props) {
         "companyId": newValue.id_
       };
       setSelectedStocks([...selectedStocks, newSelectedStock]);
+      props.setDialogTitle("Success")
+      props.setDialogMessage("Add " + newValue.company_name + " to your portfolio");
+      props.openMessageDialog();
     }
   };
-
 
   return (
     <div>
@@ -51,7 +58,7 @@ function StockSearchBox(props) {
         renderInput={(params) => (
           <TextField
             {...params}
-            label="Search company"
+            label="Add company"
             margin="normal"
             variant="outlined"
             InputProps={{ ...params.InputProps, type: 'search' }}
