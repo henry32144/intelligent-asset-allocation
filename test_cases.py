@@ -20,6 +20,7 @@ from model.get_news_keysent import KeysentGetter, test_url
 
 from model.predict_Q import predict_Q
 from model.markowitz import Markowitz
+from model.sp500 import SP500
 
 
 test_cases = Blueprint('test_cases', __name__)
@@ -134,5 +135,14 @@ def test():
     plt.plot(all_values, label='Mean-Var Portfolio')
     plt.show()
     # plt.savefig('markowitz.png')
+
+    return ''
+
+
+@test_cases.route('/test_sp500')
+def test_sp500():
+    sp_500 = SP500()
+    sp500_values, all_return = sp_500.get_backtest_result()
+    print(sp500_values)
 
     return ''
