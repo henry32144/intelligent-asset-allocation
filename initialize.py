@@ -10,5 +10,5 @@ def initialize():
     save_company()
     print("save_company")
   if len(StockPrice.query.limit(1).all()) == 0:
-    save_history_stock_price_to_db()
+    save_history_stock_price_to_db('./database/tables/sp500tickers.pkl')
     print("save_history_stock_price_to_db")
