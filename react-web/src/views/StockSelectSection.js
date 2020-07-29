@@ -18,6 +18,8 @@ const useStyles = makeStyles((theme) => ({
       width: '25vw',
     },
     position: "fixed",
+    zIndex: 1400,
+    background: 'white'
   },
 }));
 
@@ -28,7 +30,10 @@ export default function StockSelectSection(props) {
     <Box className={classes.root} boxShadow={1}>
       <StockSelectedList
         selectedStocks={props.selectedStocks}
-        setSelectedStocks={props.setSelectedStocks} />
+        setSelectedStocks={props.setSelectedStocks}
+        currentSelectedStock={props.currentSelectedStock}
+        setCurrentSelectedStock={props.setCurrentSelectedStock}
+      />
     </Box>
   );
 }

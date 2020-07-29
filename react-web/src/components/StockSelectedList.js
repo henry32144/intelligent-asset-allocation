@@ -7,6 +7,8 @@ import StockListItem from './StockListItem'
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { FixedSizeList } from 'react-window';
+import Typography from '@material-ui/core/Typography';
+import Divider from '@material-ui/core/Divider';
 
 const useStyles = makeStyles((theme) => ({
   stockComponent: {
@@ -15,11 +17,17 @@ const useStyles = makeStyles((theme) => ({
   listSubHeader: {
     textAlign: 'initial'
   },
+  listTitle: {
+    margin: theme.spacing(1, 1, 1),
+  },
+  emptyText: {
+    margin: theme.spacing(2, 0, 2),
+    textAlign: 'center'
+  }
 }));
 
 
 function StockSelectedList(props) {
-  const { selectedStocks } = props
   const classes = useStyles();
 
   const tempSelectedStocks = [{
@@ -43,6 +51,13 @@ function StockSelectedList(props) {
     }
   };
 
+  const stockListItemOnclick = (symbol) => {
+    console.log(symbol);
+    if (symbol === props.currentSelectedStock) {
+      props.setCurrentSelectedStock(symbol);
+    }
+  }
+
   const renderRow = (props) => {
     const { data, index, style } = props;
     const rowItem = data[index];
@@ -54,6 +69,7 @@ function StockSelectedList(props) {
             companySymbol={rowItem.companySymbol}
             companyId={rowItem.companyId}
             removeSelectedStock={removeSelectedStock}
+            stockListItemOnclick={stockListItemOnclick}
           >
           </StockListItem>
         }
@@ -63,14 +79,24 @@ function StockSelectedList(props) {
 
   return (
     <Box className={classes.stockComponent}>
+      <Typography variant="h6" className={classes.listTitle}>
+        Selected Stocks
+      </Typography>
+      <Divider></Divider>
+      { props.selectedStocks.length > 0 ?
       <FixedSizeList
         height={350}
         itemSize={60}
-        itemCount={tempSelectedStocks.length}
-        itemData={tempSelectedStocks}
+        itemCount={props.selectedStocks.length}
+        itemData={props.selectedStocks}
       >
         {renderRow}
       </FixedSizeList >
+      :
+      <Typography className={classes.emptyText}>
+        This portfolio is empty
+      </Typography>
+      }
     </Box>
   );
 }
