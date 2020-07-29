@@ -47,6 +47,7 @@ function App() {
     userEmail: cookies.get('userEmail'),
   });
 
+  console.log(userData);
   return (
     <div className={classes.root}>
       <TopNavBar userData={userData} setUserData={setUserData}></TopNavBar>
