@@ -18,7 +18,7 @@ function StockSearchBox(props) {
   const { additionalStyles, companyData, selectedStocks, setSelectedStocks } = props
   const classes = useStyles();
   const filterOptions = (options, { inputValue }) => {
-    return matchSorter(options, inputValue, { keys: ['company_name', 'symbol'] }).slice(0, 10);
+    return matchSorter(options, inputValue, { keys: ['companyName', 'companySymbol'] }).slice(0, 10);
   };
 
   const stockOnSelected = (event, newValue) => {
@@ -26,19 +26,18 @@ function StockSearchBox(props) {
   };
 
   const addStockToPortfolio = (newValue) => {
-    if (selectedStocks.find(x => x.companyId === newValue.id_) != null) {
+    console.log(newValue)
+    if (selectedStocks.find(x => x.companyId === newValue.companyId) != null) {
       props.setDialogTitle("Error")
       props.setDialogMessage("The stock is already in the list");
       props.openMessageDialog();
     } else {
-      const newSelectedStock = {
-        "companyName": newValue.company_name,
-        "companySymbol": newValue.symbol,
-        "companyId": newValue.id_
-      };
-      setSelectedStocks([...selectedStocks, newSelectedStock]);
+      var newPortfolioStocks = selectedStocks.map(function(item, index, array){
+        return item.companySymbol;
+      });
+      setSelectedStocks([...newPortfolioStocks, newValue.companySymbol]);
       props.setDialogTitle("Success")
-      props.setDialogMessage("Add " + newValue.company_name + " to your portfolio");
+      props.setDialogMessage("Add " + newValue.companyName + " to your portfolio");
       props.openMessageDialog();
     }
   };
@@ -53,7 +52,7 @@ function StockSearchBox(props) {
         size="small"
         onChange={stockOnSelected}
         options={companyData}
-        getOptionLabel={(option) => option.company_name}
+        getOptionLabel={(option) => option.companyName}
         filterOptions={filterOptions}
         renderInput={(params) => (
           <TextField

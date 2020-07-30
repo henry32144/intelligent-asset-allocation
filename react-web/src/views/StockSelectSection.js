@@ -33,6 +33,8 @@ export default function StockSelectSection(props) {
         setSelectedStocks={props.setSelectedStocks}
         currentSelectedStock={props.currentSelectedStock}
         setCurrentSelectedStock={props.setCurrentSelectedStock}
+        savePortfolio={props.savePortfolio}
+        saveButtonLoading={props.saveButtonLoading}
       />
     </Box>
   );

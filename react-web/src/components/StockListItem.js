@@ -24,6 +24,7 @@ export default function StockListItem(props) {
   };
 
   const listItemOnClick = () => {
+    console.log(props.companySymbol);
     props.stockListItemOnclick(props.companySymbol);
   };
 

@@ -13,10 +13,12 @@ import Cookies from 'universal-cookie';
 const useStyles = makeStyles((theme) => ({
   root: {
     display: 'flex',
-    
   },
   accountButton: {
     color: 'inherit'
+  },
+  popperStyle: {
+    zIndex: '1400',
   }
 }));
 
@@ -39,16 +41,19 @@ export default function NavBarAccountButton(props) {
 
   const logoutButtonOnClick = (e) => {
     props.setUserData({
+      userId: null,
       userName: null,
       userEmail: null,
     });
 
     // Remove user data from cookies
     const cookies = new Cookies();
-    cookies.remove('userName');
-    cookies.remove('userEmail');
+    cookies.remove('userId', { path: '/' });
+    cookies.remove('userName', { path: '/' });
+    cookies.remove('userEmail', { path: '/' });
 
     handleClose(e)
+    window.location.reload(false);
   };
 
   function handleListKeyDown(event) {
@@ -80,13 +85,19 @@ export default function NavBarAccountButton(props) {
           onClick={handleToggle}
         >
           {
-            cookies.get('userName') == undefined ? 
+            props.userData.userName == undefined ? 
               "Account"
             : 
-            cookies.get('userName')
+            props.userData.userName
           }
         </Button>
-        <Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
+        <Popper 
+          className={classes.popperStyle} 
+          open={open} 
+          anchorEl={anchorRef.current} 
+          role={undefined} 
+          transition 
+          disablePortal>
           {({ TransitionProps, placement }) => (
             <Grow
               {...TransitionProps}

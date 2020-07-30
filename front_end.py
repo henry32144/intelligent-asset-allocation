@@ -25,6 +25,7 @@ def user_login():
         if result.user_password == json_data.get("userPassword"):
             response['isSuccess'] = True
             response['userId'] = result.id
+            response['userName'] = result.user_name
     else:
         response['errorMsg'] = "User not found"
     
@@ -95,6 +96,8 @@ def get_user_portfolio():
 def create_portfolio():
     json_data = request.get_json()
 
+
+
     new_portfolio = Portfolio(
         user_id=json_data.get("userId"),
         portfolio_name=str(json_data.get("portfolioName")),
@@ -112,5 +115,27 @@ def create_portfolio():
         'data': new_portfolio.to_json(),
         'errorMsg': ""
     }
+    
+    return jsonify(response)
+
+@front_end.route("/portfolio/save", methods=['POST'])
+def save_portfolio():
+    json_data = request.get_json()
+    print(json_data)
+    response = {
+        'isSuccess': False,
+        'errorMsg': ""
+    }
+    try:
+        portfolio_id = json_data.get("portfolioId")
+        result = Portfolio.query.filter_by(id=portfolio_id).first()
+        portfolio_stocks = json_data.get("portfolioStocks", [''])
+        portfolio_stocks_str = "%%".join(portfolio_stocks)
+        result.portfolio_stocks = portfolio_stocks_str
+        print(result)
+        db.session.commit()
+        response['isSuccess'] = True
+    except Exception as e:
+        response['errorMsg'] = str(e)
     
     return jsonify(response)
