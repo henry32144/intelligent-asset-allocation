@@ -56,6 +56,7 @@ export default function PortfolioMenuButtons(props) {
       return item.portfolioId === id;
     }).portfolioStocks;
     props.setSelectedStocks(portfolioStocks);
+    props.setSideBarExpand(true);
     handleClose(e)
   }
 
