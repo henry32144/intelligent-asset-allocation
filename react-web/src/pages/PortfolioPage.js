@@ -257,6 +257,15 @@ function PortfolioPage(props) {
         if (response.ok) {
           const jsonData = await response.json();
           if (jsonData.isSuccess) {
+            
+            var tempNewPortfolios = Array.from(userPortfolios);
+            tempNewPortfolios.forEach(function(item, index, array){
+              if (item.portfolioId == currentSelectedPortfolio) {
+                item.portfolioStocks = currentPortfolioStocks;
+              }
+            });
+            console.log(tempNewPortfolios);
+            setUserPortfolios(tempNewPortfolios);
             setDialogTitle("Success")
             setDialogMessage("Portfolio has been updated!");
             handleMessageDialogOpen();
