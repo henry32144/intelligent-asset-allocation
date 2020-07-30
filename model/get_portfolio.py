@@ -1,12 +1,12 @@
 from markowitz import Markowitz
 from database.tables.user import User, get_companys
 from database.tables.company import Company
+from database.tables.portfolio import Portfolio
 
-
-def return_portfolio(mode = 'basic', user_name ):
+def return_portfolio(mode = 'basic', user_id, portfolio_id ):
 	if (mode == 'basic'):
-		data = User.query.filter_by( user_name = user_name ).first()
-		companys = get_companys(data.user_company_selection)
+		data = Portfolio.query.filter(and_(user_id == user_id, portfolio_name == portfolio_id)  )
+		companys = get_companys(data.portfolio_stocks)
 		marko = Markowitz(companys)
 	    all_weights = marko.get_all_weights()
 	    all_values, all_return = marko.get_backtest_result()
