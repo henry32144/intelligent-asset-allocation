@@ -86,7 +86,9 @@ def crawl_sp500_info():
     #         symbol.append( row[0] )
     #         company.append(stock_dict[ row[0] ])
     #         industry.append(row[2])
-
+    symbol.append('^GSPC')
+    company.append('sp500_index')
+    industry.append('all')
     cool_df = pd.DataFrame({
         'symbol' : symbol,
         'company':company,
