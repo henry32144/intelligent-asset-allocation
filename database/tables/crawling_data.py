@@ -42,7 +42,8 @@ def daily_update():
 		querys.append( c.company_name )
 	article_getter = ArticleGetter(base_url)
 	for q in querys:
-		df = article_getter.get_daily_news(q)
+		article_getter = ArticleGetter(q)
+		df = article_getter.get_daily_news()
 		_lst = []
 		for index, row in df.iterrows():
 			_lst.append(CrawlingData(news_title=row['title'], date=row['time'], company=q, url=row['url']))
