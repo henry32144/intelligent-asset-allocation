@@ -32,9 +32,11 @@ class ArticleGetter:
 
         # script = 'which Chrome'
         # a = os.system(script)
-        # driver = webdriver.Chrome('C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe')
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--headless')
+        driver = webdriver.Chrome('C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe', options=chrome_options)
 
-        driver = webdriver.Chrome('/Users/samhsia/intelligent-asset-allocation/database/tables/chromedriver')
+        #driver = webdriver.Chrome('/Users/samhsia/intelligent-asset-allocation/database/tables/chromedriver')
         driver.get(self.url)
 
         input_field = driver.find_element_by_id('newsSearchField')
@@ -59,7 +61,7 @@ class ArticleGetter:
         urls = []
         for div in divs:
             time = div.find('div', class_='MarketStoryItem-footer-1SCZA').text
-            if "hour" in time: 
+            if "hour" in time or "a" in time or "2" in time or "3" in time: 
                 try:
                     link = div.find('a', class_='TextLabel__text-label___3oCVw TextLabel__black-to-orange___23uc0 TextLabel__medium___t9PWg MarketStoryItem-headline-2cgfz')['href']
                     urls.append(link)
@@ -96,7 +98,7 @@ class ArticleGetter:
             'query': query,
             'url': urls
         })
-
+        driver.close()
         return article_df
 
 
