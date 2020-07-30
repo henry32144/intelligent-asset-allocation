@@ -13,7 +13,7 @@ import pandas as pd
 
 #https://www.reuters.com/search/news?blob=
 
-aaa
+
 # class ArticleGetter:
 #     def __init__(self, base_url, query=""):
 #         self.base_url = base_url
