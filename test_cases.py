@@ -5,6 +5,7 @@ import os
 import pickle
 from tqdm import tqdm
 from collections import defaultdict
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 from flask import Blueprint, abort, request, render_template
@@ -13,6 +14,7 @@ from database.database import db
 from database.tables.crawling_data import CrawlingData, read_csv, daily_update
 from database.tables.price import StockPrice, save_history_stock_price_to_db, update_daily_stock_price
 from database.tables.company import Company, crawl_sp500_info, save_company
+from database.tables.volatility import Volatility
 
 from database.tables.output_news import OutputNews, news_to_json
 from model.get_news_keysent import KeysentGetter, test_url
@@ -20,6 +22,7 @@ from model.get_news_keysent import KeysentGetter, test_url
 
 from model.predict_Q import predict_Q
 from model.markowitz import Markowitz
+from model.sp500 import SP500
 
 
 test_cases = Blueprint('test_cases', __name__)
@@ -121,18 +124,48 @@ def get_predicted_Q():
 
 @test_cases.route('/test')
 def test():
-    selected_tickers = ['MMM', 'CLX', 'MS']
+    selected_tickers = ['GOOG', 'AAPL', 'MSFT', 'BLK', 'KO']
     marko = Markowitz(selected_tickers)
     all_weights = marko.get_all_weights()
-    all_values, all_return = marko.get_backtest_result()
+    # all_values, all_return = marko.get_backtest_result()
 
-    print('all_weights:', all_weights)
-    print('all_values:', all_values)
-    print('all_return:', all_return)
+    print('all_weights:', len(all_weights))
+    # print('all_values:', all_values)
+    # print('all_return:', all_return)
 
-    matplotlib.use('agg')
-    plt.plot(all_values, label='Mean-Var Portfolio')
-    plt.show()
+    # matplotlib.use('agg')
+    # plt.plot(all_values, label='Mean-Var Portfolio')
+    # plt.show()
     # plt.savefig('markowitz.png')
 
+    return ''
+
+
+@test_cases.route('/test_sp500')
+def test_sp500():
+    sp_500 = SP500()
+    sp500_values, all_return = sp_500.get_backtest_result()
+
+    return ''
+
+
+@test_cases.route('/volatility')
+def calculate_volatility():
+    sp_99 = []
+    with open('./database/tables/ticker_name.txt', 'r') as f:
+        lines = f.readlines()
+        for l in lines:
+            c = l.split('\t')
+            c[1] = c[1].replace('\n','')
+            c[1] = c[1].replace(' ','')
+            sp_99.append(c[1])
+
+    all_sharpe_ratio = {}
+    for tick in sp_99:
+        vol = Volatility(tick)
+        sharpe = vol.calculate_sharpe_ratio()
+        all_sharpe_ratio[tick] = sharpe
+    
+    print(all_sharpe_ratio)
+    
     return ''

@@ -7,7 +7,7 @@ import datetime as dt
 from tqdm import tqdm
 import pandas as pd
 import pandas_datareader.data as web
-
+import yfinance as yf
 
 class StockPrice(db.Model):
     __tablename__ = 'price'
@@ -51,17 +51,30 @@ def save_history_stock_price_to_db(sp500_file="./database/tables/sp500tickers.pk
     with open(sp500_file, 'rb') as f:
         tickers = pickle.load(f)
 
+    sp_99 = []
+    with open('./database/tables/ticker_name.txt', 'r') as f0:
+        lines = f0.readlines()
+        for l in lines:
+            c = l.split('\t')
+            c[1] = c[1].replace('\n','')
+            c[1] = c[1].replace(' ','')
+            sp_99.append(c[1])
     # add S&P 500 index
-    tickers.append('^GSPC')
-
+    sp_99.append('^GSPC')
+    # yf.pdr_override()
+    print(len(sp_99))
     # get the history stock price
     start = dt.datetime(2012, 1, 1)
     end = dt.datetime(2020, 7, 1)
+    # start = '2012-01-01'
+    # end = '2020-07-01'
 
-    for ticker in tqdm(tickers):
+    for ticker in tqdm(sp_99, desc = 'get company price'):
         stock_list = []
         try:
             df = web.DataReader(ticker, 'yahoo', start, end)
+            print(ticker ,'found')
+            # df = web.get_data_yahoo(ticker, start=start, end = end)
             df.reset_index(inplace=True)
 
             for index, row in df.iterrows():
@@ -70,6 +83,7 @@ def save_history_stock_price_to_db(sp500_file="./database/tables/sp500tickers.pk
                                                 row['Close'], row['Volume'], row['Adj Close'], ticker))
             
         except:
+            print(ticker + ' not found')
             print('Get Nothing.')
 
         db.session.add_all(stock_list)
