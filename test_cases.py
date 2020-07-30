@@ -99,7 +99,7 @@ def get_news():
     getter.get_news()
     getter.to_db()
     print("to db")
-
+    return ''
 @test_cases.route('/get_stock_price')
 def get_predicted_Q():
     with open('./model/sp500tickers.pkl', 'rb') as f:

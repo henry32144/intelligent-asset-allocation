@@ -48,21 +48,17 @@ class KeysentGetter():
 
 	def url2news(self):
 		company_idx = 0
-		for url in tqdm(self.url):
+		for url in tqdm(self.url, desc = 'get urls'):
 		    resp = requests.get(url)
 		    soup = BeautifulSoup(resp.text, 'html.parser')
 		    paragraph = soup.find_all('p')
 		    paragraph = [p.text for p in paragraph]
-		    # while(paragraph[0][-8:] == "min read"):
-		    # 	del paragraph[0]
-
+		    paragraph = paragraph[1:-1]
 		    title = soup.find('title').text
 		    title = title.lstrip()
-		    if (len(self.title) != 0):
-		    	if( self.get_jaccard_sim(title, self.title[-1]) >0.8 ):
-		    		del self.companys[company_idx+1]
+		    if (len(self.title) != 0): #if the title too similiar to the previous one, skip this url
+		    	if( self.get_jaccard_sim(title.lower(), self.title[-1].lower()) >0.8 ):
 		    		continue
-		    # print(self.title)
 		    company_idx+=1
 		    self.title.append(title)
 		    hiv4 = ps.hiv4.HIV4()
@@ -70,7 +66,7 @@ class KeysentGetter():
 		    self.title_polarity.append( hiv4.get_score(hiv4.tokenize(title))['Polarity']  )
 		    
 		    po = []
-		    for p in paragraph[:-1]:
+		    for p in paragraph:
 		    	tokens = hiv4.tokenize(p)
 		    	s = hiv4.get_score(tokens)
 		    	# print(tokens)
@@ -79,7 +75,7 @@ class KeysentGetter():
 		    self.polarity.append(po)
 		# print(self.doc[0])
 		# print(self.title_polarity)
-
+		print('done')
 	def get_jaccard_sim(self, str1, str2): 
 	    a = set(str1.split()) 
 	    b = set(str2.split())
@@ -93,8 +89,9 @@ class KeysentGetter():
 		"pargraph":0,
 		"keysent":0
 		}
-		for i, po in tqdm(enumerate(self.polarity), total = len(self.polarity)):
-			if (self.title_polarity[i] >= 0.85 or self.title_polarity[i] <= -0.85):
+
+		for i, po in tqdm(enumerate(self.polarity), total = len(self.polarity), desc = 'get important sent'):
+			if (self.title_polarity[i] >= 0 or self.title_polarity[i] <= 0):
 				key_idx = []
 				for j, p in enumerate(po):
 					if (p >= 0.85):
@@ -105,17 +102,10 @@ class KeysentGetter():
 					self.important_news.append(self.doc[i])
 					self.keysent_idx.append(key_idx)
 					self.important_title.append(self.title[i])
-		print(len(self.doc))
-		print(len(self.important_news))
-				# temp = _dict
-				# temp['title'] = self.title[i]
-				# temp['paragraph'] = self.doc[i]
-				# temp['keysent'] = key_idx
-				# result.append(temp)
 
 		# for i0, n in enumerate(self.important_news):
 		# 	for k in self.keysent_idx[i0][1:]:
-		# 		self.important_news[i0][k+1] = "**" + self.important_news[i0][k+1] + "**"
+		# 		self.important_news[i0][abs(k+1)] = "**" + self.important_news[i0][abs(k+1)] + "**"
 		# 	if(self.keysent_idx[i0][0] > 0):
 		# 		print("------------NEWS : Positive------------")
 		# 	else:
@@ -126,6 +116,7 @@ class KeysentGetter():
 
 	def to_db(self):
 		_lst = []
+		pprint(self.important_news)
 		# print(self.important_title)
 		# print(len(self.important_title))
 		for i, t in enumerate(self.important_title):
@@ -138,8 +129,7 @@ class KeysentGetter():
 			for k in self.keysent_idx[i]:
 				s = s+str(k)+"%%"
 			s = s[:-2]
-
-			_lst.append(  OutputNews( t, date = datetime.now().date() - timedelta(days=1), company = self.companys[i], paragraph = p, keysent = s  )   )
+			_lst.append(OutputNews( t, date = datetime.now().date() - timedelta(days=1), company = self.companys[i], paragraph = p, keysent = s ))
 		# print(_lst[3].news_title)
 		db.session.add_all(_lst)
 		db.session.commit()
