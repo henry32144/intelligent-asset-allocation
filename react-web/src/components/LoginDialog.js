@@ -122,7 +122,7 @@ export default function LoginDialog(props) {
           if (jsonData.isSuccess) {
             // Temp user name
             const userId = jsonData.userId;
-            const userName = "Steve";
+            const userName = jsonData.userName;
             const userEmail = emailInput.current.value;
 
             props.setUserData({

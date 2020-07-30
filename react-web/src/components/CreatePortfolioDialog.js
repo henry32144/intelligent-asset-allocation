@@ -72,45 +72,7 @@ export default function CreatePortfolioDialog(props) {
     checkNameInputEmpty();
     setErrorMsg("");
     if (nameInput.current.value.length > 0) {
-      const request = {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          'portfolioName': nameInput.current.value,
-          'userId': props.userData.userId,
-        })
-      }
-      try {
-        setLoading(true);
-        const response = await fetch(BASEURL + "/portfolio/create", request)
-        if (response.ok) {
-          const jsonData = await response.json();
-          console.log(jsonData);
-          if (jsonData.isSuccess) {
-            // get create object
-            var newPortfolio = {
-              'portfolioId': jsonData.data.id,
-              'userId': jsonData.data.user_id,
-              'portfolioName': jsonData.data.portfolio_name,
-              'portfolioStocks': jsonData.data.portfolio_stocks
-            }
-            props.setCurrentSelectedPortfolio(jsonData.data.id);
-            props.setUserPortfolios([...props.userPortfolios, newPortfolio]);
-            props.handleClose();
-          } else {
-            setErrorMsg(jsonData.errorMsg);
-          }
-        }
-      }
-      catch (err) {
-        alert('create new portfolio failed', err);
-      }
-      finally {
-        setLoading(false);
-      }
+      props.createNewPortfolio(nameInput.current.value);
     }
   };
 

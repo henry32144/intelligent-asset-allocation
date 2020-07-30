@@ -14,6 +14,7 @@ from database.database import db
 from database.tables.crawling_data import CrawlingData, read_csv, daily_update
 from database.tables.price import StockPrice, save_history_stock_price_to_db, update_daily_stock_price
 from database.tables.company import Company, crawl_sp500_info, save_company
+from database.tables.volatility import Volatility
 
 from database.tables.output_news import OutputNews, news_to_json
 from model.get_news_keysent import KeysentGetter, test_url
@@ -145,4 +146,26 @@ def test_sp500():
     sp_500 = SP500()
     sp500_values, all_return = sp_500.get_backtest_result()
 
+    return ''
+
+
+@test_cases.route('/volatility')
+def calculate_volatility():
+    sp_99 = []
+    with open('./database/tables/ticker_name.txt', 'r') as f:
+        lines = f.readlines()
+        for l in lines:
+            c = l.split('\t')
+            c[1] = c[1].replace('\n','')
+            c[1] = c[1].replace(' ','')
+            sp_99.append(c[1])
+
+    all_sharpe_ratio = {}
+    for tick in sp_99:
+        vol = Volatility(tick)
+        sharpe = vol.calculate_sharpe_ratio()
+        all_sharpe_ratio[tick] = sharpe
+    
+    print(all_sharpe_ratio)
+    
     return ''
