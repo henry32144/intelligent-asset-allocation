@@ -6,7 +6,7 @@ import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
   },
@@ -21,28 +21,51 @@ const useStyles = makeStyles({
   pos: {
     marginBottom: 12,
   },
-});
+  sentence: {
+    ...theme.typography.body1,
+  },
+  keySentence: {
+    ...theme.typography.body1,
+    backgroundColor: "rgba(255, 229, 100, 0.2)"
+  },
+}));
 
-export default function NewsCard() {
+export default function NewsCard(props) {
   const classes = useStyles();
   const bull = <span className={classes.bullet}>•</span>;
 
   return (
     <Card className={classes.root} variant="outlined">
       <CardContent>
+        <Typography className={classes.title} color="textSecondary" gutterBottom>
+          {props.companyName}
+        </Typography>
         <Typography variant="h5" component="h2">
-          Apple is now bankrupt?!
+          {props.title}
         </Typography>
         <Typography className={classes.pos} color="textSecondary">
-          2099/04/01
+          {props.date}
         </Typography>
         <Typography variant="body2" component="p">
-          Just kidding.
+          {props.paragraph != undefined &&
+            <div>
+              {props.paragraph.map((item, index) =>
+                item.isKeySentence ?
+                  <p key={index} className={classes.keySentence}>
+                    {item.text}
+                  </p>
+                  :
+                  <p key={index} className={classes.sentence}>
+                    {item.text}
+                  </p>
+              )}
+            </div>
+          }
         </Typography>
       </CardContent>
-      <CardActions>
+      {/* <CardActions>
         <Button size="small">Learn More</Button>
-      </CardActions>
+      </CardActions> */}
     </Card>
   );
 }

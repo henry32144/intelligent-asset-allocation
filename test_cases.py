@@ -8,7 +8,7 @@ from collections import defaultdict
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
-from flask import Blueprint, abort, request, render_template
+from flask import Blueprint, abort, request, render_template, jsonify
 from database.tables.user import User
 from database.database import db
 from database.tables.crawling_data import CrawlingData, read_csv, daily_update
@@ -18,7 +18,6 @@ from database.tables.volatility import Volatility
 
 from database.tables.output_news import OutputNews, news_to_json
 from model.get_news_keysent import KeysentGetter, test_url
-
 
 from model.predict_Q import predict_Q
 from model.markowitz import Markowitz
@@ -87,7 +86,9 @@ def save_company_to_db():
 def json_test():
     _ = news_to_json('Amazon.com, Inc.')
     print("to json")
-    return _
+    res = {}
+    res["news"] = _
+    return jsonify(res)
 
 @test_cases.route('/get_news')
 def get_news():
