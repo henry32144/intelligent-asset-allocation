@@ -220,11 +220,11 @@ def main():
     # Clean data
     preprocessor = NewsPreprocessor(contractions_dict=contractions_dict)
     print("Start cleaning title.")
-    df["clean_title"] = df["title"].progress_apply(lambda x: preprocessor.ultimate_clean(x))
+    df["clean_title"] = df["title"].apply(lambda x: preprocessor.ultimate_clean(x))
     print("Start cleaning pysentiment content.")
-    df["clean_ps_content"] = df["ps_content"].progress_apply(lambda x: preprocessor.ultimate_clean(x))
+    df["clean_ps_content"] = df["ps_content"].apply(lambda x: preprocessor.ultimate_clean(x))
     print("Start cleaning BertSum content.")
-    df["clean_bs_content"] = df["bs_content"].progress_apply(lambda x: preprocessor.ultimate_clean(x))
+    df["clean_bs_content"] = df["bs_content"].apply(lambda x: preprocessor.ultimate_clean(x))
     df = extend_df_with_cos_sim(df=df, col="clean_ps_content", labels=["stock", "finance"], sort_by="stock")
     print(df)
 
