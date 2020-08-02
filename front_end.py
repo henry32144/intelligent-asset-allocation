@@ -96,8 +96,6 @@ def get_user_portfolio():
 def create_portfolio():
     json_data = request.get_json()
 
-
-
     new_portfolio = Portfolio(
         user_id=json_data.get("userId"),
         portfolio_name=str(json_data.get("portfolioName")),

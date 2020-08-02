@@ -47,7 +47,7 @@ function NewsList(props) {
   const classes = useStyles();
 
   return (
-    <Box className={classes.root} component={Grid} container direction="column">
+    <Grid className={classes.root} container direction="column">
       {props.newsData.map((news) => (
         <NewsCard 
           key={news.id} 
@@ -58,7 +58,7 @@ function NewsList(props) {
         >
         </NewsCard>
       ))}
-    </Box>
+    </Grid>
   );
 }
 
