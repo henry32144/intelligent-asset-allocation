@@ -8,7 +8,6 @@ import PortfolioToolBar from '../components/PortfolioToolBar'
 import NewsSection from '../views/NewsSection'
 import PerformanceSection from '../views/PerformanceSection'
 import WeightSection from '../views/WeightSection'
-import PortfolioSections from '../views/PortfolioSections'
 import Typography from '@material-ui/core/Typography';
 import { motion } from "framer-motion"
 import { BASEURL, NEWS_SECTION, PERFORMANCE_SECTION, WEIGHT_SECTION } from '../Constants';
