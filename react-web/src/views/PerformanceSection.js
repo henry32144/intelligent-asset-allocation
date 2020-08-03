@@ -1,7 +1,6 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import NewsList from '../components/NewsList'
 import Typography from '@material-ui/core/Typography';
 import { BASEURL } from '../Constants';
 
@@ -14,18 +13,14 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-export default function NewsSection(props) {
+export default function PerformanceSection(props) {
   const classes = useStyles();
 
   return (
     <div className={classes.sectionRoot}>
       <Typography className={classes.sectionTitle} variant="h5">
-        News
+        Performance
       </Typography>
-      <NewsList
-        newsData={props.newsData}
-      >
-      </NewsList>
     </div>
   );
 }

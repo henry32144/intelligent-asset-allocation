@@ -49,6 +49,7 @@ export default function PortfolioToolBar(props) {
         <Hidden smUp>
           <PortfolioDetailButtons
             showSearchButton={true}
+            setSectionCode={props.setSectionCode}
           >
           </PortfolioDetailButtons>
         </Hidden>
@@ -66,7 +67,9 @@ export default function PortfolioToolBar(props) {
       </Grid>
       <Hidden xsDown>
         <Grid item container sm={3} justify = "center" >
-          <PortfolioDetailButtons>
+          <PortfolioDetailButtons
+            setSectionCode={props.setSectionCode}
+          >
           </PortfolioDetailButtons>
         </Grid>
       </Hidden>
