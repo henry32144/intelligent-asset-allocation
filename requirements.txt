@@ -11,3 +11,5 @@ pandas-datareader
 selenium
 tqdm
 sklearn
+yfinance
+git+https://github.com/hanzhichao2000/pysentiment

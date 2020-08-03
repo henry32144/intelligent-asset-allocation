@@ -3,7 +3,7 @@ from database.tables.user import User
 from database.tables.portfolio import Portfolio
 from database.tables.company import Company
 from database.database import db
-
+from database.tables.output_news import OutputNews, news_to_json
 
 front_end = Blueprint('front_end', __name__)
 
@@ -96,8 +96,6 @@ def get_user_portfolio():
 def create_portfolio():
     json_data = request.get_json()
 
-
-
     new_portfolio = Portfolio(
         user_id=json_data.get("userId"),
         portfolio_name=str(json_data.get("portfolioName")),
@@ -137,5 +135,25 @@ def save_portfolio():
         response['isSuccess'] = True
     except Exception as e:
         response['errorMsg'] = str(e)
+    
+    return jsonify(response)
+
+@front_end.route("/news", methods=['POST'])
+def get_news_by_names():
+    json_data = request.get_json()
+    print(json_data)
+    response = {
+        'isSuccess': False,
+        'errorMsg': "",
+        'data': []
+    }
+    company_names = json_data.get("companyNames", [])
+    news = []
+    for name in company_names:
+        company_news = news_to_json(name)
+        news += company_news
+    print(news)
+    response["isSuccess"] = True
+    response["data"] = news
     
     return jsonify(response)

@@ -23,12 +23,15 @@ class OutputNews(db.Model):
 def news_to_json(company):
 	result = []
 	_dict = {
+		"id": 0,
 		"title": 0,
+		"date": "",
 		"paragraph":'',
-		"keysent":0
+		"keysent": [],
+		"company": ""
 	}
 	# data = OutputNews.query.filter_by(company = company, date = datetime.now().date()- timedelta(days=1))
-	data = OutputNews.query.filter_by(company = company).all()
+	data = OutputNews.query.filter(OutputNews.company.like(company)).all()
 	print('get data')
 	for r in data:
 		a = _dict
@@ -38,12 +41,13 @@ def news_to_json(company):
 		for p in para:
 			p.replace('','')
 		# print(para)
+		a["id"] = r.id
+		a["date"] = r.date
+		a["company"] = r.company
 		a['paragraph'] = para
 		a['title'] = r.news_title
 		result.append(a)
 
 	# pprint(result[0])
 	# return json.dumps(result) 
-	res = {}
-	res['news'] = result
-	return jsonify(res)
+	return result
