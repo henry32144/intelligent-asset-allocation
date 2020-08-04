@@ -130,6 +130,8 @@ function PortfolioPage(props) {
       const response = await fetch(BASEURL + "/company", request)
       if (response.ok) {
         const jsonData = await response.json();
+        console.log("Company data:");
+        console.log(jsonData);
         if (jsonData.isSuccess) {
           var newCompanyDataMapping = {}
           var newCompanyData = []
