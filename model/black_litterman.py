@@ -50,6 +50,8 @@ class Black_Litterman(object):
         # split dataframe into train & test part
         train_df, test_df = df['2012-01-01': '2016-12-31'], df['2017-01-01': '2020-06-30']
 
+        self.test_df = test_df
+
         return train_df, test_df
 
 
@@ -258,7 +260,6 @@ class Black_Litterman(object):
         length = len(log_return_df)
         total_value = 1
         all_values = []
-        # all_return = []
 
         for i in range(length):
             portfolio_weights = self.weights[i]
@@ -267,9 +268,11 @@ class Black_Litterman(object):
             total_value = total_value * (1+portfolio_return)
             
             all_values.append(total_value)
-            # all_return.append(portfolio_return)
 
-        return all_values
+
+        date = self.test_df.reset_index()['date'].values[1:]
+
+        return date, all_values
         
 
 
