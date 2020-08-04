@@ -125,12 +125,10 @@ def get_predicted_Q():
 
 @test_cases.route('/test')
 def test():
-    selected_tickers = ['CHTR', 'CVX', 'CB', 'CI']
+    selected_tickers = ['GOOG', 'CVX', 'CB', 'CI', 'AAPL']
     marko = Markowitz(selected_tickers)
     all_weights = marko.get_all_weights()
-    # all_values, all_return = marko.get_backtest_result()
-
-    print('all_weights:', all_weights)
+    date, all_values = marko.get_backtest_result()
 
     return ''
 
@@ -170,10 +168,8 @@ def test_black_litterman():
     selected_tickers = ['GOOG', 'CVX', 'CB', 'CI', 'AAPL']
     BL = Black_Litterman(selected_tickers)
     all_weights = BL.get_all_weights()
-    all_values = BL.get_backtest_result()
-    
-    print(all_weights)
-    print('-'*100)
-    print(all_values)
+    date, all_values = BL.get_backtest_result()
+
+    print(date)
 
     return ''
