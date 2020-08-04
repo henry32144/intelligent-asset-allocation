@@ -13,6 +13,7 @@ import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import Divider from '@material-ui/core/Divider';
+import Tooltip from '@material-ui/core/Tooltip';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -98,14 +99,16 @@ export default function PortfolioMenuButtons(props) {
 
   return (
     <div className={classes.root}>
-      <IconButton
-        edge="start"
-        className={classes.menuButton}
-        onClick={toogleDrawer}
-        color="inherit"
-        aria-label="menu">
-        <MenuIcon />
-      </IconButton>
+      <Tooltip title="Portfolio Stocks">
+        <IconButton
+          edge="start"
+          className={classes.menuButton}
+          onClick={toogleDrawer}
+          color="inherit"
+          aria-label="menu">
+          <MenuIcon />
+        </IconButton>
+      </Tooltip>
       <Button
         endIcon={<ExpandMoreIcon />}
         ref={anchorRef}

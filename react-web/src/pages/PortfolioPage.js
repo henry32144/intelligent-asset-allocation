@@ -6,9 +6,11 @@ import CreatePortfolioDialog from '../components/CreatePortfolioDialog'
 import StockSelectSection from '../views/StockSelectSection'
 import PortfolioToolBar from '../components/PortfolioToolBar'
 import NewsSection from '../views/NewsSection'
+import PerformanceSection from '../views/PerformanceSection'
+import WeightSection from '../views/WeightSection'
 import Typography from '@material-ui/core/Typography';
 import { motion } from "framer-motion"
-import { BASEURL } from '../Constants';
+import { BASEURL, NEWS_SECTION, PERFORMANCE_SECTION, WEIGHT_SECTION } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
   portfolioPage: {
@@ -56,7 +58,10 @@ function PortfolioPage(props) {
   const [dialogMessage, setDialogMessage] = React.useState("");
   const [currentSelectedPortfolio, setCurrentSelectedPortfolio] = React.useState(null);
   const [currentSelectedStock, setCurrentSelectedStock] = React.useState("APPL");
-  
+  const [currentSectionCode, setSectionCode] = React.useState(NEWS_SECTION);
+
+  let section = null;
+
   const sideBarTransitions = {
     open: {
       opacity: 1,
@@ -99,6 +104,19 @@ function PortfolioPage(props) {
 
   const handleCreatePortfolioDialogClose = () => {
     setCreatePortfolioDialogOpen(false);
+  };
+
+  const renderSection = () => {
+    switch (currentSectionCode) {
+      case NEWS_SECTION:
+        return <NewsSection newsData={newsData} />;
+      case PERFORMANCE_SECTION:
+        return <PerformanceSection />;
+      case WEIGHT_SECTION:
+        return <WeightSection />;
+      default:
+        return <NewsSection newsData={newsData} />;
+    }
   };
 
   const getCompanyData = async () => {
@@ -299,7 +317,7 @@ function PortfolioPage(props) {
 
   const savePortfolio = async () => {
     if (props.userData.userId != undefined) {
-      var currentPortfolioStocks = selectedStocks.map(function(item, index, array){
+      var currentPortfolioStocks = selectedStocks.map(function (item, index, array) {
         return item.companySymbol;
       });
       console.log(currentPortfolioStocks);
@@ -322,9 +340,9 @@ function PortfolioPage(props) {
         if (response.ok) {
           const jsonData = await response.json();
           if (jsonData.isSuccess) {
-            
+
             var tempNewPortfolios = Array.from(userPortfolios);
-            tempNewPortfolios.forEach(function(item, index, array){
+            tempNewPortfolios.forEach(function (item, index, array) {
               if (item.portfolioId == currentSelectedPortfolio) {
                 item.portfolioStocks = currentPortfolioStocks;
               }
@@ -354,6 +372,9 @@ function PortfolioPage(props) {
     }
   };
 
+  React.useEffect(() => {
+    console.log(currentSectionCode)
+  }, [currentSectionCode]);
   
   React.useEffect(() => {
     if (!dataLoaded) {
@@ -414,6 +435,7 @@ function PortfolioPage(props) {
         setCurrentSelectedPortfolio={setCurrentSelectedPortfolio}
         handleCreatePortfolioDialogOpen={handleCreatePortfolioDialogOpen}
         userData={props.userData}
+        setSectionCode={setSectionCode}
       >
       </PortfolioToolBar>
       <motion.div
@@ -435,8 +457,7 @@ function PortfolioPage(props) {
       </motion.div>
       <Grid item container direction="row" justify="center" alignItems="stretch" className={classes.portfolioContent}>
         <Grid item xs={10} md={6}>
-          <NewsSection newsData={newsData}>
-          </NewsSection>
+          {renderSection()}
         </Grid>
       </Grid>
     </div>
