@@ -1,8 +1,9 @@
 from database.database import db
 import json
 from flask import jsonify
-from sqlalchemy import Column, Integer, String, DateTime, Date
+from sqlalchemy import Column, Integer, String, DateTime, Date, and_
 from pprint import pprint
+from datetime import datetime
 
 class OutputNews(db.Model):
 	__tablename__ = "output_news"
@@ -31,7 +32,11 @@ def news_to_json(company):
 		"company": ""
 	}
 	# data = OutputNews.query.filter_by(company = company, date = datetime.now().date()- timedelta(days=1))
-	data = OutputNews.query.filter(OutputNews.company.like(company)).all()
+	#data = OutputNews.query.filter(OutputNews.company.like(company)).all()
+	date1 = datetime( 2020,7,1 )
+	date2 = datetime(2020,6,27)
+	# data = OutputNews.query.filter(OutputNews.date <= date1).filter(OutputNews.date >= date2)
+	data = OutputNews.query.filter( and_( OutputNews.company == company, OutputNews.date < date1, OutputNews.date > date2 ) )
 	print('get data')
 	for r in data:
 		a = _dict
