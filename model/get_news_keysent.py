@@ -20,7 +20,7 @@ from database.tables.crawling_data import CrawlingData
 from database.tables.output_news import OutputNews
 import json
 from pprint import pprint
-from sqlalchemy import Column, Integer, String, DateTime, Date
+from sqlalchemy import Column, Integer, String, DateTime, Date, and_
 from datetime import datetime,timedelta
 
 class KeysentGetter():
@@ -38,7 +38,9 @@ class KeysentGetter():
 
 
 	def _get_all_url(self):
-		result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
+		# result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
+		result = CrawlingData.query.filter(and_( CrawlingData.date < datetime(2020,7,1), CrawlingData.date > datetime(2020,6,27)))
+
 		self.q_data = result
 		for r in result:
 			self.url.append(r.url)
