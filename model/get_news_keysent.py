@@ -40,44 +40,67 @@ class KeysentGetter():
 	def _get_all_url(self):
 		# result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
 		result = CrawlingData.query.filter(and_( CrawlingData.date < datetime(2020,7,1), CrawlingData.date > datetime(2020,6,27)))
-
+		# result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
+		
 		self.q_data = result
 		for r in result:
 			self.url.append(r.url)
 			self.companys.append(r.company)
-		print(result)
-		return result
+		# print(result)
+		result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=2)))
+		for r in result:
+			self.url.append(r.url)
+			self.companys.append(r.company)
+		# return result
+		result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=3)))
+		for r in result:
+			self.url.append(r.url)
+			self.companys.append(r.company)
+
 
 	def url2news(self):
 		company_idx = 0
 		for url in tqdm(self.url, desc = 'get urls'):
-		    resp = requests.get(url)
-		    soup = BeautifulSoup(resp.text, 'html.parser')
-		    paragraph = soup.find_all('p')
-		    paragraph = [p.text for p in paragraph]
-		    paragraph = paragraph[1:-1]
-		    title = soup.find('title').text
-		    title = title.lstrip()
-		    if (len(self.title) != 0): #if the title too similiar to the previous one, skip this url
-		    	if( self.get_jaccard_sim(title.lower(), self.title[-1].lower()) >0.8 ):
-		    		continue
-		    company_idx+=1
-		    self.title.append(title)
-		    hiv4 = ps.hiv4.HIV4()
-		    self.doc.append(paragraph)
-		    self.title_polarity.append( hiv4.get_score(hiv4.tokenize(title))['Polarity']  )
+			check_repeated=0
+			resp = requests.get(url)
+			soup = BeautifulSoup(resp.text, 'html.parser')
+			paragraph = soup.find_all('p')
+			paragraph = [p.text for p in paragraph]
+			paragraph = paragraph[1:-1]
+			title = soup.find('title').text
+			title = title.lstrip()
+			if (len(self.title) != 0): #if the title too similiar to the previous one, skip this url
+				s1 = title.lower()
+				s2 = self.title[-1].lower()
+				s1 = re.sub(r'[-\(\)\"#\/@;:<>\{\}\-=~|\.\?]', '', s1)
+				s2 = re.sub(r'[-\(\)\"#\/@;:<>\{\}\-=~|\.\?]', '', s2)
+
+				if( self.get_jaccard_sim(title.lower(), self.title[-1].lower()) >=0.8 ):
+					del self.companys[company_idx]
+					company_idx-=1
+					# print('got one !!!')
+					# print(title)
+					check_repeated = 1
+			company_idx+=1
+			if(check_repeated == 1):
+				continue
+
+			self.title.append(title)
+			hiv4 = ps.hiv4.HIV4()
+			self.doc.append(paragraph)
+			self.title_polarity.append( hiv4.get_score(hiv4.tokenize(title))['Polarity']  )
 		    
-		    po = []
-		    for p in paragraph:
-		    	tokens = hiv4.tokenize(p)
-		    	s = hiv4.get_score(tokens)
-		    	# print(tokens)
-		    	po.append(s['Polarity'])
-		    	# print(s)
-		    self.polarity.append(po)
-		# print(self.doc[0])
-		# print(self.title_polarity)
-		print('done')
+			po = []
+			for p in paragraph:
+				tokens = hiv4.tokenize(p)
+				s = hiv4.get_score(tokens)
+				# print(tokens)
+				po.append(s['Polarity'])
+				# print(s)
+			self.polarity.append(po)
+
+
+
 	def get_jaccard_sim(self, str1, str2): 
 	    a = set(str1.split()) 
 	    b = set(str2.split())
@@ -92,18 +115,22 @@ class KeysentGetter():
 		"keysent":0
 		}
 
+		print(len(self.title_polarity))
 		for i, po in tqdm(enumerate(self.polarity), total = len(self.polarity), desc = 'get important sent'):
-			if (self.title_polarity[i] >= 0 or self.title_polarity[i] <= 0):
+			if (self.title_polarity[i] >= 0.1 or self.title_polarity[i] <= -0.1):
 				key_idx = []
 				for j, p in enumerate(po):
-					if (p >= 0.85):
+					if (p >= 0.7):
 						key_idx.append(j)
-					elif (p <= -0.85):
+					elif (p <= -0.7):
 						key_idx.append(-1*j)
 				if(len(key_idx) != 0):
 					self.important_news.append(self.doc[i])
 					self.keysent_idx.append(key_idx)
 					self.important_title.append(self.title[i])
+		# pprint(self.title)
+		# print(self.get_jaccard_sim(self.title[0], self.title[1]))
+
 
 		# for i0, n in enumerate(self.important_news):
 		# 	for k in self.keysent_idx[i0][1:]:
@@ -118,7 +145,7 @@ class KeysentGetter():
 
 	def to_db(self):
 		_lst = []
-		pprint(self.important_news)
+		# pprint(self.important_news)
 		# print(self.important_title)
 		# print(len(self.important_title))
 		for i, t in enumerate(self.important_title):

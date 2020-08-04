@@ -4,8 +4,10 @@ from database.tables.price import StockPrice
 from tqdm import tqdm
 import datetime as dt
 import numpy as np
+from numpy.linalg import inv
 import pandas as pd
 import scipy
+import pickle
 from pandas_datareader import data
 import matplotlib.pyplot as plt
 
@@ -47,6 +49,8 @@ class Black_Litterman(object):
 
         # split dataframe into train & test part
         train_df, test_df = df['2012-01-01': '2016-12-31'], df['2017-01-01': '2020-06-30']
+
+        self.test_df = test_df
 
         return train_df, test_df
 
@@ -120,6 +124,19 @@ class Black_Litterman(object):
     def portfolioMeanVar(self, W, R, C):
         return self.portfolioMean(W, R), self.portfolioVar(W, C)
 
+    def solve_weights(self, R, C, rf):
+        def fitness(W, R, C, rf):
+            mean, var = self.portfolioMeanVar(W, R, C)
+            sharp_ratio = (mean - rf) / np.sqrt(var)  # sharp ratio
+            return 1 / sharp_ratio
+        
+        n = len(R)
+        W = np.ones([n]) / n
+        b_ = [(0., 1.) for i in range(n)]
+        c_ = ({'type': 'eq', 'fun': lambda W: sum(W) - 1.})
+        optimized = scipy.optimize.minimize(fitness, W, (R, C, rf), method='SLSQP', constraints=c_, bounds=b_)
+        return optimized.x
+
 
     def calculate_reverse_pi(self, W, all_R, all_C):
         reverse_pi = []
@@ -134,14 +151,128 @@ class Black_Litterman(object):
 
         return reverse_pi
 
-    def get_predicted_Q(self):
-        
-
 
     def get_all_weights(self):
         prices_list, W = self.prepare_input() # W: market capitalization
         all_R, all_C = self.assets_historical_returns_covariances(prices_list)
-        reverse_pi = self.calculate_reverse_pi(W, all_R, all_C)
+        BL_reverse_pi = self.calculate_reverse_pi(W, all_R, all_C)
+        
+        with open('./model/predict_dict_1.pkl', 'rb') as f:
+            all_predicted_Q_1 = pickle.load(f)
 
+        with open('./model/predict_dict_2.pkl', 'rb') as f:
+            all_predicted_Q_2 = pickle.load(f)
+
+        with open('./model/predict_dict_3.pkl', 'rb') as f:
+            all_predicted_Q_3 = pickle.load(f)
+
+
+        # get predicted return
+        all_predicted_return = pd.DataFrame({})
+        for comp in self.selected_tickers:
+            if comp in all_predicted_Q_1.keys():
+                comp_return = []
+                comp_predicted_Q = all_predicted_Q_1[comp][0]
+
+                for i in range(1, len(comp_predicted_Q)):
+                    curr = comp_predicted_Q[i]
+                    prev = comp_predicted_Q[i-1]
+                    comp_return.append(np.log(curr) - np.log(prev))
+            
+                all_predicted_return[comp] = comp_return
+
+            elif comp in all_predicted_Q_2.keys():
+                comp_return = []
+                comp_predicted_Q = all_predicted_Q_2[comp][0]
+
+                for i in range(1, len(comp_predicted_Q)):
+                    curr = comp_predicted_Q[i]
+                    prev = comp_predicted_Q[i-1]
+                    comp_return.append(np.log(curr) - np.log(prev))
+            
+                all_predicted_return[comp] = comp_return
+
+            else:
+                comp_return = []
+                comp_predicted_Q = all_predicted_Q_3[comp][0]
+
+                for i in range(1, len(comp_predicted_Q)):
+                    curr = comp_predicted_Q[i]
+                    prev = comp_predicted_Q[i-1]
+                    comp_return.append(np.log(curr) - np.log(prev))
+            
+                all_predicted_return[comp] = comp_return
+
+        all_Q_hat_GRU = [i.reshape(-1, 1) for i in all_predicted_return.values]
+
+        BL_reverse_pi = BL_reverse_pi[1:]
+        all_R = all_R[1:]
+        all_C = all_C[1:]
+
+            
+        # get black-litterman weights
+        all_weights = []
+        for i in tqdm(range(len(all_R))):
+            tau = 0.025
+            rf = 0.015
+            
+            P = np.identity(len(self.selected_tickers))
+            Pi = BL_reverse_pi[i]
+            C = all_C[i]
+            R = all_R[i]
+            Q = all_Q_hat_GRU[i]
+            
+            # Calculate omega - uncertainty matrix about views
+            omega = np.dot(np.dot(np.dot(tau, P), C), np.transpose(P))
+
+            # Calculate equilibrium excess returns with views incorporated
+            sub_a = inv(np.dot(tau, C))
+            sub_b = np.dot(np.dot(np.transpose(P), inv(omega)), P)
+
+            sub_c = np.dot(inv(np.dot(tau, C)), Pi).reshape(-1, 1)
+            sub_d = np.dot(np.dot(np.transpose(P), inv(omega)), Q)
+            Pi_adj = np.dot(inv(sub_a + sub_b), (sub_c + sub_d)).squeeze()
+            
+            weight = self.solve_weights(Pi_adj+rf, C, rf)
+            all_weights.append(weight)
+
+        self.weights = all_weights
+
+        return all_weights
+
+    
+    def get_backtest_result(self):
+        # get testing section stock price data
+        log_return_df = pd.DataFrame({})
+
+        for ticker in self.selected_tickers:
+            _, test_df = self.read_stock_file(ticker)
+
+            # add log return col for calculate the performance
+            price = test_df['adj_close']
+            log_return = np.log(price) - np.log(price.shift(1))
+            log_return_df = pd.concat([log_return_df, log_return], axis=1)
+
+        log_return_df = log_return_df.iloc[1:, :]
+        log_return_df.columns = self.selected_tickers
+
+        # calculate the whole portfolio performance
+        length = len(log_return_df)
+        total_value = 1
+        all_values = []
+
+        for i in range(length):
+            portfolio_weights = self.weights[i]
+            returns = log_return_df.iloc[i, :].values
+            portfolio_return = sum(portfolio_weights * returns)
+            total_value = total_value * (1+portfolio_return)
+            
+            all_values.append(total_value)
+
+
+        date = self.test_df.reset_index()['date'].values[1:]
+
+        return date, all_values
+        
 
 

@@ -5,5 +5,4 @@ __pycache__/*
 **/.DS_Store
 **/database.db
 **/chromedriver.exe
-**/chromedriver
-
+database.db
