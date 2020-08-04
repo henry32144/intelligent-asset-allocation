@@ -180,7 +180,7 @@ class Markowitz(object):
             all_return.append(portfolio_return)
 
 
-        return all_values, all_return
+        return all_values
 
         
 

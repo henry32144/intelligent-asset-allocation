@@ -127,7 +127,7 @@ def test():
     selected_tickers = ['GOOG', 'AAPL', 'MSFT', 'BLK', 'KO']
     marko = Markowitz(selected_tickers)
     all_weights = marko.get_all_weights()
-    # all_values, all_return = marko.get_backtest_result()
+    all_values = marko.get_backtest_result()
 
     print('all_weights:', all_weights)
     # print('all_values:', all_values)
@@ -138,7 +138,12 @@ def test():
     # plt.show()
     # plt.savefig('markowitz.png')
 
-    return ''
+    test_dict = {
+        "data": {"all_weights": all_weights,
+        "all_values": all_values}
+    }
+
+    return jsonify(test_dict)
 
 
 @test_cases.route('/test_sp500')
