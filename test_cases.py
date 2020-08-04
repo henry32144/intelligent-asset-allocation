@@ -89,7 +89,7 @@ def json_test():
     print("to json")
     res = {}
     res["news"] = _
-    return jsonify(res)
+    return ''
 
 @test_cases.route('/get_news')
 def get_news():
@@ -102,6 +102,8 @@ def get_news():
     getter.to_db()
     print("to db")
     return ''
+
+
 @test_cases.route('/get_stock_price')
 def get_predicted_Q():
     with open('./model/sp500tickers.pkl', 'rb') as f:
@@ -128,7 +130,20 @@ def test():
     selected_tickers = ['GOOG', 'CVX', 'CB', 'CI', 'AAPL']
     marko = Markowitz(selected_tickers)
     all_weights = marko.get_all_weights()
+
+    # all_values, all_return = marko.get_backtest_result()
+    
+    print('all_weights:', all_weights)
+    # print('all_values:', all_values)
+    # print('all_return:', all_return)
+
+    # matplotlib.use('agg')
+    # plt.plot(all_values, label='Mean-Var Portfolio')
+    # plt.show()
+    # plt.savefig('markowitz.png')
+
     date, all_values = marko.get_backtest_result()
+
 
     return ''
 
