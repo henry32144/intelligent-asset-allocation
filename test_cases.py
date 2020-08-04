@@ -21,6 +21,7 @@ from model.get_news_keysent import KeysentGetter, test_url
 
 from model.predict_Q import predict_Q
 from model.markowitz import Markowitz
+from model.black_litterman import Black_Litterman
 from model.sp500 import SP500
 
 
@@ -124,19 +125,12 @@ def get_predicted_Q():
 
 @test_cases.route('/test')
 def test():
-    selected_tickers = ['GOOG', 'AAPL', 'MSFT', 'BLK', 'KO']
+    selected_tickers = ['CHTR', 'CVX', 'CB', 'CI']
     marko = Markowitz(selected_tickers)
     all_weights = marko.get_all_weights()
     # all_values, all_return = marko.get_backtest_result()
 
     print('all_weights:', all_weights)
-    # print('all_values:', all_values)
-    # print('all_return:', all_return)
-
-    # matplotlib.use('agg')
-    # plt.plot(all_values, label='Mean-Var Portfolio')
-    # plt.show()
-    # plt.savefig('markowitz.png')
 
     return ''
 
@@ -168,4 +162,18 @@ def calculate_volatility():
     
     print(all_sharpe_ratio)
     
+    return ''
+
+
+@test_cases.route('/test_BL')
+def test_black_litterman():
+    selected_tickers = ['GOOG', 'CVX', 'CB', 'CI', 'AAPL']
+    BL = Black_Litterman(selected_tickers)
+    all_weights = BL.get_all_weights()
+    all_values = BL.get_backtest_result()
+    
+    print(all_weights)
+    print('-'*100)
+    print(all_values)
+
     return ''
