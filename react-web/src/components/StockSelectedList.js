@@ -14,7 +14,6 @@ import { Button } from '@material-ui/core';
 import SaveIcon from '@material-ui/icons/Save';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-
 const useStyles = makeStyles((theme) => ({
   stockComponent: {
     margin: theme.spacing(0, 0, 2),
@@ -112,7 +111,7 @@ function StockSelectedList(props) {
       <Divider></Divider>
       { props.selectedStocks.length > 0 ?
       <FixedSizeList
-        height={350}
+        height={520}
         itemSize={60}
         itemCount={props.selectedStocks.length}
         itemData={props.selectedStocks}

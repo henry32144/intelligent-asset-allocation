@@ -10,7 +10,7 @@ import Hidden from '@material-ui/core/Hidden';
 const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
-    minHeight: '60px',
+    // minHeight: '60px',
     padding: theme.spacing(1, 2, 1),
     boxShadow: '0 0 1px 1px rgba(0, 0, 0 ,.1)'
   },
@@ -49,6 +49,7 @@ export default function PortfolioToolBar(props) {
         <Hidden smUp>
           <PortfolioDetailButtons
             showSearchButton={true}
+            setSectionCode={props.setSectionCode}
           >
           </PortfolioDetailButtons>
         </Hidden>
@@ -66,7 +67,9 @@ export default function PortfolioToolBar(props) {
       </Grid>
       <Hidden xsDown>
         <Grid item container sm={3} justify = "center" >
-          <PortfolioDetailButtons>
+          <PortfolioDetailButtons
+            setSectionCode={props.setSectionCode}
+          >
           </PortfolioDetailButtons>
         </Grid>
       </Hidden>
