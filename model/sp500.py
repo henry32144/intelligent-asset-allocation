@@ -64,4 +64,4 @@ class SP500(object):
 
         sp500_values.insert(0, 1)
 
-        return sp500_values, all_return
+        return sp500_values

@@ -72,6 +72,7 @@ function PortfolioPage(props) {
   const [backtestDates, setBacktestDates] = React.useState([]);
   const [selectedModel, setModel] = React.useState("basic");
   const [backdropOpen, setBackdropOpen] = React.useState(false);
+  const [investMoney, setInvestMoney] = React.useState(1);
 
   const handleBackdropClose = () => {
     setBackdropOpen(false);
@@ -148,6 +149,8 @@ function PortfolioPage(props) {
           setModel={setModel}
           getWeights={getWeights}
           selectedStocks={selectedStocks}
+          setInvestMoney={setInvestMoney}
+          investMoney={investMoney}
         />;
       default:
         return <NewsSection newsData={newsData} />;
@@ -269,25 +272,31 @@ function PortfolioPage(props) {
     setHistoryWeights(newHistoryWeightData);
   }
 
-  const setPerformanceDataset = (performance, date) => {
+  const setPerformanceDataset = (performance, SP500, date) => {
     var maxVal = 42;
     var delta = Math.floor(date.length / maxVal);
     var lesserDate = [];
     var lesserData = [];
+    var lesserSP500Data = [];
     var dataset = generateDataTemplate(0);
+    var SP500Dataset = generateDataTemplate(1);
     const originalData = performance.slice(1);
+    const originalSP500Data = SP500.slice(1);
 
     for (var i = 0; i < performance.length; i = i + delta) {
       lesserData.push(originalData[i]);
+      lesserSP500Data.push(originalSP500Data[i]);
       lesserDate.push(date[i]);
     }
 
     dataset.label = "History performance";
     dataset.data = lesserData;
+    SP500Dataset.label = "SP500 Index";
+    SP500Dataset.data = lesserSP500Data;
 
     var newPerformanceData = {
       labels: lesserDate,
-      datasets: [dataset]
+      datasets: [dataset, SP500Dataset]
     }
 
     console.log(newPerformanceData);
@@ -305,6 +314,8 @@ function PortfolioPage(props) {
       return item.companySymbol;
     });
 
+    console.log(investMoney);
+
     const request = {
       method: "POST",
       headers: {
@@ -313,7 +324,9 @@ function PortfolioPage(props) {
       },
       body: JSON.stringify({
         "stocks": companySymbols,
-        "model": model
+        "model": model,
+        "money": investMoney,
+        "portfolioId": currentSelectedPortfolio
       })
     }
 
@@ -327,7 +340,7 @@ function PortfolioPage(props) {
           console.log("Weight response")
           console.log(jsonData)
           if (jsonData.isSuccess) {
-            setPerformanceDataset(jsonData.data.all_values, jsonData.data.date);
+            setPerformanceDataset(jsonData.data.all_values, jsonData.data.SP500, jsonData.data.date);
             setWeightDataset(companySymbols, jsonData.data.all_weights, jsonData.data.date);
             setBacktestDates(jsonData.data.date);
           } else {
@@ -462,6 +475,7 @@ function PortfolioPage(props) {
         const response = await fetch(BASEURL + "/portfolio", request)
         if (response.ok) {
           const jsonData = await response.json();
+          console.log("user portfolio data");
           console.log(jsonData);
           if (jsonData.isSuccess) {
             // Get portfolio success
@@ -470,11 +484,13 @@ function PortfolioPage(props) {
               // If user have portfolios
               var newPortfolios = []
               for (var i = 0; i < jsonData.data.length; i++) {
+                var mode = jsonData.data[i].mode === undefined ? "basic" : jsonData.data[i].mode;
                 var newPortfolio = {
                   "portfolioId": jsonData.data[i].id,
                   "userId": jsonData.data[i].user_id,
                   "portfolioName": jsonData.data[i].portfolio_name,
                   "portfolioStocks": jsonData.data[i].portfolio_stocks,
+                  "portfolioMode": mode,
                 };
                 newPortfolios.push(newPortfolio);
               }
@@ -561,6 +577,17 @@ function PortfolioPage(props) {
   React.useEffect(() => {
     console.log(currentSectionCode)
   }, [currentSectionCode]);
+
+  React.useEffect(() => {
+    if (userPortfolios.length > 0 && currentSelectedPortfolio != undefined) {
+      console.log(currentSelectedPortfolio);
+      console.log(userPortfolios);
+      var currentMode = userPortfolios.find(function (item, index, array) {
+        return item.portfolioId === currentSelectedPortfolio;
+      }).portfolioMode
+      setModel(currentMode);
+    }
+  }, [currentSelectedPortfolio]);
 
   React.useEffect(() => {
     if (!dataLoaded) {
