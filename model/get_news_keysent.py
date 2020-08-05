@@ -110,7 +110,7 @@ class KeysentGetter():
 	    b = set(str2.split())
 	    c = a.intersection(b)
 	    return float(len(c)) / (len(a) + len(b) - len(c))
-				
+
 	def get_news(self):
 		result = []
 		_dict = {
@@ -119,7 +119,7 @@ class KeysentGetter():
 		"keysent":0
 		}
 
-		print(len(self.title_polarity))
+		# print(len(self.title_polarity))
 		for i, po in tqdm(enumerate(self.polarity), total = len(self.polarity), desc = 'get important sent'):
 			if (self.title_polarity[i] >= 0.5 or self.title_polarity[i] <= -0.5):
 				key_idx = []
