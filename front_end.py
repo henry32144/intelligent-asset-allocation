@@ -4,7 +4,7 @@ from database.tables.portfolio import Portfolio
 from database.tables.company import Company
 from database.database import db
 from database.tables.output_news import OutputNews, news_to_json
-
+from model.markowitz import Markowitz
 front_end = Blueprint('front_end', __name__)
 
 @front_end.route("/manifest.json")
@@ -157,3 +157,56 @@ def get_news_by_names():
     response["data"] = news
     
     return jsonify(response)
+
+@front_end.route("/portfolio/test", methods=['POST'])
+def get_model_predict():
+    json_data = request.get_json()
+    response = {
+        'isSuccess': False,
+        'errorMsg': "",
+        'data': []
+    }
+    selected_tickers = json_data.get("stocks", [])
+
+    if len(selected_tickers) == 0:
+        response["isSuccess"] = False
+        response["errorMsg"] = "Cannot find portfolio"
+    else:
+        marko = Markowitz(selected_tickers)
+        all_weights = marko.get_all_weights()
+        date, all_values = marko.get_backtest_result()
+
+        time_interval = 1
+        for i in range(len(all_weights)):
+            all_weights[i] = all_weights[i][::time_interval]
+        
+        response["data"] = {
+            "all_weights": all_weights,
+            "all_values": all_values[::time_interval],
+            "date": date.tolist()[::time_interval]
+        }
+        response["isSuccess"] = True
+
+    return jsonify(response)
+
+# @front_end.route("/portfolio/calculate", methods=['POST'])
+# def get_news_by_names():
+#     json_data = request.get_json()
+#     print(json_data)
+#     response = {
+#         'isSuccess': False,
+#         'errorMsg': "",
+#         'data': []
+#     }
+#     portfolio_id = json_data.get("portfolioId", None)
+#     model_type = json_data.get("modelType", "basic")
+
+#     if portfolio_id is None:
+#         response["isSuccess"] = False
+#         response["errorMsg"] = "Cannot find portfolio"
+#     else:
+#         pass
+
+#     response["isSuccess"] = True
+#     response["data"] = ""
+#     return jsonify(response)

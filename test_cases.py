@@ -132,7 +132,8 @@ def test():
 
     test_dict = {
         "data": {"all_weights": all_weights,
-        "all_values": all_values}
+        "all_values": all_values,
+        "date": date.tolist()}
     }
 
     return jsonify(test_dict)
