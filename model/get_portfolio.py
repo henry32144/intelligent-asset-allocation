@@ -1,8 +1,10 @@
 from model.markowitz import Markowitz
 from model.black_litterman import Black_Litterman
+from model.equal_weight import EqualWeight
 from database.tables.user import User, get_companys
 from database.tables.company import Company
 from database.tables.portfolio import Portfolio
+import numpy as np
 
 def return_portfolio(mode='basic', portfolio_id=None, company_symbols=[]):
 	if portfolio_id is None:
@@ -27,3 +29,13 @@ def return_portfolio(mode='basic', portfolio_id=None, company_symbols=[]):
 		date, all_values = BL.get_backtest_result()
 
 		return all_weights, all_values, date
+
+	elif( mode == 'equalweight'):
+		print("Use Equal weight")
+		EW = EqualWeight(companys)
+		ratio = 100 / len(companys)
+		date, all_values = EW.get_backtest_result()
+		all_weights = np.ones((len(companys), len(date) + 1)) * ratio
+		all_weights = np.around(all_weights, 2)
+
+		return all_weights.tolist(), all_values, date
