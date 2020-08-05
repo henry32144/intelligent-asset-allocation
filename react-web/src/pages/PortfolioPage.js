@@ -9,8 +9,10 @@ import NewsSection from '../views/NewsSection'
 import PerformanceSection from '../views/PerformanceSection'
 import WeightSection from '../views/WeightSection'
 import Typography from '@material-ui/core/Typography';
+import Backdrop from '@material-ui/core/Backdrop';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import { motion } from "framer-motion"
-import { BASEURL, NEWS_SECTION, PERFORMANCE_SECTION, WEIGHT_SECTION } from '../Constants';
+import { BASEURL, NEWS_SECTION, PERFORMANCE_SECTION, WEIGHT_SECTION, COLOR_PALETTES } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
   portfolioPage: {
@@ -37,7 +39,11 @@ const useStyles = makeStyles((theme) => ({
   },
   sideBar: {
     zIndex: 1300,
-  }
+  },
+  backdrop: {
+    zIndex: 1600,
+    color: '#fff',
+  },
 }));
 
 function PortfolioPage(props) {
@@ -59,6 +65,20 @@ function PortfolioPage(props) {
   const [currentSelectedPortfolio, setCurrentSelectedPortfolio] = React.useState(null);
   const [currentSelectedStock, setCurrentSelectedStock] = React.useState("APPL");
   const [currentSectionCode, setSectionCode] = React.useState(NEWS_SECTION);
+  const [portfolioPerformances, setPortfolioPerformance] = React.useState({});
+  const [currentPerformance, setCurrentPerformance] = React.useState(0);
+  const [portfolioWeights, setPortfolioWeights] = React.useState({});
+  const [historyWeights, setHistoryWeights] = React.useState({});
+  const [backtestDates, setBacktestDates] = React.useState([]);
+  const [selectedModel, setModel] = React.useState("basic");
+  const [backdropOpen, setBackdropOpen] = React.useState(false);
+
+  const handleBackdropClose = () => {
+    setBackdropOpen(false);
+  };
+  const handleBackdropToggle = () => {
+    setBackdropOpen(!backdropOpen);
+  };
 
   let section = null;
 
@@ -109,11 +129,26 @@ function PortfolioPage(props) {
   const renderSection = () => {
     switch (currentSectionCode) {
       case NEWS_SECTION:
-        return <NewsSection newsData={newsData} />;
+        return <NewsSection
+          newsData={newsData}
+        />;
       case PERFORMANCE_SECTION:
-        return <PerformanceSection />;
+        return <PerformanceSection
+          portfolioPerformances={portfolioPerformances}
+          portfolioWeights={portfolioWeights}
+          historyWeights={historyWeights}
+          backtestDates={backtestDates}
+        />;
       case WEIGHT_SECTION:
-        return <WeightSection />;
+        return <WeightSection
+          portfolioWeights={portfolioWeights}
+          historyWeights={historyWeights}
+          backtestDates={backtestDates}
+          selectedModel={selectedModel}
+          setModel={setModel}
+          getWeights={getWeights}
+          selectedStocks={selectedStocks}
+        />;
       default:
         return <NewsSection newsData={newsData} />;
     }
@@ -160,19 +195,168 @@ function PortfolioPage(props) {
     }
   };
 
+  const generateDataTemplate = (index) => {
+    return {
+      label: '',
+      fill: false,
+      lineTension: 0.1,
+      backgroundColor: COLOR_PALETTES[index],
+      borderColor: COLOR_PALETTES[index],
+      borderCapStyle: 'butt',
+      borderDash: [],
+      borderDashOffset: 0.0,
+      borderJoinStyle: 'miter',
+      pointBorderColor: COLOR_PALETTES[index],
+      pointBackgroundColor: '#fff',
+      pointBorderWidth: 0,
+      pointHoverRadius: 5,
+      pointHoverBackgroundColor: COLOR_PALETTES[index],
+      pointHoverBorderColor: COLOR_PALETTES[index],
+      pointHoverBorderWidth: 2,
+      pointRadius: 0,
+      pointHitRadius: 5,
+      data: []
+    }
+  }
+
+  const setWeightDataset = (symbols, weight, date) => {
+    var newHistoryDatasets = [];
+    var currentWeights = [];
+    var weightLabels = [];
+    var currentWeightColors = [];
+
+    var maxVal = 42;
+    var delta = Math.floor(date.length / maxVal);
+    var lesserDate = [];
+
+    for (var i = 0; i < weight.length; i++) {
+      var dataset = generateDataTemplate(i);
+      const originalData = weight[i].slice(1);
+      var lesserData = [];
+      for (var j = 0; j < originalData.length; j = j + delta) {
+        lesserData.push(originalData[j]);
+        if (i === 0) {
+          lesserDate.push(date[j]);
+        }
+      }
+
+      dataset.data = lesserData;
+      dataset.label = symbols[i];
+
+      const latestWeight = weight[i][weight[i].length - 1];
+      weightLabels.push(symbols[i] + ": " + latestWeight + "%");
+      currentWeights.push(latestWeight);
+      currentWeightColors.push(COLOR_PALETTES[i]);
+      newHistoryDatasets.push(dataset);
+    }
+
+    var newHistoryWeightData = {
+      labels: lesserDate,
+      datasets: newHistoryDatasets
+    }
+
+    var newCurrentWeightData = {
+      labels: weightLabels,
+      datasets: [{
+        data: currentWeights,
+        backgroundColor: currentWeightColors,
+        hoverBackgroundColor: currentWeightColors
+      }]
+    }
+    console.log(newCurrentWeightData);
+    console.log(newHistoryWeightData);
+    setPortfolioWeights(newCurrentWeightData);
+    setHistoryWeights(newHistoryWeightData);
+  }
+
+  const setPerformanceDataset = (performance, date) => {
+    var maxVal = 42;
+    var delta = Math.floor(date.length / maxVal);
+    var lesserDate = [];
+    var lesserData = [];
+    var dataset = generateDataTemplate(0);
+    const originalData = performance.slice(1);
+
+    for (var i = 0; i < performance.length; i = i + delta) {
+      lesserData.push(originalData[i]);
+      lesserDate.push(date[i]);
+    }
+
+    dataset.label = "History performance";
+    dataset.data = lesserData;
+
+    var newPerformanceData = {
+      labels: lesserDate,
+      datasets: [dataset]
+    }
+
+    console.log(newPerformanceData);
+    console.log(originalData[originalData.length - 1]);
+    setCurrentPerformance(originalData[originalData.length - 1]);
+    setPortfolioPerformance(newPerformanceData);
+  }
+
+  const getWeights = async (selectedModel, selectedStocks) => {
+    var model = selectedModel;
+    if (model == undefined) {
+      model = "basic";
+    }
+    var companySymbols = selectedStocks.map(function (item, index, array) {
+      return item.companySymbol;
+    });
+
+    const request = {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        "stocks": companySymbols,
+        "model": model
+      })
+    }
+
+    try {
+      if (companySymbols.length > 0) {
+        console.log("Try to get weights");
+        handleBackdropToggle();
+        const response = await fetch(BASEURL + "/portfolio/test", request)
+        if (response.ok) {
+          const jsonData = await response.json();
+          console.log("Weight response")
+          console.log(jsonData)
+          if (jsonData.isSuccess) {
+            setPerformanceDataset(jsonData.data.all_values, jsonData.data.date);
+            setWeightDataset(companySymbols, jsonData.data.all_weights, jsonData.data.date);
+            setBacktestDates(jsonData.data.date);
+          } else {
+            alert(jsonData.errorMsg);
+          }
+        }
+      }
+    }
+    catch (err) {
+      console.log('Fetch news failed', err);
+    }
+    finally {
+      handleBackdropClose();
+    }
+  };
+
   const getNews = async (selectedStocks) => {
     var companyNames = selectedStocks.map(function (item, index, array) {
       return item.companyName;
     });
 
     const request = {
-      method: 'POST',
+      method: "POST",
       headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        'companyNames': companyNames,
+        "companyNames": companyNames,
       })
     }
 
@@ -225,14 +409,14 @@ function PortfolioPage(props) {
 
   const createNewPortfolio = async (portfolioName) => {
     const request = {
-      method: 'POST',
+      method: "POST",
       headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        'portfolioName': portfolioName,
-        'userId': props.userData.userId,
+        "portfolioName": portfolioName,
+        "userId": props.userData.userId,
       })
     }
     try {
@@ -243,10 +427,10 @@ function PortfolioPage(props) {
         if (jsonData.isSuccess) {
           // get create object
           var newPortfolio = {
-            'portfolioId': jsonData.data.id,
-            'userId': jsonData.data.user_id,
-            'portfolioName': jsonData.data.portfolio_name,
-            'portfolioStocks': jsonData.data.portfolio_stocks
+            "portfolioId": jsonData.data.id,
+            "userId": jsonData.data.user_id,
+            "portfolioName": jsonData.data.portfolio_name,
+            "portfolioStocks": jsonData.data.portfolio_stocks
           }
           setUserPortfolios([...userPortfolios, newPortfolio]);
           handleCreatePortfolioDialogClose();
@@ -263,13 +447,13 @@ function PortfolioPage(props) {
   const getUserPortfolio = async () => {
     if (props.userData.userId != undefined) {
       const request = {
-        method: 'POST',
+        method: "POST",
         headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
+          Accept: "application/json",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          'userId': props.userData.userId,
+          "userId": props.userData.userId,
         })
       }
       try {
@@ -377,7 +561,7 @@ function PortfolioPage(props) {
   React.useEffect(() => {
     console.log(currentSectionCode)
   }, [currentSectionCode]);
-  
+
   React.useEffect(() => {
     if (!dataLoaded) {
       getCompanyData();
@@ -400,11 +584,15 @@ function PortfolioPage(props) {
       console.log('getNews');
 
       getNews(selectedStocks);
+      getWeights(selectedModel, selectedStocks);
     }
   }, [selectedStocks]);
 
   return (
     <div className={classes.portfolioPage}>
+      <Backdrop className={classes.backdrop} open={backdropOpen} onClick={handleBackdropClose}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
       <MessageDialog
         isOpen={isMessageDialogOpen}
         handleClose={handleMessageDialogClose}
