@@ -39,7 +39,7 @@ def daily_update():
 	querys = []
 	company_names = Company.query.all()
 	for c in company_names:
-		querys.append( c.company_name )
+		querys.append( c.symbol )
 	article_getter = ArticleGetter(base_url)
 	for q in querys:
 		article_getter = ArticleGetter(q)
@@ -47,5 +47,7 @@ def daily_update():
 		_lst = []
 		for index, row in df.iterrows():
 			_lst.append(CrawlingData(news_title=row['title'], date=row['time'], company=q, url=row['url']))
+		print(df)
+		print(len(_lst))
 		db.session.add_all(_lst)
 		db.session.commit()

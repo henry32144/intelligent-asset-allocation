@@ -6,9 +6,11 @@ import CreatePortfolioDialog from '../components/CreatePortfolioDialog'
 import StockSelectSection from '../views/StockSelectSection'
 import PortfolioToolBar from '../components/PortfolioToolBar'
 import NewsSection from '../views/NewsSection'
+import PerformanceSection from '../views/PerformanceSection'
+import WeightSection from '../views/WeightSection'
 import Typography from '@material-ui/core/Typography';
 import { motion } from "framer-motion"
-import { BASEURL } from '../Constants';
+import { BASEURL, NEWS_SECTION, PERFORMANCE_SECTION, WEIGHT_SECTION } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
   portfolioPage: {
@@ -27,7 +29,8 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(4, 0, 2),
   },
   portfolioContent: {
-    flex: 'auto'
+    flex: 'auto',
+    overflowY: "scroll"
   },
   companyName: {
     margin: theme.spacing(4, 0, 2),
@@ -41,6 +44,7 @@ function PortfolioPage(props) {
   const classes = useStyles();
 
   const [companyData, setCompanyData] = React.useState([]);
+  const [newsData, setNewsData] = React.useState([]);
   const [companyDataMapping, setCompanyDataMapping] = React.useState({});
   const [userPortfolios, setUserPortfolios] = React.useState([]);
   const [selectedStocks, setPortfolioStocks] = React.useState([]);
@@ -54,7 +58,10 @@ function PortfolioPage(props) {
   const [dialogMessage, setDialogMessage] = React.useState("");
   const [currentSelectedPortfolio, setCurrentSelectedPortfolio] = React.useState(null);
   const [currentSelectedStock, setCurrentSelectedStock] = React.useState("APPL");
-  
+  const [currentSectionCode, setSectionCode] = React.useState(NEWS_SECTION);
+
+  let section = null;
+
   const sideBarTransitions = {
     open: {
       opacity: 1,
@@ -99,6 +106,19 @@ function PortfolioPage(props) {
     setCreatePortfolioDialogOpen(false);
   };
 
+  const renderSection = () => {
+    switch (currentSectionCode) {
+      case NEWS_SECTION:
+        return <NewsSection newsData={newsData} />;
+      case PERFORMANCE_SECTION:
+        return <PerformanceSection />;
+      case WEIGHT_SECTION:
+        return <WeightSection />;
+      default:
+        return <NewsSection newsData={newsData} />;
+    }
+  };
+
   const getCompanyData = async () => {
     const request = {
       method: 'GET',
@@ -110,6 +130,8 @@ function PortfolioPage(props) {
       const response = await fetch(BASEURL + "/company", request)
       if (response.ok) {
         const jsonData = await response.json();
+        console.log("Company data:");
+        console.log(jsonData);
         if (jsonData.isSuccess) {
           var newCompanyDataMapping = {}
           var newCompanyData = []
@@ -132,6 +154,69 @@ function PortfolioPage(props) {
     }
     catch (err) {
       console.log('Fetch company data failed', err);
+    }
+    finally {
+      //setLoading(false);
+    }
+  };
+
+  const getNews = async (selectedStocks) => {
+    var companyNames = selectedStocks.map(function (item, index, array) {
+      return item.companyName;
+    });
+
+    const request = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        'companyNames': companyNames,
+      })
+    }
+
+    try {
+      if (companyNames.length > 0) {
+        console.log("Try to get news");
+        //setLoading(true);
+        const response = await fetch(BASEURL + "/news", request)
+        if (response.ok) {
+          const jsonData = await response.json();
+          if (jsonData.isSuccess) {
+            var newNewsData = [];
+            for (var i = 0; i < jsonData.data.length; i++) {
+              var paragraphs = [];
+              for (var j = 0; j < jsonData.data[i].paragraph.length; j++) {
+                var paragraph = {
+                  "isKeySentence": false,
+                  "text": jsonData.data[i].paragraph[j]
+                };
+                paragraphs.push(paragraph);
+              }
+              for (var j = 0; j < jsonData.data[i].keysent.length; j++) {
+                paragraphs[jsonData.data[i].keysent[j]]["isKeySentence"] = true;
+              }
+              var dt = new Date(jsonData.data[i].date)
+              var news = {
+                "date": dt.getFullYear() + "/" + (dt.getMonth() + 1) + "/" + dt.getDate(),
+                "companyName": jsonData.data[i].company,
+                "paragraph": paragraphs,
+                "title": jsonData.data[i].title,
+                "id": jsonData.data[i].id,
+              };
+              newNewsData.push(news);
+            }
+            console.log(newNewsData);
+            setNewsData(newNewsData)
+          } else {
+            alert(jsonData.errorMsg);
+          }
+        }
+      }
+    }
+    catch (err) {
+      console.log('Fetch news failed', err);
     }
     finally {
       //setLoading(false);
@@ -234,7 +319,7 @@ function PortfolioPage(props) {
 
   const savePortfolio = async () => {
     if (props.userData.userId != undefined) {
-      var currentPortfolioStocks = selectedStocks.map(function(item, index, array){
+      var currentPortfolioStocks = selectedStocks.map(function (item, index, array) {
         return item.companySymbol;
       });
       console.log(currentPortfolioStocks);
@@ -257,9 +342,9 @@ function PortfolioPage(props) {
         if (response.ok) {
           const jsonData = await response.json();
           if (jsonData.isSuccess) {
-            
+
             var tempNewPortfolios = Array.from(userPortfolios);
-            tempNewPortfolios.forEach(function(item, index, array){
+            tempNewPortfolios.forEach(function (item, index, array) {
               if (item.portfolioId == currentSelectedPortfolio) {
                 item.portfolioStocks = currentPortfolioStocks;
               }
@@ -290,6 +375,10 @@ function PortfolioPage(props) {
   };
 
   React.useEffect(() => {
+    console.log(currentSectionCode)
+  }, [currentSectionCode]);
+  
+  React.useEffect(() => {
     if (!dataLoaded) {
       getCompanyData();
     }
@@ -304,6 +393,15 @@ function PortfolioPage(props) {
       setSelectedStocks(userPortfolios[0].portfolioStocks);
     }
   }, [userPortfolios]);
+
+  React.useEffect(() => {
+    console.log('newssection');
+    if (selectedStocks != undefined && selectedStocks.length > 0) {
+      console.log('getNews');
+
+      getNews(selectedStocks);
+    }
+  }, [selectedStocks]);
 
   return (
     <div className={classes.portfolioPage}>
@@ -339,6 +437,7 @@ function PortfolioPage(props) {
         setCurrentSelectedPortfolio={setCurrentSelectedPortfolio}
         handleCreatePortfolioDialogOpen={handleCreatePortfolioDialogOpen}
         userData={props.userData}
+        setSectionCode={setSectionCode}
       >
       </PortfolioToolBar>
       <motion.div
@@ -360,11 +459,7 @@ function PortfolioPage(props) {
       </motion.div>
       <Grid item container direction="row" justify="center" alignItems="stretch" className={classes.portfolioContent}>
         <Grid item xs={10} md={6}>
-          <Typography className={classes.companyName} variant="h5">
-            Apple Inc.
-          </Typography>
-          <NewsSection>
-          </NewsSection>
+          {renderSection()}
         </Grid>
       </Grid>
     </div>

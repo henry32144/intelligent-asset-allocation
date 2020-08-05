@@ -8,7 +8,7 @@ from collections import defaultdict
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
-from flask import Blueprint, abort, request, render_template
+from flask import Blueprint, abort, request, render_template, jsonify
 from database.tables.user import User
 from database.database import db
 from database.tables.crawling_data import CrawlingData, read_csv, daily_update
@@ -18,7 +18,6 @@ from database.tables.volatility import Volatility
 
 from database.tables.output_news import OutputNews, news_to_json
 from model.get_news_keysent import KeysentGetter, test_url
-
 
 from model.predict_Q import predict_Q
 from model.markowitz import Markowitz
@@ -86,9 +85,10 @@ def save_company_to_db():
 
 @test_cases.route('/outputnews')
 def json_test():
-    _ = news_to_json('Apple')
+    _ = news_to_json('Amazon.com, Inc.')
     print("to json")
-    print(_)
+    res = {}
+    res["news"] = _
     return ''
 
 @test_cases.route('/get_news')
@@ -102,6 +102,8 @@ def get_news():
     getter.to_db()
     print("to db")
     return ''
+
+
 @test_cases.route('/get_stock_price')
 def get_predicted_Q():
     with open('./model/sp500tickers.pkl', 'rb') as f:
@@ -128,7 +130,20 @@ def test():
     selected_tickers = ['GOOG', 'CVX', 'CB', 'CI', 'AAPL']
     marko = Markowitz(selected_tickers)
     all_weights = marko.get_all_weights()
+
+    # all_values, all_return = marko.get_backtest_result()
+    
+    print('all_weights:', all_weights)
+    # print('all_values:', all_values)
+    # print('all_return:', all_return)
+
+    # matplotlib.use('agg')
+    # plt.plot(all_values, label='Mean-Var Portfolio')
+    # plt.show()
+    # plt.savefig('markowitz.png')
+
     date, all_values = marko.get_backtest_result()
+
 
     return ''
 
