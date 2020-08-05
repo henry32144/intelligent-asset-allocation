@@ -85,7 +85,7 @@ def save_company_to_db():
 
 @test_cases.route('/outputnews')
 def json_test():
-    _ = news_to_json('Amazon.com, Inc.')
+    _ = news_to_json('Alphabet Inc.')
     print("to json")
     res = {}
     res["news"] = _
@@ -153,28 +153,6 @@ def test_sp500():
     sp_500 = SP500()
     sp500_values, all_return = sp_500.get_backtest_result()
 
-    return ''
-
-
-@test_cases.route('/volatility')
-def calculate_volatility():
-    sp_99 = []
-    with open('./database/tables/ticker_name.txt', 'r') as f:
-        lines = f.readlines()
-        for l in lines:
-            c = l.split('\t')
-            c[1] = c[1].replace('\n','')
-            c[1] = c[1].replace(' ','')
-            sp_99.append(c[1])
-
-    all_sharpe_ratio = {}
-    for tick in sp_99:
-        vol = Volatility(tick)
-        sharpe = vol.calculate_sharpe_ratio()
-        all_sharpe_ratio[tick] = sharpe
-    
-    print(all_sharpe_ratio)
-    
     return ''
 
 
