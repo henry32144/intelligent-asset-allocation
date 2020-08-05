@@ -36,8 +36,9 @@ def news_to_json(company):
 	date1 = datetime( 2020,7,1 )
 	date2 = datetime(2020,6,27)
 	# data = OutputNews.query.filter(OutputNews.date <= date1).filter(OutputNews.date >= date2)
-	data = OutputNews.query.filter( and_( OutputNews.company == company, OutputNews.date < date1, OutputNews.date > date2 ) )
+	data = OutputNews.query.filter( and_( OutputNews.company == company, OutputNews.date < date1, OutputNews.date > date2 ) ).all()
 	print('get data')
+	print(data)
 	for r in data:
 		a = _dict
 		k = r.keysent.split('%%')
