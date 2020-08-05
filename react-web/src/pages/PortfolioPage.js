@@ -70,6 +70,7 @@ function PortfolioPage(props) {
   const [portfolioWeights, setPortfolioWeights] = React.useState({});
   const [historyWeights, setHistoryWeights] = React.useState({});
   const [backtestDates, setBacktestDates] = React.useState([]);
+  const [selectedModel, setModel] = React.useState("basic");
   const [backdropOpen, setBackdropOpen] = React.useState(false);
 
   const handleBackdropClose = () => {
@@ -128,21 +129,25 @@ function PortfolioPage(props) {
   const renderSection = () => {
     switch (currentSectionCode) {
       case NEWS_SECTION:
-        return <NewsSection 
+        return <NewsSection
           newsData={newsData}
-          />;
+        />;
       case PERFORMANCE_SECTION:
-        return <PerformanceSection 
-        portfolioPerformances={portfolioPerformances}
-        portfolioWeights={portfolioWeights}
-        historyWeights={historyWeights}
-        backtestDates={backtestDates}
+        return <PerformanceSection
+          portfolioPerformances={portfolioPerformances}
+          portfolioWeights={portfolioWeights}
+          historyWeights={historyWeights}
+          backtestDates={backtestDates}
         />;
       case WEIGHT_SECTION:
         return <WeightSection
           portfolioWeights={portfolioWeights}
           historyWeights={historyWeights}
           backtestDates={backtestDates}
+          selectedModel={selectedModel}
+          setModel={setModel}
+          getWeights={getWeights}
+          selectedStocks={selectedStocks}
         />;
       default:
         return <NewsSection newsData={newsData} />;
@@ -221,7 +226,7 @@ function PortfolioPage(props) {
     var currentWeightColors = [];
 
     var maxVal = 42;
-    var delta = Math.floor( date.length / maxVal );
+    var delta = Math.floor(date.length / maxVal);
     var lesserDate = [];
 
     for (var i = 0; i < weight.length; i++) {
@@ -234,7 +239,7 @@ function PortfolioPage(props) {
           lesserDate.push(date[j]);
         }
       }
-      
+
       dataset.data = lesserData;
       dataset.label = symbols[i];
 
@@ -266,7 +271,7 @@ function PortfolioPage(props) {
 
   const setPerformanceDataset = (performance, date) => {
     var maxVal = 42;
-    var delta = Math.floor( date.length / maxVal );
+    var delta = Math.floor(date.length / maxVal);
     var lesserDate = [];
     var lesserData = [];
     var dataset = generateDataTemplate(0);
@@ -291,19 +296,24 @@ function PortfolioPage(props) {
     setPortfolioPerformance(newPerformanceData);
   }
 
-  const getWeights = async (selectedStocks) => {
+  const getWeights = async (selectedModel, selectedStocks) => {
+    var model = selectedModel;
+    if (model == undefined) {
+      model = "basic";
+    }
     var companySymbols = selectedStocks.map(function (item, index, array) {
       return item.companySymbol;
     });
 
     const request = {
-      method: 'POST',
+      method: "POST",
       headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        'stocks': companySymbols,
+        "stocks": companySymbols,
+        "model": model
       })
     }
 
@@ -340,13 +350,13 @@ function PortfolioPage(props) {
     });
 
     const request = {
-      method: 'POST',
+      method: "POST",
       headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        'companyNames': companyNames,
+        "companyNames": companyNames,
       })
     }
 
@@ -399,14 +409,14 @@ function PortfolioPage(props) {
 
   const createNewPortfolio = async (portfolioName) => {
     const request = {
-      method: 'POST',
+      method: "POST",
       headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        'portfolioName': portfolioName,
-        'userId': props.userData.userId,
+        "portfolioName": portfolioName,
+        "userId": props.userData.userId,
       })
     }
     try {
@@ -417,10 +427,10 @@ function PortfolioPage(props) {
         if (jsonData.isSuccess) {
           // get create object
           var newPortfolio = {
-            'portfolioId': jsonData.data.id,
-            'userId': jsonData.data.user_id,
-            'portfolioName': jsonData.data.portfolio_name,
-            'portfolioStocks': jsonData.data.portfolio_stocks
+            "portfolioId": jsonData.data.id,
+            "userId": jsonData.data.user_id,
+            "portfolioName": jsonData.data.portfolio_name,
+            "portfolioStocks": jsonData.data.portfolio_stocks
           }
           setUserPortfolios([...userPortfolios, newPortfolio]);
           handleCreatePortfolioDialogClose();
@@ -437,13 +447,13 @@ function PortfolioPage(props) {
   const getUserPortfolio = async () => {
     if (props.userData.userId != undefined) {
       const request = {
-        method: 'POST',
+        method: "POST",
         headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
+          Accept: "application/json",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          'userId': props.userData.userId,
+          "userId": props.userData.userId,
         })
       }
       try {
@@ -551,7 +561,7 @@ function PortfolioPage(props) {
   React.useEffect(() => {
     console.log(currentSectionCode)
   }, [currentSectionCode]);
-  
+
   React.useEffect(() => {
     if (!dataLoaded) {
       getCompanyData();
@@ -574,7 +584,7 @@ function PortfolioPage(props) {
       console.log('getNews');
 
       getNews(selectedStocks);
-      getWeights(selectedStocks);
+      getWeights(selectedModel, selectedStocks);
     }
   }, [selectedStocks]);
 

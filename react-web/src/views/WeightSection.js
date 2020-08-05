@@ -34,31 +34,30 @@ const useStyles = makeStyles((theme) => ({
 export default function PerformanceSection(props) {
   const classes = useStyles();
 
-  const [mode, setMode] = React.useState('basic');
 
   const handleRadioChange = (event) => {
-    setMode(event.target.value);
+    props.setModel(event.target.value);
   };
 
-  const calculateButtonOnClick = (event) => {
-    
+  const calculateButtonOnClick = () => {
+    props.getWeights(props.selectedModel, props.selectedStocks);
   };
 
 
   return (
     <div className={classes.sectionRoot}>
       <Typography className={classes.sectionTitle} variant="h5">
-        Weights
+        Portfolio Weights
       </Typography>
       <Grid container justify="center">
         <FormControl component="fieldset" className={classes.formControl}>
-          <FormLabel component="legend">Mode select</FormLabel>
-          <RadioGroup aria-label="mode" name="mode" value={mode} onChange={handleRadioChange}>
-            <FormControlLabel value="basic" control={<Radio />} label="Basic model" />
+          <FormLabel component="legend">Model select</FormLabel>
+          <RadioGroup aria-label="model" name="model" value={props.selectedModel} onChange={handleRadioChange}>
+            <FormControlLabel value="basic" control={<Radio />} label="Markowitz" />
             <FormControlLabel value="blacklitterman" control={<Radio />} label="Black litterman" />
           </RadioGroup>
           <Button type="submit" variant="outlined" color="primary" className={classes.button} onClick={calculateButtonOnClick}>
-            Calculate Weight
+            Save setting
           </Button>
         </FormControl>
       </Grid>

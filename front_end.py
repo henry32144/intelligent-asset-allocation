@@ -4,6 +4,7 @@ from database.tables.portfolio import Portfolio
 from database.tables.company import Company
 from database.database import db
 from database.tables.output_news import OutputNews, news_to_json
+from model.get_portfolio import return_portfolio
 from model.markowitz import Markowitz
 front_end = Blueprint('front_end', __name__)
 
@@ -167,14 +168,13 @@ def get_model_predict():
         'data': []
     }
     selected_tickers = json_data.get("stocks", [])
+    selected_mode = json_data.get("model", "basic")
 
     if len(selected_tickers) == 0:
         response["isSuccess"] = False
         response["errorMsg"] = "Cannot find portfolio"
     else:
-        marko = Markowitz(selected_tickers)
-        all_weights = marko.get_all_weights()
-        date, all_values = marko.get_backtest_result()
+        all_weights, all_values, date = return_portfolio(mode=selected_mode, company_symbols=selected_tickers)
 
         time_interval = 1
         for i in range(len(all_weights)):
