@@ -3,6 +3,6 @@ __pycache__/*
 **/__pycache__
 
 **/.DS_Store
-**/database.db
+# **/database.db
 **/chromedriver.exe
-database.db
+# database.db

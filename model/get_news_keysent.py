@@ -20,8 +20,19 @@ from database.tables.crawling_data import CrawlingData
 from database.tables.output_news import OutputNews
 import json
 from pprint import pprint
-from sqlalchemy import Column, Integer, String, DateTime, Date
+from sqlalchemy import Column, Integer, String, DateTime, Date, and_
 from datetime import datetime,timedelta
+import ssl
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+import nltk
+nltk.download('punkt')
+from nltk.tokenize import sent_tokenize
 
 class KeysentGetter():
 	def __init__(self):
@@ -34,27 +45,19 @@ class KeysentGetter():
 		self.important_news = []
 		self.title_polarity = []
 		self.companys = []
+		self.dates = []
 		self.q_data = self._get_all_url()
 
 
 	def _get_all_url(self):
-		result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
+		result = CrawlingData.query.filter(and_( CrawlingData.date < datetime(2020,7,1), CrawlingData.date > datetime(2020,6,27)))
+		# result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
 		
 		self.q_data = result
 		for r in result:
 			self.url.append(r.url)
 			self.companys.append(r.company)
-		# print(result)
-		result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=2)))
-		for r in result:
-			self.url.append(r.url)
-			self.companys.append(r.company)
-		# return result
-		result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=3)))
-		for r in result:
-			self.url.append(r.url)
-			self.companys.append(r.company)
-
+			self.dates.append(r.date)
 
 	def url2news(self):
 		company_idx = 0
@@ -75,9 +78,8 @@ class KeysentGetter():
 
 				if( self.get_jaccard_sim(title.lower(), self.title[-1].lower()) >=0.8 ):
 					del self.companys[company_idx]
+					del self.dates[company_idx]
 					company_idx-=1
-					# print('got one !!!')
-					# print(title)
 					check_repeated = 1
 			company_idx+=1
 			if(check_repeated == 1):
@@ -87,7 +89,12 @@ class KeysentGetter():
 			hiv4 = ps.hiv4.HIV4()
 			self.doc.append(paragraph)
 			self.title_polarity.append( hiv4.get_score(hiv4.tokenize(title))['Polarity']  )
-		    
+			g = []
+			for p in paragraph:
+				p = sent_tokenize(p)
+				for pp in p:
+					g.append(pp)
+			paragraph = g
 			po = []
 			for p in paragraph:
 				tokens = hiv4.tokenize(p)
@@ -96,7 +103,6 @@ class KeysentGetter():
 				po.append(s['Polarity'])
 				# print(s)
 			self.polarity.append(po)
-
 
 
 	def get_jaccard_sim(self, str1, str2): 
@@ -115,7 +121,7 @@ class KeysentGetter():
 
 		print(len(self.title_polarity))
 		for i, po in tqdm(enumerate(self.polarity), total = len(self.polarity), desc = 'get important sent'):
-			if (self.title_polarity[i] >= 0.1 or self.title_polarity[i] <= -0.1):
+			if (self.title_polarity[i] >= 0.5 or self.title_polarity[i] <= -0.5):
 				key_idx = []
 				for j, p in enumerate(po):
 					if (p >= 0.7):
@@ -126,26 +132,9 @@ class KeysentGetter():
 					self.important_news.append(self.doc[i])
 					self.keysent_idx.append(key_idx)
 					self.important_title.append(self.title[i])
-		# pprint(self.title)
-		# print(self.get_jaccard_sim(self.title[0], self.title[1]))
-
-
-		# for i0, n in enumerate(self.important_news):
-		# 	for k in self.keysent_idx[i0][1:]:
-		# 		self.important_news[i0][abs(k+1)] = "**" + self.important_news[i0][abs(k+1)] + "**"
-		# 	if(self.keysent_idx[i0][0] > 0):
-		# 		print("------------NEWS : Positive------------")
-		# 	else:
-		# 		print("------------NEWS : Negative------------")
-		# 	print("======  :  "+self.important_title[i0] + "  : ======")
-		# 	pprint(self.important_news[i0])
-		# 	l+=1
 
 	def to_db(self):
 		_lst = []
-		# pprint(self.important_news)
-		# print(self.important_title)
-		# print(len(self.important_title))
 		for i, t in enumerate(self.important_title):
 			s = ""
 			for p in self.important_news[i]:
@@ -156,7 +145,7 @@ class KeysentGetter():
 			for k in self.keysent_idx[i]:
 				s = s+str(k)+"%%"
 			s = s[:-2]
-			_lst.append(OutputNews( t, date = datetime.now().date() - timedelta(days=1), company = self.companys[i], paragraph = p, keysent = s ))
+			_lst.append(OutputNews( t, date = self.dates[i], company = self.companys[i], paragraph = p, keysent = s ))
 		# print(_lst[3].news_title)
 		db.session.add_all(_lst)
 		db.session.commit()
@@ -165,15 +154,7 @@ class KeysentGetter():
 def test_url():
 	result = CrawlingData.query.filter_by(date=(datetime.now().date() - timedelta(days=1)))
 	return result
-# 		self.q_data = result
-# 		for r in result:
-# 			self.url.append(r.url)
-# 			self.companys.append(r.company)
-# 		return result
-# get = KeysentGetter()
-# get.url2news()
-# print(len(get.title))
-# get.get_news()
+
 
 
 

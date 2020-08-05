@@ -17,6 +17,7 @@ from database.tables.company import Company, crawl_sp500_info, save_company
 from database.tables.volatility import Volatility
 
 from database.tables.output_news import OutputNews, news_to_json
+from database.tables.portfolio import Portfolio
 from model.get_news_keysent import KeysentGetter, test_url
 
 from model.predict_Q import predict_Q
@@ -85,11 +86,11 @@ def save_company_to_db():
 
 @test_cases.route('/outputnews')
 def json_test():
-    _ = news_to_json('Amazon.com, Inc.')
+    _ = news_to_json('Alphabet Inc.')
     print("to json")
     res = {}
     res["news"] = _
-    return jsonify(res)
+    return ''
 
 @test_cases.route('/get_news')
 def get_news():
@@ -102,6 +103,8 @@ def get_news():
     getter.to_db()
     print("to db")
     return ''
+
+
 @test_cases.route('/get_stock_price')
 def get_predicted_Q():
     with open('./model/sp500tickers.pkl', 'rb') as f:
@@ -128,6 +131,18 @@ def test():
     selected_tickers = ['GOOG', 'CVX', 'CB', 'CI', 'AAPL']
     marko = Markowitz(selected_tickers)
     all_weights = marko.get_all_weights()
+
+    # all_values, all_return = marko.get_backtest_result()
+    
+    print('all_weights:', all_weights)
+    # print('all_values:', all_values)
+    # print('all_return:', all_return)
+
+    # matplotlib.use('agg')
+    # plt.plot(all_values, label='Mean-Var Portfolio')
+    # plt.show()
+    # plt.savefig('markowitz.png')
+
     date, all_values = marko.get_backtest_result()
 
     test_dict = {
@@ -147,28 +162,6 @@ def test_sp500():
     return ''
 
 
-@test_cases.route('/volatility')
-def calculate_volatility():
-    sp_99 = []
-    with open('./database/tables/ticker_name.txt', 'r') as f:
-        lines = f.readlines()
-        for l in lines:
-            c = l.split('\t')
-            c[1] = c[1].replace('\n','')
-            c[1] = c[1].replace(' ','')
-            sp_99.append(c[1])
-
-    all_sharpe_ratio = {}
-    for tick in sp_99:
-        vol = Volatility(tick)
-        sharpe = vol.calculate_sharpe_ratio()
-        all_sharpe_ratio[tick] = sharpe
-    
-    print(all_sharpe_ratio)
-    
-    return ''
-
-
 @test_cases.route('/test_BL')
 def test_black_litterman():
     selected_tickers = ['GOOG', 'CVX', 'CB', 'CI', 'AAPL']
@@ -177,5 +170,12 @@ def test_black_litterman():
     date, all_values = BL.get_backtest_result()
 
     print(date)
+
+    return ''
+
+
+@test_cases.route('/portfolio')
+def create_portfolio():
+    Portfolio()
 
     return ''
