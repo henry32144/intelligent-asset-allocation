@@ -85,7 +85,7 @@ def save_company_to_db():
 
 @test_cases.route('/outputnews')
 def json_test():
-    _ = news_to_json('Amazon.com, Inc.')
+    _ = news_to_json('Alphabet Inc.')
     print("to json")
     res = {}
     res["news"] = _
