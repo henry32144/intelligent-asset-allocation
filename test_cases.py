@@ -156,28 +156,6 @@ def test_sp500():
     return ''
 
 
-@test_cases.route('/volatility')
-def calculate_volatility():
-    sp_99 = []
-    with open('./database/tables/ticker_name.txt', 'r') as f:
-        lines = f.readlines()
-        for l in lines:
-            c = l.split('\t')
-            c[1] = c[1].replace('\n','')
-            c[1] = c[1].replace(' ','')
-            sp_99.append(c[1])
-
-    all_sharpe_ratio = {}
-    for tick in sp_99:
-        vol = Volatility(tick)
-        sharpe = vol.calculate_sharpe_ratio()
-        all_sharpe_ratio[tick] = sharpe
-    
-    print(all_sharpe_ratio)
-    
-    return ''
-
-
 @test_cases.route('/test_BL')
 def test_black_litterman():
     selected_tickers = ['GOOG', 'CVX', 'CB', 'CI', 'AAPL']
