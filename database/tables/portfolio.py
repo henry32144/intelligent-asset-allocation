@@ -6,6 +6,7 @@ class Portfolio(db.Model):
     user_id = db.Column(db.Integer, nullable=False)
     portfolio_name = db.Column(db.String, nullable=False)
     portfolio_stocks = db.Column(db.String, nullable=False)
+    mode = db.Column(db.String)
 
     def __init__(self, **kwargs):
         super(Portfolio, self).__init__(**kwargs)
@@ -22,4 +23,5 @@ class Portfolio(db.Model):
                 'user_id': self.user_id,
                 'portfolio_name': self.portfolio_name,
                 'portfolio_stocks': portfolio_stocks,
+                'mode': self.mode
                 }
