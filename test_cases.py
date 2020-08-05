@@ -145,8 +145,13 @@ def test():
 
     date, all_values = marko.get_backtest_result()
 
+    test_dict = {
+        "data": {"all_weights": all_weights,
+        "all_values": all_values,
+        "date": date.tolist()}
+    }
 
-    return ''
+    return jsonify(test_dict)
 
 
 @test_cases.route('/test_sp500')

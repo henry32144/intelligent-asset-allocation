@@ -59,15 +59,6 @@ export default function PortfolioDetailButtons(props) {
           <ListAltIcon />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Performance">
-        <IconButton
-          edge="start"
-          color="inherit"
-          onClick={performanceButtonOnclick}
-          aria-label="show performance">
-          <ShowChartIcon />
-        </IconButton>
-      </Tooltip>
       <Tooltip title="Weight">
         <IconButton
           edge="start"
@@ -75,6 +66,15 @@ export default function PortfolioDetailButtons(props) {
           onClick={weightButtonOnclick}
           aria-label="asset weight">
           <BarChartIcon />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Performance">
+        <IconButton
+          edge="start"
+          color="inherit"
+          onClick={performanceButtonOnclick}
+          aria-label="show performance">
+          <ShowChartIcon />
         </IconButton>
       </Tooltip>
     </div>
