@@ -190,4 +190,3 @@ class Markowitz(object):
         date = date.values[1:]
 
         return date, all_values
-
