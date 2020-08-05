@@ -183,11 +183,4 @@ class Markowitz(object):
 
         date = self.test_df.reset_index()['date'].values[1:]
         
-        return date, all_values
-
-        
-
-    
-
-    
-        
+        return date, all_values    
