@@ -17,6 +17,7 @@ from database.tables.company import Company, crawl_sp500_info, save_company
 from database.tables.volatility import Volatility
 
 from database.tables.output_news import OutputNews, news_to_json
+from database.tables.portfolio import Portfolio
 from model.get_news_keysent import KeysentGetter, test_url
 
 from model.predict_Q import predict_Q
@@ -164,5 +165,12 @@ def test_black_litterman():
     date, all_values = BL.get_backtest_result()
 
     print(date)
+
+    return ''
+
+
+@test_cases.route('/portfolio')
+def create_portfolio():
+    Portfolio()
 
     return ''
