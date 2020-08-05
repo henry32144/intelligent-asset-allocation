@@ -5,7 +5,7 @@ from database.tables.portfolio import Portfolio
 
 def return_portfolio(mode = 'basic',portfolio_id ):
 
-	data = Portfolio.query.filter(and_(user_id == user_id, portfolio_name == portfolio_id)  )
+	data = Portfolio.query.filter(and_(portfolio_name == portfolio_id)  )
 	companys = get_companys(data.portfolio_stocks)
 
 	if (mode == 'basic'):
