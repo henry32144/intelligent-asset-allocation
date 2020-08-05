@@ -136,7 +136,7 @@ def calculate_volatility(df):
 def save_company():
     stock_data_df = crawl_sp500_info()
     stock_data_df = calculate_volatility(stock_data_df)
-    print(stock_data_df.head().to_string())
+    # print(stock_data_df.head().to_string())
 
     stock_list = []
     for idx, row in stock_data_df.iterrows():

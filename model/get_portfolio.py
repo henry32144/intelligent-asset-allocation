@@ -4,7 +4,7 @@ from database.tables.company import Company
 from database.tables.portfolio import Portfolio
 
 def return_portfolio(mode = 'basic',portfolio_id ):
-
+	
 	data = Portfolio.query.filter(and_(portfolio_name == portfolio_id)  )
 	companys = get_companys(data.portfolio_stocks)
 
