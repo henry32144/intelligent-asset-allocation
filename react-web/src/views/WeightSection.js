@@ -71,6 +71,7 @@ export default function PerformanceSection(props) {
           <RadioGroup aria-label="model" name="model" value={props.selectedModel} onChange={handleRadioChange}>
             <FormControlLabel value="basic" control={<Radio />} label="Markowitz" />
             <FormControlLabel value="blacklitterman" control={<Radio />} label="Black litterman" />
+            <FormControlLabel value="equalweight" control={<Radio />} label="Equal Weight" />
           </RadioGroup>
           <Button type="submit" variant="outlined" color="primary" className={classes.button} onClick={calculateButtonOnClick}>
             Save setting
