@@ -158,7 +158,7 @@ def test():
 @test_cases.route('/test_sp500')
 def test_sp500():
     sp_500 = SP500()
-    sp500_values, all_return = sp_500.get_backtest_result()
+    sp500_values = sp_500.get_backtest_result()
 
     return ''
 
