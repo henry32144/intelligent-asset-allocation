@@ -18,7 +18,18 @@ function StockSearchBox(props) {
   const { additionalStyles, companyData, selectedStocks, setSelectedStocks } = props
   const classes = useStyles();
   const filterOptions = (options, { inputValue }) => {
-    return matchSorter(options, inputValue, { keys: ['companyName', 'companySymbol'] }).slice(0, 10);
+    var filted = matchSorter(options, inputValue, { keys: ['companyName', 'companySymbol'] });
+    return filted.sort((a, b) => {
+      if (a.volatility === b.volatility) {
+        return 0;
+      }
+      if (a.volatility === "stable") {
+        return -1
+      }
+      if (b.volatility === "stable") {
+        return 1
+      }
+    });
   };
 
   const stockOnSelected = (event, newValue) => {
@@ -50,9 +61,25 @@ function StockSearchBox(props) {
         id="search-box"
         disableClearable
         size="small"
+        groupBy={(option) => option.volatility}
         onChange={stockOnSelected}
-        options={companyData}
+        options={companyData.sort((a, b) => {
+          if (a.volatility === b.volatility) {
+            return 0;
+          }
+          if (a.volatility === "stable") {
+            return -1
+          }
+          if (b.volatility === "stable") {
+            return 1
+          }
+        })}
         getOptionLabel={(option) => option.companyName}
+        renderOption={(option) => (
+          <React.Fragment>
+            {option.companyName} ({option.companySymbol})
+          </React.Fragment>
+        )}
         filterOptions={filterOptions}
         renderInput={(params) => (
           <TextField

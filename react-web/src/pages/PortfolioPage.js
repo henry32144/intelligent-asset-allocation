@@ -174,14 +174,15 @@ function PortfolioPage(props) {
           var newCompanyDataMapping = {}
           var newCompanyData = []
           for (var i = 0; i < jsonData.data.length; i++) {
-            const companInfo = {
+            const companyInfo = {
               "companyIndustry": jsonData.data[i].industry,
               "companyName": jsonData.data[i].company_name,
               "companySymbol": jsonData.data[i].symbol,
-              "companyId": jsonData.data[i].id_
+              "companyId": jsonData.data[i].id_,
+              "volatility": jsonData.data[i].volatility
             };
-            newCompanyDataMapping[jsonData.data[i].symbol] = companInfo
-            newCompanyData.push(companInfo);
+            newCompanyDataMapping[jsonData.data[i].symbol] = companyInfo
+            newCompanyData.push(companyInfo);
           }
           setCompanyData(newCompanyData);
           setCompanyDataMapping(newCompanyDataMapping);
