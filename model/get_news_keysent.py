@@ -33,7 +33,7 @@ else:
 import nltk
 nltk.download('punkt')
 from nltk.tokenize import sent_tokenize
-
+#3456
 class KeysentGetter():
 	def __init__(self):
 		self.title = [] #all the titles
@@ -51,8 +51,6 @@ class KeysentGetter():
 
 	def _get_all_url(self):
 		result = CrawlingData.query.filter(and_( CrawlingData.date < datetime(2020,7,1), CrawlingData.date > datetime(2020,6,27)))
-		# result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
-		
 		self.q_data = result
 		for r in result:
 			self.url.append(r.url)
@@ -105,7 +103,7 @@ class KeysentGetter():
 			self.polarity.append(po)
 
 
-	def get_jaccard_sim(self, str1, str2): 
+	def get_jaccard_sim(self, str1, str2):
 	    a = set(str1.split()) 
 	    b = set(str2.split())
 	    c = a.intersection(b)
