@@ -23,37 +23,34 @@ class OutputNews(db.Model):
 
 def news_to_json(company):
 	result = []
-	_dict = {
-		"id": 0,
-		"title": 0,
-		"date": "",
-		"paragraph":'',
-		"keysent": [],
-		"company": ""
-	}
-	#assda
-	# data = OutputNews.query.filter_by(company = company, date = datetime.now().date()- timedelta(days=1))
-	#data = OutputNews.query.filter(OutputNews.company.like(company)).all()
+	# _dict = {
+	# 	"id": 0,
+	# 	"title": 0,
+	# 	"date": "",
+	# 	"paragraph":'',
+	# 	"keysent": [],
+	# 	"company": ""
+	# }
 	date1 = datetime( 2020,7,1 )
 	date2 = datetime(2020,6,27)
-	# data = OutputNews.query.filter(OutputNews.date <= date1).filter(OutputNews.date >= date2)
 	data = OutputNews.query.filter( and_( OutputNews.company == company, OutputNews.date < date1, OutputNews.date > date2 ) )
 	print('get data')
 	for r in data:
-		a = _dict
 		k = r.keysent.split('%%')
-		a['keysent'] = k
 		para = r.paragraph.split('%%')
 		for p in para:
 			p.replace('','')
 		# print(para)
-		a["id"] = r.id
-		a["date"] = r.date
-		a["company"] = r.company
-		a['paragraph'] = para
-		a['title'] = r.news_title
+		a = {
+			"id": r.id,
+			"title": r.news_title,
+			"date": r.date,
+			"paragraph":para,
+			"keysent": k,
+			"company": r.company
+		}
 		result.append(a)
-
-	# pprint(result[0])
-	# return json.dumps(result) 
 	return result
+
+
+
