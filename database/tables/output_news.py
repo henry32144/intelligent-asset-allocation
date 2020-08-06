@@ -23,14 +23,6 @@ class OutputNews(db.Model):
 
 def news_to_json(company):
 	result = []
-	# _dict = {
-	# 	"id": 0,
-	# 	"title": 0,
-	# 	"date": "",
-	# 	"paragraph":'',
-	# 	"keysent": [],
-	# 	"company": ""
-	# }
 	date1 = datetime( 2020,7,1 )
 	date2 = datetime(2020,6,27)
 	# data = OutputNews.query.filter(OutputNews.date <= date1).filter(OutputNews.date >= date2)
