@@ -155,7 +155,7 @@ def get_news_by_names():
     for name in company_names:
         company_news = news_to_json(name)
         news += company_news
-    print(news)
+    # print(news)
     response["isSuccess"] = True
     response["data"] = news
     
