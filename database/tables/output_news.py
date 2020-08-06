@@ -31,6 +31,7 @@ def news_to_json(company):
 		"keysent": [],
 		"company": ""
 	}
+	#assda
 	# data = OutputNews.query.filter_by(company = company, date = datetime.now().date()- timedelta(days=1))
 	#data = OutputNews.query.filter(OutputNews.company.like(company)).all()
 	date1 = datetime( 2020,7,1 )
