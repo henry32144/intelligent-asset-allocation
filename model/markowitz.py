@@ -148,7 +148,11 @@ class Markowitz(object):
             all_weights.append(weight)
         
         self.weights = all_weights
-        return all_weights
+
+        weights = np.clip(np.around(np.array(all_weights) * 100, 2), 0, 100)
+        transposed_weights = weights.transpose().tolist()
+        
+        return transposed_weights
 
 
     def get_backtest_result(self):
@@ -181,13 +185,8 @@ class Markowitz(object):
             all_values.append(total_value)
             all_return.append(portfolio_return)
 
-        date = self.test_df.reset_index()['date'].values[1:]
-        
+        date = self.test_df.reset_index()['date']
+        date = date.dt.strftime('%Y-%m-%d')
+        date = date.values[1:]
+
         return date, all_values
-
-        
-
-    
-
-    
-        

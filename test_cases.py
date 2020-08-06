@@ -22,6 +22,7 @@ from model.get_news_keysent import KeysentGetter, test_url
 
 from model.predict_Q import predict_Q
 from model.markowitz import Markowitz
+from model.equal_weight import EqualWeight
 from model.black_litterman import Black_Litterman
 from model.sp500 import SP500
 
@@ -145,8 +146,13 @@ def test():
 
     date, all_values = marko.get_backtest_result()
 
+    test_dict = {
+        "data": {"all_weights": all_weights,
+        "all_values": all_values,
+        "date": date.tolist()}
+    }
 
-    return ''
+    return jsonify(test_dict)
 
 
 @test_cases.route('/test_sp500')
@@ -169,8 +175,11 @@ def test_black_litterman():
     return ''
 
 
-@test_cases.route('/portfolio')
-def create_portfolio():
-    Portfolio()
+@test_cases.route('/test_equal')
+def test_equal_weight():
+    selected_tickers = ['GOOG', 'CVX', 'CB', 'CI', 'AAPL']
+    ew = EqualWeight(selected_tickers)
+    
+    date, all_values = ew.get_backtest_result()
 
     return ''

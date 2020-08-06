@@ -52,7 +52,7 @@ class SP500(object):
         log_return = log_return[1:]
 
         sp500_values = []
-        all_return = []
+        # all_return = []
         total_value = 1
 
         for i in range(len(log_return)):
@@ -60,8 +60,8 @@ class SP500(object):
             total_value = total_value * (1 + curr_log_return)
             
             sp500_values.append(total_value)
-            all_return.append(curr_log_return)
+            # all_return.append(curr_log_return)
 
         sp500_values.insert(0, 1)
 
-        return sp500_values, all_return
+        return sp500_values
