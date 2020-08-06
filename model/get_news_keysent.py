@@ -1,6 +1,7 @@
 # seq matcher
 # spacy matcher
 import sys
+import ssl
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '..')
 import requests
@@ -33,7 +34,8 @@ else:
 import nltk
 nltk.download('punkt')
 from nltk.tokenize import sent_tokenize
-#3456
+
+
 class KeysentGetter():
 	def __init__(self):
 		self.title = [] #all the titles
@@ -50,10 +52,16 @@ class KeysentGetter():
 
 
 	def _get_all_url(self):
+		start = datetime(2020,7,1)
+		end = datetime(2020,6,25)
+		# result = CrawlingData.query.filter( and_( CrawlingData.date < datetime(2020,7,1), CrawlingData.date > datetime(2020, 6,25)))
+		# result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
 		result = CrawlingData.query.filter(and_( CrawlingData.date < datetime(2020,7,1), CrawlingData.date > datetime(2020,6,27)))
+		# result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
 		self.q_data = result
 		for r in result:
 			self.url.append(r.url)
+			self.dates.append(r.date)
 			self.companys.append(r.company)
 			self.dates.append(r.date)
 
@@ -87,23 +95,16 @@ class KeysentGetter():
 			hiv4 = ps.hiv4.HIV4()
 			self.doc.append(paragraph)
 			self.title_polarity.append( hiv4.get_score(hiv4.tokenize(title))['Polarity']  )
-			g = []
-			for p in paragraph:
-				p = sent_tokenize(p)
-				for pp in p:
-					g.append(pp)
-			paragraph = g
 			po = []
 			for p in paragraph:
+				# print(len(p))
 				tokens = hiv4.tokenize(p)
 				s = hiv4.get_score(tokens)
-				# print(tokens)
 				po.append(s['Polarity'])
-				# print(s)
 			self.polarity.append(po)
 
 
-	def get_jaccard_sim(self, str1, str2):
+	def get_jaccard_sim(self, str1, str2): 
 	    a = set(str1.split()) 
 	    b = set(str2.split())
 	    c = a.intersection(b)
@@ -130,6 +131,8 @@ class KeysentGetter():
 					self.important_news.append(self.doc[i])
 					self.keysent_idx.append(key_idx)
 					self.important_title.append(self.title[i])
+					print(key_idx)
+					print(len(self.doc[i]))
 
 	def to_db(self):
 		_lst = []
@@ -152,7 +155,3 @@ class KeysentGetter():
 def test_url():
 	result = CrawlingData.query.filter_by(date=(datetime.now().date() - timedelta(days=1)))
 	return result
-
-
-
-
