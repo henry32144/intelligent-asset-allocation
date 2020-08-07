@@ -18,12 +18,12 @@ TEST_END_DATE = "2020-07-01"
 # Model configuration
 BATCH_SIZE = 8
 MAX_LEN = 32
-EPOCHS = 20
-DROPOUT_RATE = 0.1
+EPOCHS = 10
+DROPOUT_RATE = 0.5
 PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
 tokenizer = AutoTokenizer.from_pretrained(PRE_TRAINED_MODEL_NAME)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-MODEL_PATH = "./weights/2020-08-04_cnn_distilbert.bin"
+MODEL_PATH = "./weights/2020-08-07_cnn_distilbert.bin"
 
 # Optimization
 # Best fine-tuning learning rate (among 5e-5, 4e-5, 3e-5, and 2e-5) from BERT paper

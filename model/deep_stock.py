@@ -592,7 +592,7 @@ def plot_history(history):
     plt.title("Training MCC History")
     plt.ylabel("MCC")
     plt.xlabel("Epoch")
-    plt.ylim([-1, 1])
+    # plt.ylim([-1, 1])
     plt.legend()
     plt.grid()
 
@@ -602,7 +602,7 @@ def plot_history(history):
     plt.title("Training F1 History")
     plt.ylabel("F1")
     plt.xlabel("Epoch")
-    plt.ylim([0, 1])
+    #plt.ylim([0, 1])
     plt.legend()
     plt.grid()
 
@@ -612,7 +612,7 @@ def plot_history(history):
     plt.title("Training Accuracy History")
     plt.ylabel("Accuracy")
     plt.xlabel("Epoch")
-    plt.ylim([0.4, 0.6])
+   #  plt.ylim([0.4, 0.6])
     plt.legend()
     plt.grid()
 
