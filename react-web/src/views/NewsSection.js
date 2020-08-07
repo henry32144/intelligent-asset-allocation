@@ -1,9 +1,8 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
 import NewsList from '../components/NewsList'
 import Typography from '@material-ui/core/Typography';
-import { BASEURL } from '../Constants';
+
 
 const useStyles = makeStyles((theme) => ({
   sectionRoot: {

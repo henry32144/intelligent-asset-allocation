@@ -62,7 +62,7 @@ export default function PortfolioMenuButtons(props) {
   }
 
   const createPortfolioOnClick = (e) => {
-    if (props.userData.userId == undefined) {
+    if (props.userData.userId == null) {
       props.setDialogTitle("Error")
       props.setDialogMessage("Please login first");
       props.openMessageDialog();
@@ -118,7 +118,7 @@ export default function PortfolioMenuButtons(props) {
         onClick={handlePortfolioToggle}
       >
         <Typography variant="inherit" noWrap>
-          { props.currentSelectedPortfolio == undefined || props.userPortfolios.length == 0 ?
+          { props.currentSelectedPortfolio == undefined || props.userPortfolios.length === 0 ?
             "My Portfolios"
             :
             props.userPortfolios.find(function(item, index, array){

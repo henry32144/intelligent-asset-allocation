@@ -10,6 +10,14 @@ import numpy as np
 
 front_end = Blueprint('front_end', __name__)
 
+@front_end.route('/', defaults={'path': ''})
+@front_end.route('/<path:path>')
+def index(path):
+    try:
+        return render_template("index.html")
+    except TemplateNotFound:
+        abort(404)
+
 @front_end.route("/manifest.json")
 def manifest():
     return send_from_directory('./static', 'manifest.json')
@@ -53,7 +61,7 @@ def user_signup():
         )
         db.session.add(new_user)
         db.session.commit()
-        db.session.refresh(new_portfolio)
+        db.session.refresh(new_user)
 
         # Create basic portfolio
         new_portfolio = Portfolio(

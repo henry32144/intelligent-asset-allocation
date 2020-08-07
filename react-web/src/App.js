@@ -2,9 +2,10 @@ import React from 'react';
 import './App.css';
 import { makeStyles } from '@material-ui/core/styles';
 import TopNavBar from './components/TopNavBar'
-import PortfolioPage from './pages/PortfolioPage'
+import DashboardPage from './pages/DashboardPage'
+import LandingPage from './pages/LandingPage'
+import { HOME_PAGE, DASHBOARD_PAGE } from './Constants';
 import Cookies from 'universal-cookie';
-
 // {
 //   height: 'calc(100% - 56px)',
 //   [`${theme.breakpoints.up('xs')} and (orientation: landscape)`]: {
@@ -25,17 +26,17 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const toolbarRelativeProperties = (property, modifier = value => value) => theme =>
-  Object.keys(theme.mixins.toolbar).reduce((style, key) => {
-    const value = theme.mixins.toolbar[key];
-    if (key === 'minHeight') {
-      return { ...style, [property]: modifier(value) };
-    }
-    if (value.minHeight !== undefined) {
-      return { ...style, [key]: { [property]: modifier(value.minHeight) } };
-    }
-    return style;
-  }, {});
+// const toolbarRelativeProperties = (property, modifier = value => value) => theme =>
+//   Object.keys(theme.mixins.toolbar).reduce((style, key) => {
+//     const value = theme.mixins.toolbar[key];
+//     if (key === 'minHeight') {
+//       return { ...style, [property]: modifier(value) };
+//     }
+//     if (value.minHeight !== undefined) {
+//       return { ...style, [key]: { [property]: modifier(value.minHeight) } };
+//     }
+//     return style;
+//   }, {});
 
 function App() {
   const classes = useStyles();
@@ -47,14 +48,33 @@ function App() {
     userEmail: cookies.get('userEmail'),
   });
 
-  console.log(userData);
+  const [currentPage, switchPage] = React.useState(HOME_PAGE);
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case HOME_PAGE:
+        return <LandingPage
+          userData={userData}
+        />;
+      case DASHBOARD_PAGE:
+        return <DashboardPage
+          userData={userData}
+        />;
+      default:
+        return <LandingPage
+          userData={userData}
+        />;
+    }
+  };
+
   return (
     <div className={classes.root}>
-      <TopNavBar userData={userData} setUserData={setUserData}></TopNavBar>
-      <PortfolioPage
-        userData={userData}
-      >
-      </PortfolioPage>
+      <TopNavBar 
+        userData={userData} 
+        setUserData={setUserData}
+        switchPage={switchPage}
+      />
+      {renderPage()}
     </div>
   );
 }

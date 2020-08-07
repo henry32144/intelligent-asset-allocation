@@ -7,6 +7,7 @@ import NavBarAccountButton from './NavBarAccountButton'
 import LoginDialog from './LoginDialog'
 import SignupDialog from './SignupDialog'
 import MessageDialog from './MessageDialog'
+import { HOME_PAGE, DASHBOARD_PAGE } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -18,6 +19,16 @@ const useStyles = makeStyles((theme) => ({
   rightButtons: {
     marginLeft: "auto",
     display: 'inline-flex',
+  },
+  iconSize: {
+    width: "26px",
+    height: "26px",
+  },
+  accountButtons: {
+    display: 'inline-flex',
+  },
+  dashboardButton: {
+    marginRight: theme.spacing(1)
   },
 }));
 
@@ -74,9 +85,21 @@ export default function TopNavBar(props) {
           handleClose={handleMessageDialogClose}
           message={dialogMessage}
         >
-        </MessageDialog> 
+        </MessageDialog>
         <Toolbar>
-          <Button className={classes.brandButton} color="inherit" size="large">
+          <Button
+            className={classes.brandButton}
+            color="inherit"
+            size="large"
+            onClick={() => {props.switchPage(HOME_PAGE)}}
+            startIcon={
+              <img 
+                alt=""
+                className={classes.iconSize}
+                src={'../static/logo26.png'} 
+              />
+            }
+          >
             Hugging Money
           </Button>
           <section className={classes.rightButtons}>
@@ -87,11 +110,20 @@ export default function TopNavBar(props) {
                   Login
                 </Button>
                 :
-                <NavBarAccountButton 
-                  setUserData={props.setUserData}
-                  userData={props.userData}
-                >
-                </NavBarAccountButton>
+                <div className={classes.accountButtons}>
+                  <Button 
+                    color="inherit" 
+                    className={classes.dashboardButton}
+                    onClick={() => {props.switchPage(DASHBOARD_PAGE)}}
+                  >
+                    Dashboard
+                  </Button>
+                  <NavBarAccountButton
+                    setUserData={props.setUserData}
+                    userData={props.userData}
+                  >
+                  </NavBarAccountButton>
+                </div>
             }
           </section>
         </Toolbar>
