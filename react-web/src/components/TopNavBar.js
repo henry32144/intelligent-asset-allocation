@@ -77,7 +77,7 @@ export default function TopNavBar(props) {
         </MessageDialog> 
         <Toolbar>
           <Button className={classes.brandButton} color="inherit" size="large">
-            AI Asset
+            Hugging Money
           </Button>
           <section className={classes.rightButtons}>
             {

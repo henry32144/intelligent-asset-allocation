@@ -65,7 +65,7 @@ def save_history_stock_price_to_db(sp500_file="./database/tables/sp500tickers.pk
     print(len(sp_99))
     # get the history stock price
     start = dt.datetime(2012, 1, 1)
-    end = dt.datetime(2020, 7, 1)
+    end = dt.datetime(2020, 8, 5)
     # start = '2012-01-01'
     # end = '2020-07-01'
 
