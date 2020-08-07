@@ -409,9 +409,12 @@ function DashboardPage(props) {
                 paragraphs.push(paragraph);
               }
               for (var k = 0; k < jsonData.data[i].keysent.length; k++) {
-                var keyIndex = jsonData.data[i].keysent[k]
-                if (keyIndex >= 0 && keyIndex < paragraphs.length) {
-                  paragraphs[keyIndex]["isKeySentence"] = true;
+                if (jsonData.data[i].keysent[k] != "") {
+                  var keyIndex = jsonData.data[i].keysent[k]
+                  if (keyIndex >= 0 && keyIndex < paragraphs.length) {
+                    console.log(i, keyIndex);
+                    paragraphs[keyIndex]["isKeySentence"] = true;
+                  }
                 }
               }
               var dt = new Date(jsonData.data[i].date)
