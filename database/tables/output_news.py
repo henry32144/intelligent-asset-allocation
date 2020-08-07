@@ -28,7 +28,7 @@ def news_to_json(company):
 	# data = OutputNews.query.filter(OutputNews.date <= date1).filter(OutputNews.date >= date2)
 	data = OutputNews.query.filter( and_( OutputNews.company == company, OutputNews.date > date2 ) ).all()
 	print('get data')
-	print(data)
+	# print(data)
 	for r in data:
 		k = r.keysent.split('%%')
 		para = r.paragraph.split('%%')
@@ -44,6 +44,7 @@ def news_to_json(company):
 			"company": r.company
 		}
 		result.append(a)
+	print(r.news_title)
 	return result
 
 
