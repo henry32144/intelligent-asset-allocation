@@ -44,7 +44,7 @@ def news_to_json(company):
 			"company": r.company
 		}
 		result.append(a)
-	print(r.news_title)
+		print(r.news_title)
 	return result
 
 

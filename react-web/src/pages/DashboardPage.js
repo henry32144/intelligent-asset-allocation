@@ -11,7 +11,7 @@ import WeightSection from '../views/WeightSection'
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { motion } from "framer-motion"
-import { BASEURL, NEWS_SECTION, PERFORMANCE_SECTION, WEIGHT_SECTION, COLOR_PALETTES } from '../Constants';
+import { BASEURL, NEWS_SECTION, PERFORMANCE_SECTION, WEIGHT_SECTION, COLOR_PALETTES, COMPANY_MAPPING } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
   portfolioPage: {
@@ -50,7 +50,8 @@ function DashboardPage(props) {
 
   const [companyData, setCompanyData] = React.useState([]);
   const [newsData, setNewsData] = React.useState([]);
-  const [companyDataMapping, setCompanyDataMapping] = React.useState({});
+  //const [companyDataMapping, setCompanyDataMapping] = React.useState({});
+  const companyDataMapping = COMPANY_MAPPING;
   const [userPortfolios, setUserPortfolios] = React.useState([]);
   const [selectedStocks, setPortfolioStocks] = React.useState([]);
   const [dataLoaded, setDataLoaded] = React.useState(false);
@@ -102,8 +103,11 @@ function DashboardPage(props) {
       console.log(selectedStocks);
       console.log(stockSymbols);
       var stocksDetail = []
-      for (var i = 0; i < stockSymbols.length; i++) {
-        stocksDetail.push(companyDataMapping[stockSymbols[i]]);
+      console.log(companyDataMapping);
+      if (companyDataMapping != undefined) {
+        for (var i = 0; i < stockSymbols.length; i++) {
+          stocksDetail.push(companyDataMapping[stockSymbols[i]]);
+        }
       }
       console.log(stocksDetail);
       setPortfolioStocks(stocksDetail);
@@ -199,7 +203,9 @@ function DashboardPage(props) {
             newCompanyData.push(companyInfo);
           }
           setCompanyData(newCompanyData);
-          setCompanyDataMapping(newCompanyDataMapping);
+          console.log("newCompanyDataMapping");
+          console.log(newCompanyDataMapping);
+          //setCompanyDataMapping(newCompanyDataMapping);
         } else {
           alert(jsonData.errorMsg);
         }
@@ -623,12 +629,20 @@ function DashboardPage(props) {
     }
   }, [props.userData]);
 
+  // Initialize user portfolio
   React.useEffect(() => {
     if (userPortfolios.length > 0 && currentSelectedPortfolio == undefined) {
       setCurrentSelectedPortfolio(userPortfolios[0].portfolioId);
       setSelectedStocks(userPortfolios[0].portfolioStocks);
     }
   }, [userPortfolios]);
+
+  // Setup stock list if mapping is ready
+  React.useEffect(() => {
+    if (userPortfolios.length > 0 && selectedStocks.length > 0 && currentSelectedPortfolio != undefined) {
+      setSelectedStocks(userPortfolios[currentSelectedPortfolio].portfolioStocks);
+    }
+  }, [companyDataMapping]);
 
   React.useEffect(() => {
     console.log('newssection');
