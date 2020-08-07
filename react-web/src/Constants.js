@@ -4,6 +4,9 @@ export const NEWS_SECTION = 0;
 export const PERFORMANCE_SECTION = 1;
 export const WEIGHT_SECTION = 2;
 
+export const HOME_PAGE = 0;
+export const DASHBOARD_PAGE = 1;
+
 export const COLOR_PALETTES = [
     "#d847a7",
     "#5bc452",

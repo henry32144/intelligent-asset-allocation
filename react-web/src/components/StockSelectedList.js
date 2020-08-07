@@ -1,17 +1,12 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import List from '@material-ui/core/List';
 import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
-import ListSubheader from '@material-ui/core/ListSubheader';
 import StockListItem from './StockListItem'
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
 import { FixedSizeList } from 'react-window';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import { Button } from '@material-ui/core';
-import SaveIcon from '@material-ui/icons/Save';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 const useStyles = makeStyles((theme) => ({

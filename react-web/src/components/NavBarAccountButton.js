@@ -9,6 +9,7 @@ import MenuList from '@material-ui/core/MenuList';
 import { makeStyles } from '@material-ui/core/styles';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import Cookies from 'universal-cookie';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -26,7 +27,6 @@ export default function NavBarAccountButton(props) {
   const classes = useStyles();
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
-  const cookies = new Cookies();
 
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
@@ -78,6 +78,7 @@ export default function NavBarAccountButton(props) {
       <div>
         <Button 
           startIcon={<AccountCircleIcon />}
+          endIcon={<ExpandMoreIcon />}
           ref={anchorRef}
           aria-controls={open ? 'menu-list-grow' : undefined}
           aria-haspopup="true"

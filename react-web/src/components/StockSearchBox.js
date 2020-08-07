@@ -13,9 +13,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function StockSearchBox(props) {
-  const [value, setValue] = React.useState(null);
 
-  const { additionalStyles, companyData, selectedStocks, setSelectedStocks } = props
+  const { companyData, selectedStocks, setSelectedStocks } = props
   const classes = useStyles();
   const filterOptions = (options, { inputValue }) => {
     var filted = matchSorter(options, inputValue, { keys: ['companyName', 'companySymbol'] });
