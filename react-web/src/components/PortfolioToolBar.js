@@ -56,12 +56,14 @@ export default function PortfolioToolBar(props) {
       </Grid>
       <Grid item container xs={12} sm={6} justify = "center" >
         <StockSearchBox
+            userData={props.userData}
             selectedStocks={props.selectedStocks} 
             setSelectedStocks={props.setSelectedStocks}
             companyData={props.companyData}
             setDialogTitle={props.setDialogTitle}
             setDialogMessage={props.setDialogMessage}
             openMessageDialog={props.openMessageDialog}
+            currentSelectedPortfolio={props.currentSelectedPortfolio}
           >
         </StockSearchBox>
       </Grid>

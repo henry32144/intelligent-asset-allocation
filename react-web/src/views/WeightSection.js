@@ -78,10 +78,14 @@ export default function PerformanceSection(props) {
           </Button>
         </FormControl>
       </Grid>
-      <Typography className={classes.chartTitle} variant="h5">
-        Current Weights
-      </Typography>
-      <Doughnut data={props.portfolioWeights} />
+      {props.portfolioWeights.hasOwnProperty("labels") &&
+        <div>
+          <Typography className={classes.chartTitle} variant="h5">
+            Current Weights
+        </Typography>
+          <Doughnut data={props.portfolioWeights} />
+        </div>
+      }
     </div>
   );
 }
