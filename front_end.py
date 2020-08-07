@@ -53,7 +53,7 @@ def user_signup():
         )
         db.session.add(new_user)
         db.session.commit()
-        db.session.refresh(new_user)
+        db.session.refresh(new_portfolio)
 
         # Create basic portfolio
         new_portfolio = Portfolio(

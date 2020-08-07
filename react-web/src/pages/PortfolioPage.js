@@ -64,7 +64,7 @@ function PortfolioPage(props) {
   const [dialogMessage, setDialogMessage] = React.useState("");
   const [currentSelectedPortfolio, setCurrentSelectedPortfolio] = React.useState(null);
   const [currentSelectedStock, setCurrentSelectedStock] = React.useState("APPL");
-  const [currentSectionCode, setSectionCode] = React.useState(NEWS_SECTION);
+  const [currentSectionCode, setSectionCode] = React.useState(WEIGHT_SECTION);
   const [portfolioPerformances, setPortfolioPerformance] = React.useState({});
   const [currentPerformance, setCurrentPerformance] = React.useState(0);
   const [portfolioWeights, setPortfolioWeights] = React.useState({});
@@ -160,7 +160,17 @@ function PortfolioPage(props) {
           investMoney={investMoney}
         />;
       default:
-        return <NewsSection newsData={newsData} />;
+        return <WeightSection
+        portfolioWeights={portfolioWeights}
+        historyWeights={historyWeights}
+        backtestDates={backtestDates}
+        selectedModel={selectedModel}
+        setModel={setModel}
+        getWeights={getWeights}
+        selectedStocks={selectedStocks}
+        setInvestMoney={setInvestMoney}
+        investMoney={investMoney}
+      />;
     }
   };
 
@@ -626,7 +636,9 @@ function PortfolioPage(props) {
       console.log('getNews');
 
       getNews(selectedStocks);
-      getWeights(selectedModel, selectedStocks);
+      if (portfolioWeights.hasOwnProperty("labels") === false) {
+        getWeights(selectedModel, selectedStocks);
+      }
     }
   }, [selectedStocks]);
 
