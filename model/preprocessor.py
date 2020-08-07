@@ -38,27 +38,32 @@ def add_content(url, ratio=0.8):
         res_ps: important sentence string
         res_bertsum: filtered string by BertSum
     """
-    resp = requests.get(url)
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 \
+        (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36'}
+    resp = requests.get(url, timeout=10, headers=headers)
     soup = BeautifulSoup(resp.text, 'html.parser')
     paragraph = soup.find_all('p')
     paragraph = [p.text for p in paragraph]
     paragraph = paragraph[1:-1]
     res_origin = "".join(paragraph)
+    return res_origin
+
+
+def summary(content, threshold=0.85):
+    sent_text = nltk.sent_tokenize(content)
     hiv4_function = ps.hiv4.HIV4()
     po = []
-    for p in paragraph:
+    for p in sent_text:
         tokens = hiv4_function.tokenize(p)
         s = hiv4_function.get_score(tokens)
         po.append(s['Polarity'])
     res = []
     for i, p in enumerate(po):
-        if(float(p) >= 0.85 or float(p) <= -0.85):
-            res.append(paragraph[i])
+        if(float(p) >= threshold or float(p) <= -threshold):
+            res.append(sent_text[i])
     res_ps = "".join(res)
-    bert_summarizer = Summarizer()
-    result = bert_summarizer(res_origin, ratio=ratio)
-    res_bertsum = ''.join(result)
-    return (res_origin, res_ps, res_bertsum)
+    return res_ps
 
 
 class NewsPreprocessor:
@@ -220,11 +225,11 @@ def main():
     # Clean data
     preprocessor = NewsPreprocessor(contractions_dict=contractions_dict)
     print("Start cleaning title.")
-    df["clean_title"] = df["title"].progress_apply(lambda x: preprocessor.ultimate_clean(x))
+    df["clean_title"] = df["title"].apply(lambda x: preprocessor.ultimate_clean(x))
     print("Start cleaning pysentiment content.")
-    df["clean_ps_content"] = df["ps_content"].progress_apply(lambda x: preprocessor.ultimate_clean(x))
+    df["clean_ps_content"] = df["ps_content"].apply(lambda x: preprocessor.ultimate_clean(x))
     print("Start cleaning BertSum content.")
-    df["clean_bs_content"] = df["bs_content"].progress_apply(lambda x: preprocessor.ultimate_clean(x))
+    df["clean_bs_content"] = df["bs_content"].apply(lambda x: preprocessor.ultimate_clean(x))
     df = extend_df_with_cos_sim(df=df, col="clean_ps_content", labels=["stock", "finance"], sort_by="stock")
     print(df)
 
