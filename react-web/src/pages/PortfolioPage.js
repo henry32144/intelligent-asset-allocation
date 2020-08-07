@@ -101,14 +101,21 @@ function PortfolioPage(props) {
   };
 
   const setSelectedStocks = (stockSymbols) => {
-    console.log(stockSymbols);
-    console.log(companyDataMapping);
-    var stocksDetail = []
-    for (var i = 0; i < stockSymbols.length; i++) {
-      stocksDetail.push(companyDataMapping[stockSymbols[i]]);
+    if (props.userData.userId != undefined) {
+      console.log(selectedStocks);
+      console.log(stockSymbols);
+      var stocksDetail = []
+      for (var i = 0; i < stockSymbols.length; i++) {
+        stocksDetail.push(companyDataMapping[stockSymbols[i]]);
+      }
+      console.log(stocksDetail);
+      setPortfolioStocks(stocksDetail);
     }
-    console.log(stocksDetail);
-    setPortfolioStocks(stocksDetail);
+    else {
+      console.log("Please login first");
+      setDialogMessage("Please login first");
+      handleMessageDialogOpen();
+    }
   }
 
   const handleMessageDialogOpen = () => {
@@ -174,14 +181,15 @@ function PortfolioPage(props) {
           var newCompanyDataMapping = {}
           var newCompanyData = []
           for (var i = 0; i < jsonData.data.length; i++) {
-            const companInfo = {
+            const companyInfo = {
               "companyIndustry": jsonData.data[i].industry,
               "companyName": jsonData.data[i].company_name,
               "companySymbol": jsonData.data[i].symbol,
-              "companyId": jsonData.data[i].id_
+              "companyId": jsonData.data[i].id_,
+              "volatility": jsonData.data[i].volatility
             };
-            newCompanyDataMapping[jsonData.data[i].symbol] = companInfo
-            newCompanyData.push(companInfo);
+            newCompanyDataMapping[jsonData.data[i].symbol] = companyInfo
+            newCompanyData.push(companyInfo);
           }
           setCompanyData(newCompanyData);
           setCompanyDataMapping(newCompanyDataMapping);
@@ -358,8 +366,8 @@ function PortfolioPage(props) {
   };
 
   const getNews = async (selectedStocks) => {
-    var companyNames = selectedStocks.map(function (item, index, array) {
-      return item.companyName;
+    var companySymbols = selectedStocks.map(function (item, index, array) {
+      return item.companySymbol;
     });
 
     const request = {
@@ -369,18 +377,20 @@ function PortfolioPage(props) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        "companyNames": companyNames,
+        "companySymbols": companySymbols,
       })
     }
 
     try {
-      if (companyNames.length > 0) {
+      if (companySymbols.length > 0) {
         console.log("Try to get news");
         //setLoading(true);
         const response = await fetch(BASEURL + "/news", request)
         if (response.ok) {
           const jsonData = await response.json();
           if (jsonData.isSuccess) {
+            console.log("News");
+            console.log(jsonData);
             var newNewsData = [];
             for (var i = 0; i < jsonData.data.length; i++) {
               var paragraphs = [];
@@ -392,7 +402,11 @@ function PortfolioPage(props) {
                 paragraphs.push(paragraph);
               }
               for (var j = 0; j < jsonData.data[i].keysent.length; j++) {
-                paragraphs[jsonData.data[i].keysent[j]]["isKeySentence"] = true;
+                var keyIndex = jsonData.data[i].keysent[j]
+                console.log(keyIndex)
+                if (keyIndex >= 0) {
+                  paragraphs[keyIndex]["isKeySentence"] = true;
+                }
               }
               var dt = new Date(jsonData.data[i].date)
               var news = {
@@ -518,7 +532,7 @@ function PortfolioPage(props) {
   };
 
   const savePortfolio = async () => {
-    if (props.userData.userId != undefined) {
+    if (props.userData.userId != undefined && currentSelectedPortfolio != undefined) {
       var currentPortfolioStocks = selectedStocks.map(function (item, index, array) {
         return item.companySymbol;
       });
@@ -566,9 +580,11 @@ function PortfolioPage(props) {
         setSaveButtonLoading(false);
       }
     } else if (props.userData.userId == undefined) {
+      setDialogTitle("Error")
       setDialogMessage("Please login first");
       handleMessageDialogOpen();
     } else if (currentSelectedPortfolio == undefined) {
+      setDialogTitle("Error")
       setDialogMessage("Create portfolio first");
       handleMessageDialogOpen();
     }

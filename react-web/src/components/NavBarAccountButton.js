@@ -106,7 +106,6 @@ export default function NavBarAccountButton(props) {
               <Paper>
                 <ClickAwayListener onClickAway={handleClose}>
                   <MenuList autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
-                    <MenuItem onClick={handleClose}>Profile</MenuItem>
                     <MenuItem onClick={logoutButtonOnClick}>Logout</MenuItem>
                   </MenuList>
                 </ClickAwayListener>

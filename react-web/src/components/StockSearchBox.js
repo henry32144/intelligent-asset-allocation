@@ -18,7 +18,18 @@ function StockSearchBox(props) {
   const { additionalStyles, companyData, selectedStocks, setSelectedStocks } = props
   const classes = useStyles();
   const filterOptions = (options, { inputValue }) => {
-    return matchSorter(options, inputValue, { keys: ['companyName', 'companySymbol'] }).slice(0, 10);
+    var filted = matchSorter(options, inputValue, { keys: ['companyName', 'companySymbol'] });
+    return filted.sort((a, b) => {
+      if (a.volatility === b.volatility) {
+        return 0;
+      }
+      if (a.volatility === "stable") {
+        return -1
+      }
+      if (b.volatility === "stable") {
+        return 1
+      }
+    });
   };
 
   const stockOnSelected = (event, newValue) => {
@@ -27,17 +38,27 @@ function StockSearchBox(props) {
 
   const addStockToPortfolio = (newValue) => {
     console.log(newValue)
-    if (selectedStocks.find(x => x.companyId === newValue.companyId) != null) {
+    if (props.userData.userId != undefined && props.currentSelectedPortfolio != undefined) {
+      if (selectedStocks.find(x => x.companyId === newValue.companyId) != null) {
+        props.setDialogTitle("Error")
+        props.setDialogMessage("The stock is already in the list");
+        props.openMessageDialog();
+      } else {
+        var newPortfolioStocks = selectedStocks.map(function(item, index, array){
+          return item.companySymbol;
+        });
+        setSelectedStocks([...newPortfolioStocks, newValue.companySymbol]);
+        props.setDialogTitle("Success")
+        props.setDialogMessage("Add " + newValue.companyName + " to your portfolio");
+        props.openMessageDialog();
+      }
+    } else if (props.userData.userId == undefined) {
       props.setDialogTitle("Error")
-      props.setDialogMessage("The stock is already in the list");
+      props.setDialogMessage("Please login first");
       props.openMessageDialog();
-    } else {
-      var newPortfolioStocks = selectedStocks.map(function(item, index, array){
-        return item.companySymbol;
-      });
-      setSelectedStocks([...newPortfolioStocks, newValue.companySymbol]);
-      props.setDialogTitle("Success")
-      props.setDialogMessage("Add " + newValue.companyName + " to your portfolio");
+    } else if (props.currentSelectedPortfolio == undefined) {
+      props.setDialogTitle("Error")
+      props.setDialogMessage("Create portfolio first");
       props.openMessageDialog();
     }
   };
@@ -50,9 +71,25 @@ function StockSearchBox(props) {
         id="search-box"
         disableClearable
         size="small"
+        groupBy={(option) => option.volatility}
         onChange={stockOnSelected}
-        options={companyData}
+        options={companyData.sort((a, b) => {
+          if (a.volatility === b.volatility) {
+            return 0;
+          }
+          if (a.volatility === "stable") {
+            return -1
+          }
+          if (b.volatility === "stable") {
+            return 1
+          }
+        })}
         getOptionLabel={(option) => option.companyName}
+        renderOption={(option) => (
+          <React.Fragment>
+            {option.companyName} ({option.companySymbol})
+          </React.Fragment>
+        )}
         filterOptions={filterOptions}
         renderInput={(params) => (
           <TextField

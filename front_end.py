@@ -142,7 +142,7 @@ def save_portfolio():
     return jsonify(response)
 
 @front_end.route("/news", methods=['POST'])
-def get_news_by_names():
+def get_news_by_symbols():
     json_data = request.get_json()
     print(json_data)
     response = {
@@ -150,9 +150,9 @@ def get_news_by_names():
         'errorMsg': "",
         'data': []
     }
-    company_names = json_data.get("companyNames", [])
+    company_symbols = json_data.get("companySymbols", [])
     news = []
-    for name in company_names:
+    for name in company_symbols:
         company_news = news_to_json(name)
         news += company_news
     # print(news)

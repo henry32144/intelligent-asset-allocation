@@ -24,13 +24,13 @@ export default function PerformanceSection(props) {
 
   return (
     <div className={classes.sectionRoot}>
-      <Typography className={classes.sectionTitle} variant="h5">
+      {/* <Typography className={classes.sectionTitle} variant="h5">
         Portfolio Weights
       </Typography>
       <Doughnut
         data={props.portfolioWeights}
-      />
-      <Typography className={classes.chartTitle} variant="h5">
+      /> */}
+      <Typography className={classes.sectionTitle} variant="h5">
         Performance
       </Typography>
       <Line

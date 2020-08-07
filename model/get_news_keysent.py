@@ -52,11 +52,7 @@ class KeysentGetter():
 
 
 	def _get_all_url(self):
-		start = datetime(2020,7,1)
-		end = datetime(2020,6,25)
-		# result = CrawlingData.query.filter( and_( CrawlingData.date < datetime(2020,7,1), CrawlingData.date > datetime(2020, 6,25)))
-		# result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
-		result = CrawlingData.query.filter(and_( CrawlingData.date < datetime(2020,7,1), CrawlingData.date > datetime(2020,6,27)))
+		result = CrawlingData.query.filter(CrawlingData.date > datetime(2020,6,30))
 		# result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
 		self.q_data = result
 		for r in result:
@@ -82,7 +78,7 @@ class KeysentGetter():
 				s1 = re.sub(r'[-\(\)\"#\/@;:<>\{\}\-=~|\.\?]', '', s1)
 				s2 = re.sub(r'[-\(\)\"#\/@;:<>\{\}\-=~|\.\?]', '', s2)
 
-				if( self.get_jaccard_sim(title.lower(), self.title[-1].lower()) >=0.8 ):
+				if( self.get_jaccard_sim(title.lower(), self.title[-1].lower()) >=0.7 ):
 					del self.companys[company_idx]
 					del self.dates[company_idx]
 					company_idx-=1
