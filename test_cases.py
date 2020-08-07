@@ -100,9 +100,9 @@ def get_news():
     print("create getter")
     getter.url2news()
     print("url 2 news")
-    getter.get_news()
-    getter.to_db()
-    print("to db")
+    # getter.get_news()
+    # getter.to_db()
+    # print("to db")
     return ''
 
 
