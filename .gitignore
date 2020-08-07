@@ -2,6 +2,7 @@ __pycache__
 __pycache__/*
 **/__pycache__
 
+database.zip
 **/.DS_Store
 # **/database.db
 **/chromedriver.exe
