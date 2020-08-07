@@ -53,6 +53,17 @@ def user_signup():
         )
         db.session.add(new_user)
         db.session.commit()
+        db.session.refresh(new_user)
+
+        # Create basic portfolio
+        new_portfolio = Portfolio(
+            user_id=new_user.id,
+            portfolio_name='My Portfolio 1',
+            portfolio_stocks=''
+        )
+
+        db.session.add(new_portfolio)
+        db.session.commit()
     else:
         response['errorMsg'] = "User already exists"
     return jsonify(response)
@@ -160,6 +171,12 @@ def get_news_by_symbols():
     response["data"] = news
     
     return jsonify(response)
+
+@front_end.route("/get_test", methods=['GET'])
+def get_news_test():
+    company_news = news_to_json('GOOG')
+
+    return jsonify(company_news)
 
 @front_end.route("/portfolio/test", methods=['POST'])
 def get_model_predict():

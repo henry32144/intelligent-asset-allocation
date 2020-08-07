@@ -403,8 +403,7 @@ function PortfolioPage(props) {
               }
               for (var j = 0; j < jsonData.data[i].keysent.length; j++) {
                 var keyIndex = jsonData.data[i].keysent[j]
-                console.log(keyIndex)
-                if (keyIndex >= 0) {
+                if (keyIndex >= 0 && keyIndex < paragraphs.length) {
                   paragraphs[keyIndex]["isKeySentence"] = true;
                 }
               }
