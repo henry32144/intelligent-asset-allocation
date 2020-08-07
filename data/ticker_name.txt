@@ -3,6 +3,7 @@ Microsoft Corporation	MSFT
 Amazon.com, Inc.	AMZN
 Facebook Inc	FB
 Alphabet Inc	GOOG
+Google	GOOG
 Johnson & Johnson	JNJ
 Berkshire Hathaway Inc.	BRK-B
 Visa Inc	V

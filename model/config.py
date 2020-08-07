@@ -7,7 +7,7 @@ torch.manual_seed(RANDOM_SEED)
 
 
 # Data configuration
-TOP_K = 5
+TOP_K = 10
 TRAIN_START_DATE = "2012-01-01"
 TRAIN_END_DATE = "2015-12-31"
 VALID_START_DATE = "2016-01-01"
@@ -16,9 +16,9 @@ TEST_START_DATE = "2017-01-01"
 TEST_END_DATE = "2020-07-01"
 
 # Model configuration
-BATCH_SIZE = 4
+BATCH_SIZE = 8
 MAX_LEN = 32
-EPOCHS = 4
+EPOCHS = 20
 DROPOUT_RATE = 0.1
 PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
 tokenizer = AutoTokenizer.from_pretrained(PRE_TRAINED_MODEL_NAME)
@@ -32,7 +32,7 @@ MODEL_PATH = "./weights/2020-08-04_cnn_distilbert.bin"
 FIND_BEST_LR = False
 LEARNING_RATE = 2e-5
 WEIGHT_DECAY = 5e-4
-FC_WEIGHT = 0.2
-CE_WEIGHT = 0.8
+FC_WEIGHT = 0.0
+CE_WEIGHT = 1.0
 OPTIMIZER = "adamw"
-SCHEDULER = "one_cycle"
+SCHEDULER = "linear"

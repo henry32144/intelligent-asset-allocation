@@ -622,7 +622,7 @@ def plot_history(history):
     plt.title("Training Loss History")
     plt.ylabel("Loss")
     plt.xlabel("Epoch")
-    plt.ylim([0.5, 0.7])
+    # plt.ylim([0.5, 0.7])
     plt.legend()
     plt.grid()
 
@@ -889,9 +889,9 @@ def test_distilbert(model, data_loader, device):
 
 def main():
     print("Loading data...")
-    train_data = joblib.load("./data/train_top10_v3.bin")
+    train_data = joblib.load("./data/train_top25.bin")
     # train_data = train_data[train_data["sector"] == "Financials"]
-    valid_data = joblib.load("./data/valid_top10_v3.bin")
+    valid_data = joblib.load("./data/valid_top25.bin")
     # valid_data = valid_data[valid_data["sector"] == "Financials"]
     print("Done!")
 
