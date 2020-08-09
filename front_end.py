@@ -184,7 +184,6 @@ def save_portfolio():
 @front_end.route("/news", methods=['POST'])
 def get_news_by_symbols():
     json_data = request.get_json()
-    print(json_data)
     response = {
         'isSuccess': False,
         'errorMsg': "",
@@ -207,7 +206,7 @@ def get_news_test():
 
     return jsonify(company_news)
 
-@front_end.route("/portfolio/test", methods=['POST'])
+@front_end.route("/portfolio/weights", methods=['POST'])
 def get_model_predict():
     json_data = request.get_json()
     response = {
@@ -218,14 +217,23 @@ def get_model_predict():
     selected_tickers = json_data.get("stocks", [])
     selected_mode = json_data.get("model", "basic")
     portfolio_id = json_data.get("portfolioId")
-    money = json_data.get("money", 1)
+    money = json_data.get("money", 1.)
+    initial = json_data.get("isInitial", False)
 
     portfolio = Portfolio.query.filter_by(id=portfolio_id).first()
+
+    if initial:
+        print("is initial")
+        selected_mode = portfolio.mode
+        money = portfolio.invest_money
+        print(selected_mode)
+    
     # Update portfolio
     print(portfolio_id)
     if portfolio is not None:
         print("save mode")
         portfolio.mode = selected_mode
+        portfolio.invest_money = money
         db.session.commit()
 
     if len(selected_tickers) == 0:

@@ -146,6 +146,7 @@ function DashboardPage(props) {
           portfolioPerformances={portfolioPerformances}
           portfolioWeights={portfolioWeights}
           historyWeights={historyWeights}
+          currentPerformance={currentPerformance}
           backtestDates={backtestDates}
         />;
       case WEIGHT_SECTION:
@@ -326,7 +327,7 @@ function DashboardPage(props) {
     setPortfolioPerformance(newPerformanceData);
   }
 
-  const getWeights = async (selectedModel, selectedStocks) => {
+  const getWeights = async (selectedModel, selectedStocks, isInitial=false) => {
     var model = selectedModel;
     if (model == undefined) {
       model = "basic";
@@ -347,7 +348,8 @@ function DashboardPage(props) {
         "stocks": companySymbols,
         "model": model,
         "money": investMoney,
-        "portfolioId": currentSelectedPortfolio
+        "portfolioId": currentSelectedPortfolio,
+        "isInitial": isInitial
       })
     }
 
@@ -355,7 +357,7 @@ function DashboardPage(props) {
       if (companySymbols.length > 0) {
         console.log("Try to get weights");
         handleBackdropToggle();
-        const response = await fetch(BASEURL + "/portfolio/test", request)
+        const response = await fetch(BASEURL + "/portfolio/weights", request)
         if (response.ok) {
           const jsonData = await response.json();
           console.log("Weight response")
@@ -434,7 +436,7 @@ function DashboardPage(props) {
               newNewsData.push(news);
             }
             console.log(newNewsData);
-            setNewsData(newNewsData)
+            setNewsData(newNewsData);
           } else {
             alert(jsonData.errorMsg);
           }
@@ -514,12 +516,14 @@ function DashboardPage(props) {
               var newPortfolios = []
               for (var i = 0; i < jsonData.data.length; i++) {
                 var mode = jsonData.data[i].mode == undefined ? "basic" : jsonData.data[i].mode;
+                var investMoney = jsonData.data[i].invest_money == undefined ? 1. : jsonData.data[i].invest_money;
                 var newPortfolio = {
                   "portfolioId": jsonData.data[i].id,
                   "userId": jsonData.data[i].user_id,
                   "portfolioName": jsonData.data[i].portfolio_name,
                   "portfolioStocks": jsonData.data[i].portfolio_stocks,
                   "portfolioMode": mode,
+                  "portfolioInvestMoney": investMoney,
                 };
                 newPortfolios.push(newPortfolio);
               }
@@ -613,10 +617,13 @@ function DashboardPage(props) {
     if (userPortfolios.length > 0 && currentSelectedPortfolio != undefined) {
       console.log(currentSelectedPortfolio);
       console.log(userPortfolios);
-      var currentMode = userPortfolios.find(function (item, index, array) {
+      var currentPortfolio = userPortfolios.find(function (item, index, array) {
         return item.portfolioId === currentSelectedPortfolio;
-      }).portfolioMode
+      })
+      var currentMode = currentPortfolio.portfolioMode;
+      var currentInvestMoney = currentPortfolio.portfolioInvestMoney;
       setModel(currentMode);
+      setInvestMoney(currentInvestMoney);
     }
   }, [currentSelectedPortfolio]);
 
@@ -651,7 +658,7 @@ function DashboardPage(props) {
 
       getNews(selectedStocks);
       if (portfolioWeights.hasOwnProperty("labels") === false) {
-        getWeights(selectedModel, selectedStocks);
+        getWeights(selectedModel, selectedStocks, true);
       }
     }
   }, [selectedStocks]);

@@ -3,7 +3,6 @@ import './App.css';
 import { makeStyles } from '@material-ui/core/styles';
 import TopNavBar from './components/TopNavBar'
 import DashboardPage from './pages/DashboardPage'
-import LandingPage from './pages/LandingPage'
 import { HOME_PAGE, DASHBOARD_PAGE } from './Constants';
 import Cookies from 'universal-cookie';
 // {
@@ -50,11 +49,11 @@ function App() {
 
   const [currentPage, switchPage] = React.useState(HOME_PAGE);
 
-  React.useEffect(() => {
-    if (userData.userId == undefined) {
-      window.location.pathname = './login';
-    }
-  }, [userData]);
+  // React.useEffect(() => {
+  //   if (userData.userId == undefined) {
+  //     window.location.pathname = './login';
+  //   }
+  // }, [userData]);
 
   return (
     <div className={classes.root}>
