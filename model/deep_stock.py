@@ -111,6 +111,53 @@ def create_dataloader(df, tokenizer, max_len, top_k, batch_size, shuffle=True):
         num_workers=0)
 
 
+class ReutersDatasetV2(Dataset):
+    def __init__(self, df, tokenizer, max_len):
+        self.df = df
+        self.targets = df.label.values
+        self.tokenizer = tokenizer
+        self.max_len = max_len
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, item):
+        contents = self.df["content"][item]
+        target = self.targets[item]
+
+        enc_list = []
+        for content in contents:
+            enc = self.tokenizer.encode_plus(
+                str(content),
+                max_length=self.max_len,
+                add_special_tokens=True,
+                return_token_type_ids=False,
+                pad_to_max_length=True,
+                return_attention_mask=True,
+                return_tensors="pt")
+            enc["input_ids"] = enc["input_ids"].flatten()
+            enc["attention_mask"] = enc["attention_mask"].flatten()
+            enc_list.append(enc)
+
+        return {
+            "ids_and_mask": enc_list,
+            "target": torch.tensor(target)
+        }
+
+
+def create_dataloader_v2(df, tokenizer, max_len, batch_size, shuffle=True):
+    dataset = ReutersDataset(
+        df=df,
+        tokenizer=tokenizer,
+        max_len=max_len)
+
+    return DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_workers=0)
+
+
 class CnnMaxPooling(nn.Module):
 
     def __init__(self, word_dim, window_size, out_channels):
@@ -126,10 +173,10 @@ class CnnMaxPooling(nn.Module):
         return res
 
 
-class ReutersClassifier(nn.Module):
+class ReutersCnnClassifier(nn.Module):
 
     def __init__(self, n_classes, top_k, p, window_size, out_channels):
-        super(ReutersClassifier, self).__init__()
+        super(ReutersCnnClassifier, self).__init__()
         self.PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
         self.distilbert_layer = AutoModel.from_pretrained(self.PRE_TRAINED_MODEL_NAME)
         self.dropout = nn.Dropout(p=p)
@@ -149,6 +196,72 @@ class ReutersClassifier(nn.Module):
         doc_embed = self.cnn_max_pool(concat)
         class_score = self.classifier(doc_embed)
         return class_score
+
+    def freeze_bert_encoder(self):
+        for param in self.distilbert_layer.parameters():
+            param.requires_grad = False
+
+    def unfreeze_bert_encoder(self):
+        for param in self.distilbert_layer.parameters():
+            param.requires_grad = True
+
+
+class ReutersLinearClassifier(nn.Module):
+
+    def __init__(self, n_classes, top_k, p):
+        super(ReutersLinearClassifier, self).__init__()
+        self.PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
+        self.distilbert_layer = AutoModel.from_pretrained(self.PRE_TRAINED_MODEL_NAME)
+        self.dropout = nn.Dropout(p=p)
+        self.fc_dropout = nn.Dropout(p=p)
+        self.fc = nn.Linear(self.distilbert_layer.config.dim*top_k, self.distilbert_layer.config.dim)
+        self.classifier = nn.Linear(self.distilbert_layer.config.dim, n_classes)
+
+    def forward(self, ids_and_mask):
+        pool_list = []
+        for enc in ids_and_mask:
+            pooled_output = self.distilbert_layer(
+                input_ids=enc["input_ids"],
+                attention_mask=enc["attention_mask"])
+            branch = self.dropout(pooled_output[0][:, 0, :])
+            pool_list.append(branch)
+        concat = torch.cat([br for br in pool_list], 1)
+        concat = self.fc(concat)
+        return self.classifier(self.fc_dropout(F.relu(concat)))
+
+    def freeze_bert_encoder(self):
+        for param in self.distilbert_layer.parameters():
+            param.requires_grad = False
+
+    def unfreeze_bert_encoder(self):
+        for param in self.distilbert_layer.parameters():
+            param.requires_grad = True
+
+
+class ReutersLinearClassifierV2(nn.Module):
+
+    def __init__(self, n_classes, p):
+        super(ReutersLinearClassifierV2, self).__init__()
+        self.PRE_TRAINED_MODEL_NAME = 'distilbert-base-uncased'
+        self.distilbert_layer = AutoModel.from_pretrained(self.PRE_TRAINED_MODEL_NAME)
+        self.dropout = nn.Dropout(p=p)
+        self.fc_dropout = nn.Dropout(p=p)
+        self.fc = nn.Linear(self.distilbert_layer.config.dim, self.distilbert_layer.config.dim)
+        self.classifier = nn.Linear(self.distilbert_layer.config.dim, n_classes)
+
+    def forward(self, ids_and_mask):
+        pool_list = []
+        for enc in ids_and_mask:
+            pooled_output = self.distilbert_layer(
+                input_ids=enc["input_ids"],
+                attention_mask=enc["attention_mask"])
+            branch = self.dropout(pooled_output[0][:, 0, :])
+            pool_list.append(branch)
+        concat = torch.zeros(self.distilbert_layer.config.dim).to(config.device)
+        for branch in pool_list:
+            concat = torch.add(concat, branch)
+        concat = self.fc(concat)
+        return self.classifier(self.fc_dropout(F.relu(concat)))
 
     def freeze_bert_encoder(self):
         for param in self.distilbert_layer.parameters():
@@ -806,6 +919,179 @@ def train_baseline(
     return history
 
 
+def train_aggregate_model(
+        train_data, valid_data, model, optim_name, lr_scheduler_type, momentum=0.0,
+        weight_decay=5e-4, lr_decay=1.0, hyper_lr=1e-8, step_size=30, t_0=10, t_mult=2):
+    """
+    Reference from https://github.com/awslabs/adatune/blob/master/bin/baselines.py
+    Args:
+        train_data: pandas dataframe
+        valid_data: pandas dataframe
+        model: pytorch class
+        optim_name: str ('sgd', 'adam', 'adamw')
+        lr_scheduler_type: str ('hd', 'ed', 'cyclic', 'staircase', 'one_cycle', 'linear')
+        momentum: float
+        weight_decay: float
+        lr_decay: float
+        hyper_lr: float
+        step_size: int
+        t_0: int
+        t_mult: int
+
+    Returns:
+        history plot
+    """
+    train_dataloader = create_dataloader_v2(train_data, config.tokenizer, config.MAX_LEN, config.BATCH_SIZE)
+    val_dataloader = create_dataloader_v2(valid_data, config.tokenizer, config.MAX_LEN, config.BATCH_SIZE)
+
+    model.to(config.device)
+    cur_lr = config.LEARNING_RATE
+    scheduler, optimizer = None, None
+    # loss_function = nn.CrossEntropyLoss().to(config.device)
+    loss_function = FocalCrossEntropyLoss(fc_w=config.FC_WEIGHT, ce_w=config.CE_WEIGHT).to(config.device)
+    history = defaultdict(list)
+    best_loss = np.inf
+
+    # Hypergradient Descent: https://arxiv.org/pdf/1703.04782.pdf
+    if lr_scheduler_type == 'hd':
+        if optim_name == 'adam':
+            optimizer = AdamHD(
+                model.parameters(), lr=config.LEARNING_RATE, weight_decay=weight_decay,
+                eps=1e-4, hypergrad_lr=hyper_lr)
+        elif optim_name == 'sgd':
+            optimizer = SGDHD(
+                model.parameters(), lr=config.LEARNING_RATE, momentum=momentum,
+                weight_decay=weight_decay, hypergrad_lr=hyper_lr)
+        else:
+            print("In HD, only can choose either ADAM or SGD so far...")
+    else:
+        if optim_name == 'adam':
+            optimizer = optim.Adam(
+                model.parameters(), lr=config.LEARNING_RATE, weight_decay=weight_decay, eps=1e-4)
+        elif optim_name == 'sgd':
+            optimizer = optim.SGD(
+                model.parameters(), lr=config.LEARNING_RATE, momentum=momentum, weight_decay=weight_decay)
+        else:
+            optimizer = AdamW(
+                model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY, correct_bias=False)
+
+        # Exponential Decay
+        if lr_scheduler_type == 'ed':
+            scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=lr_decay)
+        # Staircase Decay
+        elif lr_scheduler_type == 'staircase':
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=lr_decay)
+        # Cosine Annealing with Restarts
+        elif lr_scheduler_type == 'cyclic':
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+                optimizer, T_0=t_0, T_mult=t_mult, eta_min=config.LEARNING_RATE * 1e-4)
+        # One Cycle Policy Learning Rate Scheduler
+        elif lr_scheduler_type == 'one_cycle':
+            total_steps = len(train_dataloader) * config.EPOCHS
+            scheduler = OneCycleLR(optimizer, num_steps=total_steps, lr_range=(1e-8, 1e-3))
+            # One Cycle Policy Learning Rate Scheduler
+        elif lr_scheduler_type == 'linear':
+            total_steps = len(train_dataloader) * config.EPOCHS
+            scheduler = get_linear_schedule_with_warmup(
+                optimizer, num_warmup_steps=0, num_training_steps=total_steps)
+
+    print("\nTrain on {} samples, validate on {} samples".format(train_data.shape[0], valid_data.shape[0]))
+    print("Optimizer: {}\nScheduler: {}".format(optim_name, lr_scheduler_type))
+    print("Total Epoch: {}\nBatch Size {}\n".format(config.EPOCHS, config.BATCH_SIZE))
+    for epoch in range(config.EPOCHS):
+        t0_epoch = time.time()
+        model = model.train()
+        print("Epoch {}/{}".format(epoch + 1, config.EPOCHS))
+
+        losses = []
+        batch_time_elapsed = []
+        correct_predictions = 0
+        true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
+
+        for i, data in enumerate(progressbar(train_dataloader)):
+            t0_batch = time.time()
+            for d in data["ids_and_mask"]:
+                d["input_ids"] = d["input_ids"].to(config.device)
+                d["attention_mask"] = d["attention_mask"].to(config.device)
+            targets = data["target"].to(config.device)
+
+            outputs = model(data["ids_and_mask"])
+            outputs = F.softmax(outputs)
+            _, preds = torch.max(outputs, dim=1)
+            loss = loss_function(outputs, targets)
+
+            for p, t in zip(preds, targets):
+                if p == 1 and t == 1:
+                    true_pos += 1
+                if p == 0 and t == 0:
+                    true_neg += 1
+                if p == 1 and t == 0:
+                    false_pos += 1
+                if p == 0 and t == 1:
+                    false_neg += 1
+
+            correct_predictions += torch.sum(preds == targets)
+            losses.append(loss.item())
+
+            loss.backward()
+            nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
+            optimizer.zero_grad()
+
+            if scheduler and lr_scheduler_type == 'cyclic':
+                scheduler.step(int(epoch+(i/len(train_data))))
+
+            if scheduler and lr_scheduler_type != 'cyclic':
+                scheduler.step()
+
+            # for d in data["ids_and_mask"]:
+            #     d["input_ids"] = d["input_ids"].to("cpu")
+            #     d["attention_mask"] = d["attention_mask"].to("cpu")
+            # targets = data["target"].to("cpu")
+
+            time_elapsed = time.time() - t0_batch
+            batch_time_elapsed.append(time_elapsed)
+
+        train_recall = float(true_pos) / float(true_pos + false_neg + 1e-7)
+        train_precision = float(true_pos) / float(true_pos + false_pos + 1e-7)
+        train_f1 = 2 * train_precision * train_recall / (train_precision + train_recall + 1e-7)
+        train_accuracy = (true_pos + true_neg) / float(true_pos + true_neg + false_pos + false_neg)
+        train_mcc = matthews_correlation_coefficient(true_pos, true_neg, false_pos, false_neg)
+
+        print("Train | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
+            np.mean(losses), train_accuracy, train_f1, train_mcc))
+
+        val_acc, val_f1, val_mcc, val_loss = eval_distilbert(
+            model, val_dataloader, loss_function, config.device, len(valid_data))
+        time_elapsed = time.time() - t0_epoch
+
+        print("Valid | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f} | MCC: {:.4f}".format(
+            val_loss, val_acc, val_f1, val_mcc))
+
+        history["train_f1"].append(train_f1)
+        history["train_mcc"].append(train_mcc)
+        history["train_acc"].append(train_accuracy)
+        history["train_loss"].append(np.mean(losses))
+        history["val_f1"].append(val_f1)
+        history["val_mcc"].append(val_mcc)
+        history["val_acc"].append(val_acc)
+        history["val_loss"].append(val_loss)
+
+        if val_loss < best_loss:
+            torch.save(model.state_dict(), config.MODEL_PATH)
+            best_loss = val_loss
+
+        cur_lr = 0.0
+        for param_group in optimizer.param_groups:
+            cur_lr = param_group['lr']
+        print('Learning rate after epoch {} is: {:.6f}\n'.format(epoch+1, cur_lr))
+        print("Elapsed time per batch: {:4f} min\nTotal time elapsed: {:.4f} min".format(
+            np.mean(batch_time_elapsed)/60, time_elapsed/60))
+
+    # plot_history(history)
+    return history
+
+
 def eval_distilbert(model, data_loader, loss_function, device, n_examples):
     model = model.eval()
 
@@ -887,16 +1173,44 @@ def test_distilbert(model, data_loader, device):
     print("F1: {:.4f}\nACC: {:.4f}\nMCC: {:.4f}".format(f1, accuracy, mcc))
 
 
-def main():
+def main1():
     print("Loading data...")
-    train_data = joblib.load("./data/train_top25.bin")
+    train_data = joblib.load("./data/train_top25_v2.bin")
     # train_data = train_data[train_data["sector"] == "Financials"]
-    valid_data = joblib.load("./data/valid_top25.bin")
+    valid_data = joblib.load("./data/valid_top25_v2.bin")
     # valid_data = valid_data[valid_data["sector"] == "Financials"]
     print("Done!")
 
     print("Loading model...")
-    model = ReutersClassifier(n_classes=2, top_k=config.TOP_K, p=config.DROPOUT_RATE, window_size=3, out_channels=64)
+    model = ReutersCnnClassifier(
+        n_classes=2, top_k=config.TOP_K, p=config.DROPOUT_RATE, window_size=5, out_channels=32)
+    # model = ReutersLinearClassifier(
+    #     n_classes=2, top_k=config.TOP_K, p=config.DROPOUT_RATE)
+    model.unfreeze_bert_encoder()
+    model.to(config.device)
+    print("Done!")
+
+    if config.FIND_BEST_LR:
+        print("Finding the best learning rate...")
+        criterion = FocalCrossEntropyLoss().to(config.device)
+        optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
+        plot_find_lr(train_data, model, optimizer, criterion)
+
+    history = train_baseline(
+        train_data, valid_data, model, optim_name=config.OPTIMIZER, lr_scheduler_type=config.SCHEDULER)
+    plot_history(history)
+
+
+def main2():
+    print("Loading data...")
+    train_data = joblib.load("./data/train_top25_v3.bin")
+    valid_data = joblib.load("./data/valid_top25_v3.bin")
+    train_data = train_data[train_data['content'].map(len) > 0]
+    valid_data = valid_data[valid_data['content'].map(len) > 0]
+    print("Done!")
+
+    print("Loading model...")
+    model = ReutersLinearClassifierV2(n_classes=2, p=config.DROPOUT_RATE)
     model.unfreeze_bert_encoder()
     model.to(config.device)
     print("Done!")
@@ -913,4 +1227,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main2()

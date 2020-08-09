@@ -191,7 +191,7 @@ def transform(data, k=25):
 
 
 def check_nan(df):
-	# Calculate sparsity
+    # Calculate sparsity
     sparse = df.isna().sum().sum()
     total = df.shape[0] * df.shape[1]
     ratio = sparse / total
@@ -223,7 +223,7 @@ def load_stock(ticker_name, start_date="2012-01-01"):
     return hist
 
 def load_news(news_path):
-	news = joblib.load(news_path)
+    news = joblib.load(news_path)
     news.reset_index(drop=True, inplace=True)
     return news
 ```
@@ -246,16 +246,18 @@ news_all = load_news(news_path="../data/sp500_top100_content_base_v1.bin")
 
 for ticker in tqdm(news_all["ticker"].unique()):
     news = news_all[news_all["ticker"] == str(ticker)]
+    news = news.drop(labels="ticker", axis=1)
     stock = load_stock(str(ticker), start_date="2012-01-01")
-    news_and_stock = pd.merge(news, stock, on=["date"])
+    news_and_stock = news.merge(stock, on="date")
     news_and_stock.set_index('date', inplace=True)
+    news_and_stock = news_and_stock.sort_index()
     
     train_temp = news_and_stock.loc[
-    	pd.to_datetime(TRAIN_START_DATE).date():pd.to_datetime(TRAIN_END_DATE).date()]
+        pd.to_datetime(TRAIN_START_DATE).date():pd.to_datetime(TRAIN_END_DATE).date()]
     valid_temp = news_and_stock.loc[
-    	pd.to_datetime(VALID_START_DATE).date():pd.to_datetime(VALID_END_DATE).date()]
+        pd.to_datetime(VALID_START_DATE).date():pd.to_datetime(VALID_END_DATE).date()]
     test_temp = news_and_stock.loc[
-    	pd.to_datetime(TEST_START_DATE).date():pd.to_datetime(TEST_END_DATE).date()]
+        pd.to_datetime(TEST_START_DATE).date():pd.to_datetime(TEST_END_DATE).date()]
     
     train = pd.concat([train, train_temp], axis=0)
     valid = pd.concat([valid, valid_temp], axis=0)
