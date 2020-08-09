@@ -130,7 +130,7 @@ contents = crawler.collate_responses(results)
 
 content_list = []
 for content, url in zip(contents, data.url.tolist()):
-	content_list.append([content, url])
+    content_list.append([content, url])
 final_df = pd.merge(data, pd.DataFrame(content_list, columns=["content", "url"]), on="url")
 final_df = final_df.drop_duplicates(subset="content")
 joblib.dump(final_df, "../data/sp500_top100_content_v5.bin", compress=5)
@@ -202,6 +202,68 @@ def check_nan(df):
     sns.heatmap(df.isnull(), cbar=True, cmap=sns.color_palette("GnBu_d"))
     plt.title("Missing Values Heatmap")
     plt.show()
+```
+
+## Aggregate Approach
+Aggregate data with prediction delay (default is 7 days).
+
+```python
+def fillnan4df(df):
+    data = df.copy()
+    data = data[["ticker", "content"]]
+    data = data.groupby(df.index)["content"].agg(list)
+    index = pd.date_range(start=str(data.index.min()), end=str(data.index.max()), freq='D')
+    data.index = pd.DatetimeIndex(data.index)
+    data = data.reindex(index, fill_value=None)
+    data = pd.DataFrame(data)
+    return data
+
+def add_function(row, prediction_delay=7):
+    total = []
+    for i in range(prediction_delay):
+        if str(row[i]) != "nan":
+            total += row[i]
+        elif np.dtype(np.float) != type(row[i]):
+            total += row[i]
+    return total
+
+def eliminate_nan_in_list(content_list):
+    return [content for content in content_list if type(content) != np.dtype(np.float)]
+
+def reconstruct(df, prediction_delay=7):
+    data = fillnan4df(df)
+    prev_news = deque(maxlen=prediction_delay)
+
+    news_seperate_ndays = []
+    for idx, news in enumerate(data.content):
+        prev_news.append(news)
+        if len(prev_news) == prediction_delay:
+            n_days_news = list(prev_news)
+            news_seperate_ndays.append(n_days_news)
+    
+    index = pd.date_range(
+        start=str(df.index.min()+datetime.timedelta(days=prediction_delay-1)), end=str(df.index.max()), freq='D')
+    data = pd.DataFrame(news_seperate_ndays, index=index)
+    data = data.apply(add_function, axis=1)
+    data = pd.DataFrame(data, columns=["content"])
+    return data
+```
+
+### Usage of Functions
+
+```python
+full_data = pd.DataFrame()
+for ticker in data.ticker.unique().tolist():
+    ticker_df = data[data["ticker"] == ticker]
+    ticker_df = ticker_df.drop_duplicates(subset=["url", "title", "content"])
+    ticker_df = ticker_df.reset_index(drop=True)
+    ticker_df = ticker_df.set_index(keys="date", drop=True)
+    ticker_df = ticker_df.sort_index()
+    ticker_df = reconstruct(ticker_df)
+    ticker_df["ticker"] = ticker
+    full_data = pd.concat([full_data, ticker_df], axis=0)
+    full_data["content"] = full_data["content"].apply(eliminate_nan_in_list)
+    full_data["news_count"] = full_data["content"].apply(len)
 ```
 
 ## Split Data into Train/Valid/Test
