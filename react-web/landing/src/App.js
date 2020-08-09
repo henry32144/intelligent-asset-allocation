@@ -34,7 +34,7 @@ function App() {
       />
       <LandingPage
           userData={userData}
-      />;
+      />
     </div>
   );
 }

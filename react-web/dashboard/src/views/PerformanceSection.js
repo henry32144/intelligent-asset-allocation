@@ -17,10 +17,10 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(2, 0, 2),
   },
   earnMoneyText: {
-    color: "#f0162f"
+    color: "#00873c"
   },
   loseMoneyText: {
-    color: "#00873c"
+    color: "#f0162f"
   },
 }));
 
@@ -32,11 +32,11 @@ export default function PerformanceSection(props) {
     var classType = undefined;
     if (props.currentPerformance >= 0) {
       classType = classes.earnMoneyText;
+      performanceText = " " + parseFloat(props.currentPerformance).toFixed(2);
     } else {
       classType = classes.loseMoneyText;
+      performanceText = " -" + parseFloat(props.currentPerformance).toFixed(2);
     }
-
-    performanceText = " " + parseFloat(props.currentPerformance).toFixed(2);
 
     return <Typography variant="h4" display="inline" className={classType} >
       {performanceText}
@@ -54,7 +54,7 @@ export default function PerformanceSection(props) {
       <Grid container className={classes.sectionTitle}>
         <Grid item xs={12} sm={6}>
           <Typography variant="h5" display="inline">
-            Estimated Income:
+            Estimated return:
           </Typography>
           {getCurrentPerformanceText()}
         </Grid>
