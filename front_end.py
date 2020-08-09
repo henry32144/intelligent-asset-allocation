@@ -10,12 +10,33 @@ import numpy as np
 
 front_end = Blueprint('front_end', __name__)
 
-@front_end.route('/', defaults={'path': ''})
-@front_end.route('/<path:path>')
-def index(path):
+@front_end.route('/')
+def index():
     try:
         return render_template("index.html")
-    except TemplateNotFound:
+    except:
+        abort(404)
+
+
+@front_end.route('/dashboard')
+def dashboard():
+    try:
+        return render_template("dashboard.html")
+    except:
+        abort(404)
+    
+@front_end.route('/login')
+def login():
+    try:
+        return render_template("login.html")
+    except:
+        abort(404)
+
+@front_end.route('/signup')
+def signup():
+    try:
+        return render_template("signup.html")
+    except:
         abort(404)
 
 @front_end.route("/manifest.json")
