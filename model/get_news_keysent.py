@@ -51,7 +51,7 @@ class KeysentGetter():
 		self.q_data = self._get_all_url()
 
 	def _get_all_url(self):
-		result = CrawlingData.query.filter(CrawlingData.date > datetime(2020,6,30))
+		result = CrawlingData.query.filter(and_( CrawlingData.date < datetime( 2020,7,2 ), CrawlingData.date > datetime(2020,5,1) ))
 		# result = CrawlingData.query.filter_by( date =  (datetime.now().date() - timedelta(days=1)))
 		self.q_data = result
 		for r in result:
@@ -93,7 +93,8 @@ class KeysentGetter():
 			key_idx = key_idx[:-2]
 			# print("paragraph length" ,len(paragraph))
 			# print("keyidx", key_idx)
-			_lst.append(  OutputNews( title, date = self.dates[url_idx], company = self.companys[url_idx], paragraph = paragraph_sents, keysent = key_idx ))
+			if key_idx != None or key_idx != "":
+				_lst.append(  OutputNews( title, date = self.dates[url_idx], company = self.companys[url_idx], paragraph = paragraph_sents, keysent = key_idx ))
 
 		db.session.add_all(_lst)
 		db.session.commit()

@@ -30,12 +30,12 @@ export default function PerformanceSection(props) {
   const getCurrentPerformanceText = () => {
     var performanceText = "";
     var classType = undefined;
-    if (props.currentPerformance >= 0) {
+    if (props.currentPerformance >= 1.) {
       classType = classes.earnMoneyText;
       performanceText = " " + parseFloat(props.currentPerformance).toFixed(2);
     } else {
       classType = classes.loseMoneyText;
-      performanceText = " -" + parseFloat(props.currentPerformance).toFixed(2);
+      performanceText = " " + parseFloat(props.currentPerformance).toFixed(2);
     }
 
     return <Typography variant="h4" display="inline" className={classType} >
@@ -54,7 +54,7 @@ export default function PerformanceSection(props) {
       <Grid container className={classes.sectionTitle}>
         <Grid item xs={12} sm={6}>
           <Typography variant="h5" display="inline">
-            Estimated return:
+            Estimated value:
           </Typography>
           {getCurrentPerformanceText()}
         </Grid>

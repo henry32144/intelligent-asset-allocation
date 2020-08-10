@@ -7,7 +7,7 @@ from datetime import datetime
 
 class OutputNews(db.Model):
 	__tablename__ = "output_news"
-	id = db.Column(Integer, primary_key=True)
+	id = db.Column(db.Integer, primary_key=True)
 	news_title = db.Column(db.String)
 	date = db.Column(db.Date)
 	company = db.Column(db.String)
@@ -23,12 +23,16 @@ class OutputNews(db.Model):
 
 def news_to_json(company):
 	result = []
-	date1 = datetime( 2020,7,1 )
-	date2 = datetime(2020,6,27)
+	print(company)
+	date1 = datetime( 2020,7,2 )
+	date2 = datetime(2020,6,1)
 	# data = OutputNews.query.filter(OutputNews.date <= date1).filter(OutputNews.date >= date2)
-	data = OutputNews.query.filter( and_( OutputNews.company == company, OutputNews.date > date2 ) ).all()
+	#data = OutputNews.query.filter( and_( OutputNews.company == company, OutputNews.date > date2 ) ).all()
+	data = OutputNews.query.filter( OutputNews.company == company ).all()
 	print('get data')
-	# print(data)
+
+	
+	print(data)
 	for r in data:
 		k = r.keysent.split('%%')
 		para = r.paragraph.split('%%')
