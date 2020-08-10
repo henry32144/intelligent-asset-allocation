@@ -41,15 +41,12 @@ class StockPrice(db.Model):
         return cls.query.filter_by(comp=comp).all()
 
 
-def save_history_stock_price_to_db(sp500_file="./database/tables/sp500tickers.pkl"):
+def save_history_stock_price_to_db():
     """
         The goal of the function is read the list of S&P500 from wiki (a pickle file).
         Then, get the history stock price through Yahoo Finance API.
         The function just need to execute one time at first.
     """
-
-    with open(sp500_file, 'rb') as f:
-        tickers = pickle.load(f)
 
     sp_99 = []
     with open('./database/tables/ticker_name.txt', 'r') as f0:
@@ -65,9 +62,7 @@ def save_history_stock_price_to_db(sp500_file="./database/tables/sp500tickers.pk
     print(len(sp_99))
     # get the history stock price
     start = dt.datetime(2012, 1, 1)
-    end = dt.datetime(2020, 7, 1)
-    # start = '2012-01-01'
-    # end = '2020-07-01'
+    end = dt.datetime(2020, 8, 5)
 
     for ticker in tqdm(sp_99, desc = 'get company price'):
         stock_list = []

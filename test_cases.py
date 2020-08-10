@@ -69,9 +69,9 @@ def update():
     return ''
 
 
-@test_cases.route('/create_pricetable_test')
+@test_cases.route('/create_price_db')
 def create_pricetable_test():
-    save_history_stock_price_to_db('./database/tables/sp500tickers.pkl')
+    save_history_stock_price_to_db()
     return ''
 
 @test_cases.route('/daily_update_stockprice')
@@ -153,7 +153,6 @@ def test():
     }
 
     return jsonify(test_dict)
-
 
 @test_cases.route('/test_sp500')
 def test_sp500():
