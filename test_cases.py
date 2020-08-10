@@ -168,8 +168,7 @@ def test_black_litterman():
     BL = Black_Litterman(selected_tickers)
     all_weights = BL.get_all_weights()
     date, all_values = BL.get_backtest_result()
-
-    print(date)
+    print(all_values)
 
     return ''
 
