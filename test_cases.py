@@ -185,6 +185,10 @@ def test_equal_weight():
 
 @test_cases.route('/predict_Q_NLP')
 def test_predict_nlp():
-    predict_Q_NLP('GOOG')
+    predicted_price, real_stock_price, test_df = predict_Q_NLP('GOOG')
+
+    # print(train_df.head().to_string())
+    print(test_df.head().to_string())
+
 
     return ''
