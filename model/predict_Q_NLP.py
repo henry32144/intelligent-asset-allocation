@@ -79,7 +79,7 @@ def get_stock_price(tick):
         else:
             return 0
 
-    def add_target_and_split(df):
+    def add_target_and_split(df, tick):
         df['prev_adj_close'] = df['adj_close'].shift(1) # 將 adj Close 往後推移一天
         adj_close = df['adj_close']
         prev_adj_close = df['prev_adj_close']
@@ -89,41 +89,42 @@ def get_stock_price(tick):
         
         df = df.loc[:, train_cols]
         df.set_index('date', inplace=True)
-        train_df, test_df = df['2012-01-01': '2016-12-31'], df['2017-01-01': '2020-06-30']
+        predict_df = joblib.load("./model/ticker_prediction.npy")
+        predict_df_sub = predict_df[predict_df['ticker'] == tick]
+
+        train_df, test_df = df['2012-01-01': '2016-12-31'], df['2017-01-01': '2020-06-30'] 
+        test_df = pd.merge(test_df, predict_df_sub, left_index=True, right_index=True) 
         
         return train_df, test_df
 
 
-    train_df, test_df = add_target_and_split(df)
+    train_df, test_df = add_target_and_split(df, tick)
+    test_df.drop(['target', 'ticker'], inplace=True, axis=1)
+    test_df.columns = ['high', 'low', 'open', 'adj_close', 'vol', 'target']
 
-    return train_df, test_df
-    
+    # We need to standardize the input before putting them into the model
+    min_max_scaler = MinMaxScaler(feature_range=(0, 1))
+    train_scaled  = min_max_scaler.fit_transform(train_df.values)
+    time_step = 180
+    target_col_idx = 3
 
-    # # split dataframe into train & test part
-    # train_df, test_df = df['2012-01-01': '2016-12-31'], df['2017-01-01': '2020-06-30']
-    
-    # # We need to standardize the input before putting them into the model
-    # min_max_scaler = MinMaxScaler(feature_range=(0, 1))
-    # train_scaled  = min_max_scaler.fit_transform(train_df.values)
-    # time_step = 180
-    # target_col_idx = 3
+    # Get the trainset part
+    X_train, y_train = to_model_input(time_step, train_scaled, target_col_idx)
 
-    # # Get the trainset part
-    # X_train, y_train = to_model_input(time_step, train_scaled, target_col_idx)
+    # Get the testset part
+    dataset_total = pd.concat([train_df, test_df], axis=0)
+    testing_inputs = dataset_total[len(dataset_total)-len(test_df)-time_step:]
+    testing_scaled = min_max_scaler.transform(testing_inputs)
+    X_test, y_test = to_model_input(time_step, testing_scaled, target_col_idx)
 
-    # # Get the testset part
-    # dataset_total = pd.concat([train_df, test_df], axis=0)
-    # testing_inputs = dataset_total[len(dataset_total)-len(test_df)-time_step:]
-    # testing_scaled = min_max_scaler.transform(testing_inputs)
-    # X_test, y_test = to_model_input(time_step, testing_scaled, target_col_idx)
+    stock_default_list[tick].append(X_train)
+    stock_default_list[tick].append(y_train)
+    stock_default_list[tick].append(X_test)
+    stock_default_list[tick].append(y_test)
+    stock_default_list[tick].append(test_df)
 
-    # stock_default_list[tick].append(X_train)
-    # stock_default_list[tick].append(y_train)
-    # stock_default_list[tick].append(X_test)
-    # stock_default_list[tick].append(y_test)
-    # stock_default_list[tick].append(test_df)
+    return test_df, stock_default_list, min_max_scaler
 
-    # return test_df, stock_default_list, min_max_scaler
 
 def get_stock_price_offline(tick):
     from sqlalchemy import create_engine
@@ -192,7 +193,7 @@ def get_stock_price_offline(tick):
 
 def train_model(X_train, y_train, epochs, batch_size):
     model = Sequential()
-    model.add(GRU(units = 50, return_sequences = True, input_shape = (X_train.shape[1], 5)))
+    model.add(GRU(units = 50, return_sequences = True, input_shape = (X_train.shape[1], 6)))
     model.add(GRU(units = 100, return_sequences = True))
     model.add(GRU(units = 100, return_sequences = True))
     model.add(GRU(units = 50))
@@ -222,22 +223,19 @@ def get_prediction(model, X_test, test_df, min_max_scaler):
 
 
 def predict_Q_NLP(tick):
-    predict_df = joblib.load("./model/ticker_prediction.npy")
-    train_df, test_df = get_stock_price(tick)
-    print(test_df.head().to_string())
-    # print(predict_df.head().to_string())
+    test_df, stock_default_list, min_max_scaler = get_stock_price(tick)
 
-    # X_train = stock_default_list[tick][0]
-    # y_train = stock_default_list[tick][1]
+    X_train = stock_default_list[tick][0]
+    y_train = stock_default_list[tick][1]
 
-    # batch_size = 16
-    # epochs = 64
+    batch_size = 16
+    epochs = 64
 
-    # model = train_model(X_train, y_train, epochs, batch_size)
+    model = train_model(X_train, y_train, epochs, batch_size)
 
-    # X_test = stock_default_list[tick][2]
-    # test_df = stock_default_list[tick][4]
+    X_test = stock_default_list[tick][2]
+    test_df = stock_default_list[tick][4]
 
-    # predicted_price, real_stock_price = get_prediction(model, X_test, test_df, min_max_scaler)
+    predicted_price, real_stock_price = get_prediction(model, X_test, test_df, min_max_scaler)
     
-    # return predicted_price, real_stock_price, test_df
+    return predicted_price, real_stock_price, test_df
