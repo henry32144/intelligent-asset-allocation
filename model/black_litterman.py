@@ -157,13 +157,13 @@ class Black_Litterman(object):
         all_R, all_C = self.assets_historical_returns_covariances(prices_list)
         BL_reverse_pi = self.calculate_reverse_pi(W, all_R, all_C)
         
-        with open('./model/predict_dict_0_35.pkl', 'rb') as f:
+        with open('./model/predict_dict_1.pkl', 'rb') as f:
             all_predicted_Q_1 = pickle.load(f)
 
-        with open('./model/predict_dict_35_70.pkl', 'rb') as f:
+        with open('./model/predict_dict_2.pkl', 'rb') as f:
             all_predicted_Q_2 = pickle.load(f)
 
-        with open('./model/predict_dict_70_last.pkl', 'rb') as f:
+        with open('./model/predict_dict_3.pkl', 'rb') as f:
             all_predicted_Q_3 = pickle.load(f)
 
 
