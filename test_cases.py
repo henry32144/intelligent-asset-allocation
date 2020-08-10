@@ -25,7 +25,7 @@ from model.markowitz import Markowitz
 from model.equal_weight import EqualWeight
 from model.black_litterman import Black_Litterman
 from model.sp500 import SP500
-
+from model.predict_Q_NLP import predict_Q_NLP
 
 test_cases = Blueprint('test_cases', __name__)
 
@@ -179,5 +179,12 @@ def test_equal_weight():
     ew = EqualWeight(selected_tickers)
     
     date, all_values = ew.get_backtest_result()
+
+    return ''
+
+
+@test_cases.route('/predict_Q_NLP')
+def test_predict_nlp():
+    predict_Q_NLP('GOOG')
 
     return ''
