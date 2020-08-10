@@ -12,6 +12,9 @@ import FormControl from '@material-ui/core/FormControl';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormLabel from '@material-ui/core/FormLabel';
 import Button from '@material-ui/core/Button';
+import Input from '@material-ui/core/Input';
+import InputLabel from '@material-ui/core/InputLabel';
+import InputAdornment from '@material-ui/core/InputAdornment';
 
 const useStyles = makeStyles((theme) => ({
   sectionRoot: {
@@ -34,7 +37,6 @@ const useStyles = makeStyles((theme) => ({
 export default function PerformanceSection(props) {
   const classes = useStyles();
 
-
   const handleRadioChange = (event) => {
     props.setModel(event.target.value);
   };
@@ -43,28 +45,47 @@ export default function PerformanceSection(props) {
     props.getWeights(props.selectedModel, props.selectedStocks);
   };
 
+  const handleMoneyInput = (event) => {
+    props.setInvestMoney(parseInt(event.target.value));
+  };
+
 
   return (
     <div className={classes.sectionRoot}>
       <Typography className={classes.sectionTitle} variant="h5">
         Portfolio Weights
       </Typography>
-      <Grid container justify="center">
+      <Grid container justify="center" alignItems="center" direction="column">
+        <FormControl>
+          <InputLabel htmlFor="invest-money-input">Invest Money</InputLabel>
+          <Input
+            id="invest-money-input"
+            value={props.investMoney}
+            type="number"
+            onChange={handleMoneyInput}
+            startAdornment={<InputAdornment position="start">$</InputAdornment>}
+          />
+        </FormControl>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormLabel component="legend">Model select</FormLabel>
           <RadioGroup aria-label="model" name="model" value={props.selectedModel} onChange={handleRadioChange}>
             <FormControlLabel value="basic" control={<Radio />} label="Markowitz" />
             <FormControlLabel value="blacklitterman" control={<Radio />} label="Black litterman" />
+            <FormControlLabel value="equalweight" control={<Radio />} label="Equal Weight" />
           </RadioGroup>
           <Button type="submit" variant="outlined" color="primary" className={classes.button} onClick={calculateButtonOnClick}>
             Save setting
           </Button>
         </FormControl>
       </Grid>
-      <Typography className={classes.chartTitle} variant="h5">
-        Current Weights
-      </Typography>
-      <Doughnut data={props.portfolioWeights} />
+      {props.portfolioWeights.hasOwnProperty("labels") &&
+        <div>
+          <Typography className={classes.chartTitle} variant="h5">
+            Current Weights
+        </Typography>
+          <Doughnut data={props.portfolioWeights} />
+        </div>
+      }
     </div>
   );
 }

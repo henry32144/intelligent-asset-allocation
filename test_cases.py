@@ -100,9 +100,9 @@ def get_news():
     print("create getter")
     getter.url2news()
     print("url 2 news")
-    getter.get_news()
-    getter.to_db()
-    print("to db")
+    # getter.get_news()
+    # getter.to_db()
+    # print("to db")
     return ''
 
 
@@ -157,7 +157,7 @@ def test():
 @test_cases.route('/test_sp500')
 def test_sp500():
     sp_500 = SP500()
-    sp500_values, all_return = sp_500.get_backtest_result()
+    sp500_values = sp_500.get_backtest_result()
 
     return ''
 

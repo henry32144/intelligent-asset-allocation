@@ -11,7 +11,11 @@ const useStyles = makeStyles((theme) => ({
   },
   sectionTitle: {
     margin: theme.spacing(0, 0, 2),
-  }
+  },
+  emptyText: {
+    margin: theme.spacing(2, 0, 2),
+    textAlign: 'center'
+  },
 }));
 
 export default function NewsSection(props) {
@@ -22,10 +26,18 @@ export default function NewsSection(props) {
       <Typography className={classes.sectionTitle} variant="h5">
         News
       </Typography>
-      <NewsList
-        newsData={props.newsData}
-      >
-      </NewsList>
+
+      {
+        props.newsData.length > 0 ?
+          <NewsList
+            newsData={props.newsData}
+          >
+          </NewsList>
+          :
+          <Typography className={classes.emptyText}>
+            Add company to the portfolio to see news
+          </Typography>
+      }
     </div>
   );
 }

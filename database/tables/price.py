@@ -81,8 +81,8 @@ def save_history_stock_price_to_db():
             print(ticker + ' not found')
             print('Get Nothing.')
 
-        db.session.add_all(stock_list)
-        db.session.commit()
+        # db.session.add_all(stock_list)
+        # db.session.commit()
 
 
 def update_daily_stock_price(sp500_file):

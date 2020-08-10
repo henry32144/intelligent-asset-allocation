@@ -5,7 +5,9 @@ from database.tables.company import Company
 from database.database import db
 from database.tables.output_news import OutputNews, news_to_json
 from model.get_portfolio import return_portfolio
-from model.markowitz import Markowitz
+from model.sp500 import SP500
+import numpy as np
+
 front_end = Blueprint('front_end', __name__)
 
 @front_end.route("/manifest.json")
@@ -50,6 +52,17 @@ def user_signup():
             user_password=json_data.get("userPassword")
         )
         db.session.add(new_user)
+        db.session.commit()
+        db.session.refresh(new_portfolio)
+
+        # Create basic portfolio
+        new_portfolio = Portfolio(
+            user_id=new_user.id,
+            portfolio_name='My Portfolio 1',
+            portfolio_stocks=''
+        )
+
+        db.session.add(new_portfolio)
         db.session.commit()
     else:
         response['errorMsg'] = "User already exists"
@@ -140,7 +153,7 @@ def save_portfolio():
     return jsonify(response)
 
 @front_end.route("/news", methods=['POST'])
-def get_news_by_names():
+def get_news_by_symbols():
     json_data = request.get_json()
     print(json_data)
     response = {
@@ -148,16 +161,22 @@ def get_news_by_names():
         'errorMsg': "",
         'data': []
     }
-    company_names = json_data.get("companyNames", [])
+    company_symbols = json_data.get("companySymbols", [])
     news = []
-    for name in company_names:
+    for name in company_symbols:
         company_news = news_to_json(name)
         news += company_news
-    print(news)
+    # print(news)
     response["isSuccess"] = True
     response["data"] = news
     
     return jsonify(response)
+
+@front_end.route("/get_test", methods=['GET'])
+def get_news_test():
+    company_news = news_to_json('GOOG')
+
+    return jsonify(company_news)
 
 @front_end.route("/portfolio/test", methods=['POST'])
 def get_model_predict():
@@ -169,12 +188,32 @@ def get_model_predict():
     }
     selected_tickers = json_data.get("stocks", [])
     selected_mode = json_data.get("model", "basic")
+    portfolio_id = json_data.get("portfolioId")
+    money = json_data.get("money", 1)
+
+    portfolio = Portfolio.query.filter_by(id=portfolio_id).first()
+    # Update portfolio
+    print(portfolio_id)
+    if portfolio is not None:
+        print("save mode")
+        portfolio.mode = selected_mode
+        db.session.commit()
 
     if len(selected_tickers) == 0:
         response["isSuccess"] = False
         response["errorMsg"] = "Cannot find portfolio"
     else:
+        sp_500 = SP500()
+        sp500_values = sp_500.get_backtest_result()
         all_weights, all_values, date = return_portfolio(mode=selected_mode, company_symbols=selected_tickers)
+
+        # Estimated return
+        all_values = np.array(all_values, dtype='float32') * money
+        sp500_values = np.array(sp500_values, dtype='float32') * money
+        all_values = np.around(all_values, 2)
+        sp500_values = np.around(sp500_values, 2)
+        all_values = all_values.tolist()
+        sp500_values = sp500_values.tolist()
 
         time_interval = 1
         for i in range(len(all_weights)):
@@ -183,7 +222,8 @@ def get_model_predict():
         response["data"] = {
             "all_weights": all_weights,
             "all_values": all_values[::time_interval],
-            "date": date.tolist()[::time_interval]
+            "date": date.tolist()[::time_interval],
+            "SP500": sp500_values[::time_interval]
         }
         response["isSuccess"] = True
 
