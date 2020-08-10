@@ -72,7 +72,7 @@ def get_stock_price(tick):
     df.set_index('date', inplace=True)
 
     # split dataframe into train & test part
-    train_df, test_df = df['2012-01-01': '2016-12-31'], df['2017-01-01': '2020-08-05']
+    train_df, test_df = df['2012-01-01': '2016-12-31'], df['2017-01-01': '2020-06-30']
     
     # We need to standardize the input before putting them into the model
     min_max_scaler = MinMaxScaler(feature_range=(0, 1))
