@@ -8,3 +8,4 @@ database.zip
 # **/database.db
 **/chromedriver.exe
 # database.db
+Database/.DS_Store
