@@ -247,12 +247,13 @@ class Black_Litterman(object):
     def get_backtest_result(self):
         # get testing section stock price data
         log_return_df = pd.DataFrame({})
-
+        prices_dict = {}
         for ticker in self.selected_tickers:
             _, test_df = self.read_stock_file(ticker)
 
             # add log return col for calculate the performance
             price = test_df['adj_close']
+            prices_dict[ticker] = price.values.tolist()
             log_return = np.log(price) - np.log(price.shift(1))
             log_return_df = pd.concat([log_return_df, log_return], axis=1)
 
@@ -277,7 +278,7 @@ class Black_Litterman(object):
         date = date.dt.strftime('%Y-%m-%d')
         date = date.values[1:]
 
-        return date, all_values
+        return date, all_values, prices_dict
         
 
 

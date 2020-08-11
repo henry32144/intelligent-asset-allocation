@@ -6,6 +6,7 @@ import pickle
 from tqdm import tqdm
 from collections import defaultdict
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 from flask import Blueprint, abort, request, render_template, jsonify
@@ -144,12 +145,13 @@ def test():
     # plt.show()
     # plt.savefig('markowitz.png')
 
-    date, all_values = marko.get_backtest_result()
+    date, all_values, prices = marko.get_backtest_result()
 
     test_dict = {
         "data": {"all_weights": all_weights,
         "all_values": all_values,
-        "date": date.tolist()}
+        "date": date.tolist()},
+        "prices": prices
     }
 
     return jsonify(test_dict)
@@ -211,3 +213,25 @@ def test_predict_nlp():
 
 
     return ''
+
+
+
+
+@test_cases.route('/test_sharpe_ratio')
+def calculate_sharpe_ratio():
+    selected_tickers = ['GOOG', 'AMZN', 'FB', 'MSFT', 'AAPL']
+    BL = Black_Litterman(selected_tickers)
+    all_weights = BL.get_all_weights()
+    date, all_values, prices = BL.get_backtest_result()
+    returns = np.array(all_values)
+    sharpe_ratio = ((returns.mean()) - 0.08) / returns.std()
+    print("sharpe", sharpe_ratio)
+
+    test_dict = {
+        "data": {"all_weights": all_weights,
+        "all_values": all_values,
+        "date": date.tolist()},
+        "prices": prices
+    }
+
+    return jsonify(test_dict)

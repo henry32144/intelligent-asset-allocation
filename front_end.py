@@ -242,7 +242,10 @@ def get_model_predict():
     else:
         sp_500 = SP500()
         sp500_values = sp_500.get_backtest_result()
-        all_weights, all_values, date = return_portfolio(mode=selected_mode, company_symbols=selected_tickers)
+        all_weights, all_values, date, prices = return_portfolio(mode=selected_mode, company_symbols=selected_tickers)
+        risk_free = 0.08
+        returns = np.array(all_values)
+        sharpe_ratio = ((all_values[-1] / all_values[0]) - risk_free) / returns.std()
 
         # Estimated return
         all_values = np.array(all_values, dtype='float32') * money
@@ -260,7 +263,9 @@ def get_model_predict():
             "all_weights": all_weights,
             "all_values": all_values[::time_interval],
             "date": date.tolist()[::time_interval],
-            "SP500": sp500_values[::time_interval]
+            "SP500": sp500_values[::time_interval],
+            "prices": prices,
+            "sharpe_ratio": sharpe_ratio
         }
         response["isSuccess"] = True
 
