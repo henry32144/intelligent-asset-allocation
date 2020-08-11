@@ -1,5 +1,5 @@
-//export const BASEURL = "http://54.184.86.20:5000";
-export const BASEURL = "http://127.0.0.1:5000";
+export const BASEURL = "http://54.184.86.20:5000";
+//export const BASEURL = "http://127.0.0.1:5000";
 
 export const NEWS_SECTION = 0;
 export const PERFORMANCE_SECTION = 1;
