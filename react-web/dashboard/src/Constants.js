@@ -8,6 +8,24 @@ export const WEIGHT_SECTION = 2;
 export const HOME_PAGE = 0;
 export const DASHBOARD_PAGE = 1;
 
+export const ERROR_COMPANIES = [
+  "IBM",
+  "ISRG",
+  "MDLZ",
+  "MS",
+  "NFLX",
+  "NEE",
+  "NVDA",
+  "PYPL",
+  "PG",
+  "RTX",
+  "CRM",
+  "TMO",
+  "UNH",
+  "VZ",
+  "^GSPC"
+];
+
 export const COLOR_PALETTES = [
     "#d847a7",
     "#5bc452",

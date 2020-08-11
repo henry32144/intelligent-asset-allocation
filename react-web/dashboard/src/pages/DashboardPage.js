@@ -11,7 +11,9 @@ import WeightSection from '../views/WeightSection'
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { motion } from "framer-motion"
-import { BASEURL, NEWS_SECTION, PERFORMANCE_SECTION, WEIGHT_SECTION, COLOR_PALETTES, COMPANY_MAPPING } from '../Constants';
+import { BASEURL, NEWS_SECTION,
+   PERFORMANCE_SECTION, WEIGHT_SECTION,
+    COLOR_PALETTES, COMPANY_MAPPING, ERROR_COMPANIES } from '../Constants';
 
 const useStyles = makeStyles((theme) => ({
   portfolioPage: {
@@ -193,15 +195,20 @@ function DashboardPage(props) {
           var newCompanyDataMapping = {}
           var newCompanyData = []
           for (var i = 0; i < jsonData.data.length; i++) {
-            const companyInfo = {
-              "companyIndustry": jsonData.data[i].industry,
-              "companyName": jsonData.data[i].company_name,
-              "companySymbol": jsonData.data[i].symbol,
-              "companyId": jsonData.data[i].id_,
-              "volatility": jsonData.data[i].volatility
-            };
-            newCompanyDataMapping[jsonData.data[i].symbol] = companyInfo
-            newCompanyData.push(companyInfo);
+            if (!ERROR_COMPANIES.includes(jsonData.data[i].symbol)) {
+              const companyInfo = {
+                "companyIndustry": jsonData.data[i].industry,
+                "companyName": jsonData.data[i].company_name,
+                "companySymbol": jsonData.data[i].symbol,
+                "companyId": jsonData.data[i].id_,
+                "volatility": jsonData.data[i].volatility
+              };
+              newCompanyDataMapping[jsonData.data[i].symbol] = companyInfo
+              newCompanyData.push(companyInfo);
+            }
+            else {
+              console.log(jsonData.data[i].symbol);
+            }
           }
           setCompanyData(newCompanyData);
           console.log("newCompanyDataMapping");

@@ -172,6 +172,25 @@ def test_black_litterman():
 
     return ''
 
+@test_cases.route("/find_error_bl", methods=['GET'])
+def get_all_company():
+    json_data = request.get_json()
+    result = Company.query.all()
+    basic_company = ["AMZN"]
+    error_list = []
+    # Response template
+
+    if len(result) > 0:
+        for r in tqdm(result):
+            try:
+                selected_tickers = basic_company + [r.symbol]
+                BL = Black_Litterman(selected_tickers)
+                all_weights = BL.get_all_weights()
+                date, all_values = BL.get_backtest_result()
+            except Exception as e:
+                print(str(e))
+                error_list.append(r.symbol)
+    return jsonify(error_list)
 
 @test_cases.route('/test_equal')
 def test_equal_weight():
