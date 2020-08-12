@@ -34,7 +34,7 @@ export default function NewsSection(props) {
           </NewsList>
           :
           <Typography className={classes.emptyText}>
-            Add company to the portfolio to see news
+            We did not detect important news for the companies you selected yet.
           </Typography>
       }
     </div>

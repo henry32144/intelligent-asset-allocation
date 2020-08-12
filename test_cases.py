@@ -215,11 +215,52 @@ def test_predict_nlp():
     return ''
 
 
-
-
 @test_cases.route('/test_sharpe_ratio')
 def calculate_sharpe_ratio():
     selected_tickers = ['GOOG', 'AMZN', 'FB', 'MSFT', 'AAPL']
+    BL = Black_Litterman(selected_tickers)
+    all_weights = BL.get_all_weights()
+    date, all_values, prices = BL.get_backtest_result()
+    returns = np.array(all_values)
+    sharpe_ratio = ((returns.mean()) - 0.08) / returns.std()
+    print("sharpe", sharpe_ratio)
+
+    test_dict = {
+        "data": {"all_weights": all_weights,
+        "all_values": all_values,
+        "date": date.tolist()},
+        "prices": prices
+    }
+
+    return jsonify(test_dict)
+
+
+
+@test_cases.route('/test_all_companies')
+def test_all_companies():
+    result = Company.query.all()
+    selected_tickers = []
+    error_company = [
+        "IBM",
+        "ISRG",
+        "MDLZ",
+        "MS",
+        "NFLX",
+        "NEE",
+        "NVDA",
+        "PYPL",
+        "PG",
+        "RTX",
+        "CRM",
+        "TMO",
+        "UNH",
+        "VZ",
+        "^GSPC"
+    ]
+    for r in result:
+        if r.symbol not in error_company:
+            selected_tickers.append(r.symbol)
+    print("total_companies ", len(selected_tickers))
     BL = Black_Litterman(selected_tickers)
     all_weights = BL.get_all_weights()
     date, all_values, prices = BL.get_backtest_result()

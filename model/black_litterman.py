@@ -259,7 +259,6 @@ class Black_Litterman(object):
 
         log_return_df = log_return_df.iloc[1:, :]
         log_return_df.columns = self.selected_tickers
-
         # calculate the whole portfolio performance
         length = len(log_return_df)
         total_value = 1

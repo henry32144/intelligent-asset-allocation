@@ -56,7 +56,7 @@ class EqualWeight(object):
         for tick in self.selected_tickers:
             _, test_df = self.read_stock_file(tick)
             price = test_df['adj_close']
-            prices_dict[ticker] = price.values.tolist()
+            prices_dict[tick] = price.values.tolist()
             log_return = np.log(price) - np.log(price.shift(1))
             all_test_df = pd.concat([all_test_df, log_return], axis=1)
 

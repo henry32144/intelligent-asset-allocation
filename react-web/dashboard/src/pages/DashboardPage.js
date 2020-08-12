@@ -302,48 +302,57 @@ function DashboardPage(props) {
     setHistoryWeights(newHistoryWeightData);
   }
 
-  const setPerformanceDataset = (performance, SP500, date, symbols, prices) => {
+  const setPerformanceDataset = (performance, SP500, equalWeight, date, symbols, prices) => {
     var maxVal = 42;
     var delta = Math.floor(date.length / maxVal);
     var lesserDate = [];
     var lesserData = [];
     var lesserSP500Data = [];
+    var lesserEqualWeightData = [];
     var dataset = generateDataTemplate(0);
     var SP500Dataset = generateDataTemplate(1);
+    var EqualWeightDataset = generateDataTemplate(2);
     var PriceDatasetArray = []
     var lesserPriceArray = [];
     const originalData = performance.slice(1);
     const originalSP500Data = SP500.slice(1);
-
+    const originalEqualWeightData = equalWeight.slice(1);
 
     for (var i = 0; i < performance.length; i = i + delta) {
       lesserData.push(originalData[i]);
       lesserSP500Data.push(originalSP500Data[i]);
       lesserDate.push(date[i]);
+      lesserEqualWeightData.push(originalEqualWeightData[i]);
 
-      // for (var j = 0; j < symbols.length; j ++) {
-      //   var priceValue = prices[symbols[j]];
-      //   priceValue = priceValue.slice(1);
-      //   lesserPriceArray.push(priceValue);
-      // }
+      for (var j = 0; j < symbols.length; j ++) {
+        var priceValue = prices[symbols[j]];
+        priceValue = priceValue.slice(1);
+        lesserPriceArray.push(priceValue);
+      }
     }
 
     dataset.label = "History performance";
     dataset.data = lesserData;
     SP500Dataset.label = "SP500 Index";
     SP500Dataset.data = lesserSP500Data;
+    EqualWeightDataset.label = "Eqaul Weight";
+    EqualWeightDataset.data = lesserEqualWeightData;
 
-    // for (var i = 0; i < symbols.length; i ++) {
-    //   var dataset = generateDataTemplate(i + 2)
-    //   dataset.label = symbols[i];
-    //   dataset.data = lesserPriceArray[i];
-    //   PriceDatasetArray.push(dataset);
-    // }
+    for (var i = 0; i < symbols.length; i ++) {
+      var d = generateDataTemplate(i + 3)
+      d.label = symbols[i];
+      d.data = lesserPriceArray[i];
+      PriceDatasetArray.push(d);
+    }
 
     var newPerformanceData = {
       labels: lesserDate,
-      datasets: [dataset, SP500Dataset]
+      datasets: [dataset, SP500Dataset, EqualWeightDataset]
     }
+    // var newPerformanceData = {
+    //   labels: lesserDate,
+    //   datasets: [dataset, SP500Dataset, EqualWeightDataset]
+    // }
 
     console.log(newPerformanceData);
     console.log(originalData[originalData.length - 1]);
@@ -387,7 +396,8 @@ function DashboardPage(props) {
           console.log("Weight response")
           console.log(jsonData)
           if (jsonData.isSuccess) {
-            setPerformanceDataset(jsonData.data.all_values, jsonData.data.SP500, jsonData.data.date, companySymbols, jsonData.data.prices);
+            setPerformanceDataset(jsonData.data.all_values, jsonData.data.SP500, jsonData.data.equalweight_all_values,
+               jsonData.data.date, companySymbols, jsonData.data.prices);
             setSharpeRatio(jsonData.data.sharpe_ratio);
             setWeightDataset(companySymbols, jsonData.data.all_weights, jsonData.data.date);
             setBacktestDates(jsonData.data.date);

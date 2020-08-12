@@ -243,17 +243,37 @@ def get_model_predict():
         sp_500 = SP500()
         sp500_values = sp_500.get_backtest_result()
         all_weights, all_values, date, prices = return_portfolio(mode=selected_mode, company_symbols=selected_tickers)
+        _, equalweight_all_values, _, _ = return_portfolio(mode="equalweight", company_symbols=selected_tickers)
         risk_free = 0.08
         returns = np.array(all_values)
         sharpe_ratio = ((all_values[-1] / all_values[0]) - risk_free) / returns.std()
 
         # Estimated return
-        all_values = np.array(all_values, dtype='float32') * money
-        sp500_values = np.array(sp500_values, dtype='float32') * money
+        for k, v in prices.items():
+            temp_prices = np.array(prices[k], dtype='float32')
+
+            log_return = np.log(temp_prices) - np.log(np.roll(temp_prices, 1))
+            temp_prices = money * (1 + log_return[1:])
+            # temp_prices = (temp_prices / temp_prices[0]) * money
+            temp_prices = np.around(temp_prices, 2)
+
+            prices[k] = temp_prices.tolist()
+        
+        all_values = np.array(all_values, dtype='float32')
+        all_values = all_values * money
+
+        equalweight_all_values = np.array(equalweight_all_values, dtype='float32')
+        equalweight_all_values = equalweight_all_values * money
+
+        sp500_values = np.array(sp500_values, dtype='float32')
+        sp500_values = sp500_values * money
+
         all_values = np.around(all_values, 2)
         sp500_values = np.around(sp500_values, 2)
+        equalweight_all_values = np.around(equalweight_all_values, 2)
         all_values = all_values.tolist()
         sp500_values = sp500_values.tolist()
+        equalweight_all_values = equalweight_all_values.tolist()
 
         time_interval = 1
         for i in range(len(all_weights)):
@@ -262,6 +282,7 @@ def get_model_predict():
         response["data"] = {
             "all_weights": all_weights,
             "all_values": all_values[::time_interval],
+            "equalweight_all_values": equalweight_all_values[::time_interval],
             "date": date.tolist()[::time_interval],
             "SP500": sp500_values[::time_interval],
             "prices": prices,
