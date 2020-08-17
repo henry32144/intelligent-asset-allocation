@@ -9,7 +9,6 @@ import pandas as pd
 import scipy
 import pickle
 from pandas_datareader import data
-import matplotlib.pyplot as plt
 
 
 class Black_Litterman(object):

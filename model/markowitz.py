@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import scipy
 from pandas_datareader import data
-import matplotlib.pyplot as plt
 
 class Markowitz(object):
     def __init__(self, selected_tickers):

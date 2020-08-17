@@ -5,7 +5,7 @@ __pycache__/*
 database.zip
 **/database.zip
 **/.DS_Store
-# **/database.db
+
 **/chromedriver.exe
-# database.db
+
 Database/.DS_Store

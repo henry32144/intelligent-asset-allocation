@@ -7,8 +7,6 @@ from tqdm import tqdm
 from collections import defaultdict
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib
 from flask import Blueprint, abort, request, render_template, jsonify
 from database.tables.user import User
 from database.database import db
