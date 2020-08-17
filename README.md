@@ -85,10 +85,10 @@ python app.py
 
 Steps to use this website.
 
-1. Login. You can use default account to login, email and password are 123.
-2. Go to dashboard page. Press `Start Now` or `Dashboard` button on the top right of the page.
-3. Modify Portfolio. You can add companies on the search box, remove companies on the left panel.
-4. Calculate Portfolio Weight. Once you finished company selection, you can press calculate weight button. The result should be displayed in few seconds.
+1. *Login.* You can use default account to login, email and password are 123.
+2. *Go to dashboard page.* Press `Start Now` or `Dashboard` button on the top right of the page.
+3. *Modify Portfolio.* You can add companies on the search box, remove companies on the left panel.
+4. *Calculate Portfolio Weight.* Once you finished company selection, you can press calculate weight button. The result should be displayed in few seconds.
 
 
 <!-- CONTRIBUTING -->
@@ -96,7 +96,7 @@ Steps to use this website.
 
 [Dennis Wu](https://github.com/Hibb-bb)
 
-[Cheng-Han Wu](https://github.com/henry32144/intelligent-asset-allocation)
+[Cheng-Han Wu](https://github.com/henry32144)
 
 [Yang Wang](https://github.com/penguinwang96825)
 
