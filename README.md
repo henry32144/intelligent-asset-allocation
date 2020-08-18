@@ -44,11 +44,11 @@ git clone https://github.com/henry32144/intelligent-asset-allocation.git
 cd intelligent-asset-allocation
 
 
-docker build -t intelligent-asset-allocation . --no-cache
+docker build -t intelligent-asset-allocation .
 ```
 3. Run docker
 ```sh
-docker run intelligent-asset-allocation
+docker run -p 5000:5000 intelligent-asset-allocation
 ```
 4. Open your browser and type `127.0.0.1:5000` in url
 
