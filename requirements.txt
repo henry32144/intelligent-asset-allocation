@@ -1,6 +1,6 @@
 gunicorn
 gevent
-tensorflow==2.2
+tensorflow==2.9.3
 Flask-APScheduler
 Flask-SQLAlchemy
 bs4
